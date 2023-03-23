@@ -1,0 +1,6 @@
+# ignore specific
+**/__pycache__
+**/.pylint
+/.spyproject
+*/test
+data/*
