@@ -4,3 +4,8 @@
 /.spyproject
 */test
 data/*
+# unignore css and tray
+!data/host_qtapp/app.css
+!data/host_qtapp/tray.png
+# ignore all documentation for now
+docs/*
