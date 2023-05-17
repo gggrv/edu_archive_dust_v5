@@ -12,12 +12,13 @@ import pandas as pd
 # pip install
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import ( QWidget, QVBoxLayout,
-    QLineEdit, QHBoxLayout
+    QLineEdit, QHBoxLayout, QLabel
     )
 # same project
 from sparkling.neo4j import NODE
 from sparkling.common.pyqt5 import ( set_actions, remove_actions )
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer, Playlist
+from sparkling.grimoire.PlaylistManager import DEFAULT_PLAYLIST_SCREEN_NAME
 
 PLAYLIST_BASENAME = 'temp'
 PLACEHOLDER_QUERY = f'MATCH ({NODE}) RETURN {NODE} LIMIT 50'
@@ -27,6 +28,7 @@ class DatabaseFilter( QWidget ):
     SEND_TO_CURRENT_ACTIVE_PLAYLIST = pyqtSignal( pd.DataFrame )
     
     class Gui:
+        current_playlist_lab = None
         searchbar = None
         result_view = None
     
@@ -48,6 +50,7 @@ class DatabaseFilter( QWidget ):
         
         # controls
         
+        self.Gui.current_playlist_lab = QLabel( DEFAULT_PLAYLIST_SCREEN_NAME, parent=self )
         self.Gui.searchbar = QLineEdit( parent=self )
         self.Gui.result_view = PlaylistViewer( parent=self )
         
@@ -60,6 +63,7 @@ class DatabaseFilter( QWidget ):
         
         # assemble
         
+        lyt.addWidget( self.Gui.current_playlist_lab )
         lyt.addLayout( hbox )
         lyt.addWidget( self.Gui.searchbar )
         lyt.addWidget( self.Gui.result_view )
@@ -100,10 +104,11 @@ class DatabaseFilter( QWidget ):
     def conn_changed_event( self, conn ):
         self.Gui.result_view.conn_changed_event( conn )
         
-    def switch_db_name( self, db_name ):
+    def set_current_active_playlist( self, p ):
         
         # change db name
-        self.__db_name = db_name
+        self.Gui.current_playlist_lab.setText( p.screen_name() )
+        self.__db_name = p.db_name()
         
         if not self.isVisible():
             # no point to redownload data into hidden

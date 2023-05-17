@@ -76,17 +76,17 @@ class MainDoer( BaseSomeDoer ):
         NEO4J_SETTINGS = 'neo4j_settings.yaml'
         TREES = 'trees.yaml'
         RENAMING_RULES = 'renaming_rules.yaml'
+        PLAYLIST_PLUGINS = 'playlist_plugins.yaml'
         
     class Presets:
         
         FileRenamer = None
         
+    class Doers:
+        
+        PlaylistManager = None
+        
     conn = None # here will be a single connection
-    playlist_manager = None
-    
-    # to be read from disk
-    trees = None
-    rules = None
     
     def __init__( self,
         save_folder
@@ -110,12 +110,13 @@ class MainDoer( BaseSomeDoer ):
         self.Files.NEO4J_SETTINGS = self.set_file( self.Files.NEO4J_SETTINGS )
         self.Files.TREES = self.set_file( self.Files.TREES )
         self.Files.RENAMING_RULES = self.set_file( self.Files.RENAMING_RULES )
+        self.Files.PLAYLIST_PLUGINS = self.set_file( self.Files.PLAYLIST_PLUGINS )
         
         self.Presets.FileRenamer = FileRenamerPresets( self.Files.RENAMING_RULES )
     
         # other
         
-        self.playlist_manager = PlaylistManager( self.Folders.PLAYLISTS )
+        self.Doers.PlaylistManager = PlaylistManager( self.Folders.PLAYLISTS )
     
     def __establish_connection( self ):
         

@@ -8,11 +8,13 @@ import logging
 log = logging.getLogger(__name__)
 
 # embedded in python
+import importlib
+import os
 # pip install
 import pandas as pd
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import ( QWidget, QFileDialog,
-    QHBoxLayout, QSplitter, QTabWidget, QVBoxLayout )
+from PyQt5.QtWidgets import ( QWidget, QFileDialog, QCheckBox, QPushButton,
+    QHBoxLayout, QSplitter, QTabWidget, QVBoxLayout, QGridLayout )
 # same project
 #from sparkling.common import readf, savef, readf_yaml, unique_loc
 #from sparkling.common.qt import set_actions
@@ -22,6 +24,7 @@ from sparkling.grimoire.Playlist import Playlist, Columns as PlaylistColumns
 from sparkling.grimoire.pyqt5.PlaylistSelectorView import PlaylistSelectorView
 from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
+from sparkling.grimoire.pyqt5.PlaylistPluginsPresetsEditor import PlaylistPluginsPresetsEditor
 #from sparkling.grimoire.pyqt5.TreeFilter import TreeFilter
 
 class CentralWidget( QWidget ):
@@ -36,11 +39,13 @@ class CentralWidget( QWidget ):
         tab_widget = None
     
         side_tab_widget = None
+        plugin_pane = None
     
         split_vleft = None
         split_hmid = None
     
     _own_doer = None
+    _plugins = None # future dictionary
 
     def __init__( self,
                   own_doer,
@@ -50,6 +55,9 @@ class CentralWidget( QWidget ):
             parent=parent, *args, **kwargs )
         
         self._own_doer = own_doer
+        self._plugins = {}
+        
+        # gui
         
         # help:
         # https://blog.csdn.net/huayunhualuo/article/details/102700647
@@ -59,7 +67,7 @@ class CentralWidget( QWidget ):
         self.Gui.split_vleft.setContentsMargins(0,0,0,0)
         self.Gui.split_hmid.setContentsMargins(0,0,0,0)
         
-        self.Gui.playlist_selector = PlaylistSelectorView( self._own_doer.playlist_manager, parent=self )
+        self.Gui.playlist_selector = PlaylistSelectorView( self._own_doer.Doers.PlaylistManager, parent=self )
         #self.Gui.tree_filter = TreeFilter( parent=self )
         self.Gui.database_filter = DatabaseFilter( parent=self )
         
@@ -77,9 +85,10 @@ class CentralWidget( QWidget ):
         side_lyt2.addWidget( self.Gui.database_filter )
         side_widget2.setLayout( side_lyt2 )
         
-        side_widget3 = QWidget( parent=self )
-        side_lyt3 = QVBoxLayout()
-        side_widget3.setLayout( side_lyt3 )
+        self.Gui.plugin_pane = PlaylistPluginsPresetsEditor(
+            self._own_doer.Folders.PLUGINS,
+            self._own_doer.Files.PLAYLIST_PLUGINS,
+            parent=self )
         
         
         
@@ -90,7 +99,7 @@ class CentralWidget( QWidget ):
         self.Gui.side_tab_widget = QTabWidget( parent=self )
         self.Gui.side_tab_widget.setContentsMargins(0,0,0,0)
         self.Gui.side_tab_widget.addTab( side_widget1, 'navi' )
-        self.Gui.side_tab_widget.addTab( side_widget3, '⚙️' )
+        self.Gui.side_tab_widget.addTab( self.Gui.plugin_pane, '⚙️' )
         self.Gui.side_tab_widget.addTab( side_widget2, 'filter' )
 
         # layouts
@@ -104,7 +113,7 @@ class CentralWidget( QWidget ):
         self.Gui.split_hmid.addWidget( self.Gui.tab_widget )
         
         # set default middle splitter position
-        self.Gui.split_hmid.setStretchFactor( 0,1 )
+        #self.Gui.split_hmid.setStretchFactor( 0,1 )
         self.Gui.split_hmid.setStretchFactor( 1,2 )
         
         lyt.addWidget( self.Gui.split_hmid )
@@ -125,6 +134,9 @@ class CentralWidget( QWidget ):
         
         self.Gui.database_filter.SEND_TO_CURRENT_ACTIVE_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
         #self.Gui.tree_filter.Gui.tree_view.SEND_TO_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
+        
+        self.Gui.plugin_pane.REQUEST_PLUGIN_ENABLE.connect( self.__request_plugin_event )
+        self.Gui.plugin_pane.REQUEST_PLUGIN_DISABLE.connect( self.__request_plugin_clear_event )
         
         # autorun
         
@@ -168,8 +180,14 @@ class CentralWidget( QWidget ):
         self.Gui.tab_widget.addTab( w, p.screen_name() )
         
     def __current_active_playlist_changed_event( self, p ):
+        
+        if p.basename()==self.Gui.playlist_selector.current_active_playlist().basename():
+            # no change - i focused in the save playlist viewer
+            return
+        
         self.Gui.playlist_selector.set_current_active_playlist( p )
-        self.Gui.database_filter.switch_db_name( p.db_name() )
+        self.Gui.database_filter.set_current_active_playlist( p )
+        self.Gui.plugin_pane.set_current_active_playlist( p )
         
     def __playlist_closed_event( self, p ):
         
@@ -258,6 +276,52 @@ class CentralWidget( QWidget ):
     def _export_playlist_to_csv_event( self, p ):
         self._own_doer.export_playlist_to_csv( p )
         
+    def __request_plugin_clear_event( self, plugin_name ):
+        
+        # Removes this pugin's additional functionality
+        # from playlist context menu, etc.
+        
+        # Right now I keep loaded plugins until grimoire's main
+        # window is closed.
+        
+        if not plugin_name in self._plugins:
+            log.error( f'attempt to remove unloaded plugin functionality: {plugin_name}' )
+            return
+        
+        self._plugins[plugin_name].autoreverse()
+        
+    def __request_plugin_event( self, plugin_name ):
+        
+        # Adds this pugin's additional functionality
+        # into playlist context menu, etc.
+        
+        # help:
+        # https://www.geeksforgeeks.org/how-to-import-a-python-module-given-the-full-path/
+        
+        if plugin_name is self._plugins:
+            # this plugin is already loaded
+            # autorun it again
+            p = self._plugins[plugin_name].autorun()
+            return
+        
+        # i need to load this plugin
+        
+        # load it
+        plugin_src = os.path.join( self._own_doer.Folders.PLUGINS, plugin_name )
+        spec = importlib.util.spec_from_file_location(
+            plugin_name, plugin_src )
+        if spec is None:
+            log.error( f'failed to load invalid plugin {plugin_name}' )
+            return
+        p = importlib.util.module_from_spec( spec )
+        spec.loader.exec_module( p )
+        
+        # remember
+        self._plugins[plugin_name] = p
+        
+        # autorun
+        p.autorun( self )
+        
 #---------------------------------------------------------------------------+++
-# end 2023.05.13
-# added imports/exports
+# end 2023.05.17
+# wip plugins
