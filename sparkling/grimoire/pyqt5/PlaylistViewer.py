@@ -258,6 +258,70 @@ class PlaylistViewer( PandasTableView ):
         # i want to edit it manually
         ev.accept()
         
+    def _accept_custom_metadata( self, metadata ):
+        
+        # Accepts custom metadata that is not in db.
+        # For external use only (plugins for example).
+        
+        identities = []
+        
+        if type(metadata)==pd.DataFrame:
+            # df with some rows that are not in db
+            raise NotImplementedError
+        
+        elif type(metadata)==dict:
+            # one single row that is not in db
+            # this is param_dict
+            
+            # parse reserved columns
+            labels = ''
+            if Neo4jColumns._NEO4J_LABELS in metadata:
+                labels = metadata[Neo4jColumns._NEO4J_LABELS]
+                del metadata[ Neo4jColumns._NEO4J_LABELS ]
+            
+            # send to db
+            node = self._conn.convert_node( NODE, labels, param_dict=metadata )
+            response = self._conn.query(
+                f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
+                db_name=self._playlist.db_name()
+                )
+            
+            if response is None:
+                log.error( f'failed to connect to server to create node {node} in db {self._playlist.db_name()}' )
+            else:
+                for record in response:
+                    identities.append( record['identity'] )
+        
+        elif type(metadata)==list:
+            # list of dictionaries that are not in db
+            
+            for row in metadata:
+                    
+                # parse reserved columns
+                labels = ''
+                if Neo4jColumns._NEO4J_LABELS in row:
+                    labels = row[Neo4jColumns._NEO4J_LABELS]
+                    del row[ Neo4jColumns._NEO4J_LABELS ]
+                    
+                # send to db
+                node = self._conn.convert_node( NODE, labels, param_dict=row )
+                response = self._conn.query(
+                    f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
+                    db_name=self._playlist.db_name()
+                    )
+            
+                if response is None:
+                    log.error( f'failed to connect to server to create node {node} in db {self._playlist.db_name()}' )
+                else:
+                    for record in response:
+                        identities.append( record['identity'] )
+        
+        else:
+            raise ValueError
+            
+        # send to internal data
+        self.add_identities( identities )
+        
     def __accept_dropped_paths( self, paths ):
         
         # I can call this method whenever I want my
