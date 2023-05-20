@@ -23,8 +23,8 @@ from sparkling.grimoire.PlaylistManager import (
         
 class CustomCheckbox( QCheckBox ):
     
-    # Custom Combobox that emits not only current text,
-    # but also a cell_rowiloc.
+    # Custom Checkbox that emits not only current text,
+    # but also some associated text that helps identify it.
     
     STATE_CHANGED = pyqtSignal( str, bool )
 
