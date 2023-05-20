@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 import os
 # pip install
 # same project
-from sparkling.common import readf
+from sparkling.common import readf, savef
 
 class Conventions:
     
@@ -20,15 +20,21 @@ class Conventions:
     PRODUCT_NAME_PREFIX = 'prd_'
     COMPONENT_NAME_PREFIX = 'c_'
     
+    class Folders:
+        
+        IMAGES = 'images' # same as the one in the default environment definition file
+    
     class Files:
         
-        ENVIROMENT = 'env_.tex'
+        ENVIROMENT_DEFINITION = 'env_.tex'
         PROJECT_DEFINITION = 'project_.tex'
         
     @staticmethod
-    def create_environment( project_name ):
+    def default_environment_definition( project_name ):
         
-        src = Conventions.Files.ENVIRONMENT
+        # Creates the environment file contents.
+        
+        src = Conventions.Files.ENVIROMENT_DEFINITION
         
         if not os.path.isfile( src ):
             log.error( f'no default template for environment: {src}' )
@@ -44,7 +50,9 @@ class Conventions:
         return text
         
     @staticmethod
-    def create_project_definition( project_name ):
+    def default_project_definition( project_name ):
+        
+        # Creates the project file contents.
         
         src = Conventions.Files.PROJECT_DEFINITION
         
@@ -60,7 +68,33 @@ class Conventions:
         text = text.replace( '%project_name%', prefixed_project_name )
         
         return text
+    
+    @staticmethod
+    def create_project( path_to_new_project ):
+        
+        # Treats given path as a project root.
+        # Creates necessary definitions, folders.
+        
+        # get project name
+        project_name = os.path.basename( path_to_new_project )
+        
+        # create necessary folders
+        for folder in Conventions.Folders.SAMPLE_PROJECT_FOLDERS:
+            src = os.path.join( path_to_new_project, folder )
+            os.makedirs( src )
+            
+        # populate folders with necessary files
+        
+        # project
+        src = os.path.join( path_to_new_project, Conventions.Files.PROJECT_DEFINITION )
+        text = Conventions.default_project_definition( project_name )
+        savef( src, text )
 
+        # environment
+        src = os.path.join( path_to_new_project, Conventions.Files.ENVIROMENT_DEFINITION )
+        text = Conventions.default_environment_definition( project_name )
+        savef( src, text )
+        
 #---------------------------------------------------------------------------+++
-# end 2023.04.08
-# created
+# end 2023.05.19
+# usability update
