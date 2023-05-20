@@ -11,117 +11,76 @@ log = logging.getLogger(__name__)
 import os
 # pip install
 # same project
+from sparkling.common.SomeDoer import SomeDoer
 from sparkling.contech.Conventions import Conventions as Conv
-from sparkling.contech.tools import (
+from sparkling.contech.main import (
     render_product, get_products
     )
 from sparkling.common import savef
 
-class ContextProject( object ):
+class ContextProject( SomeDoer ):
     
-    # A definition of the project.
-    # Gives easy eccess to necessary files.
+    # A definition of some existing context project.
+    # Gives easy access to necessary files.
     # Assumes the project follows naming conventions.
     
-    __project_root_folder = None
     __project_name = None
     
     __products = None
     
     class Files:
         
-        ENVIRONMENT = None #'env_{}.tex'
-        PROJECT_DEFINITION = None #'project_{}.tex'
+        ENVIRONMENT_DEFINITION = None
+        PROJECT_DEFINITION = None
     
     def __init__(
             self,
-            project_root_folder,
-            project_name=None
+            project_root_folder
             ):
         
-        super( ContextProject, self ).__init__()
+        super( ContextProject, self ).__init__( project_root_folder )
         
-        self.__set_root_folder( project_root_folder )
-        self.__set_project_name( project_name )
+        self.__project_name = os.path.basename( project_root_folder )
         
-        self.__products = {}
-        
-        # set files
+        # set paths
         self.Files.ENVIRONMENT = self.__set_file(
             f'{Conv.ENVIRONMENT_NAME_PREFIX}{self.__project_name}.tex' )
         self.Files.PROJECT_DEFINITION = self.__set_file(
             f'{Conv.PROJECT_NAME_PREFIX}{self.__project_name}.tex' )
         
+        # dynamic
+        self.__products = {}
+        
         # make sure needed files exist
-        self.create_default_environment()
+        self.default_environment_definition()
         self.create_default_project_definition()
-        
-    def __set_root_folder( self, project_root_folder ):
-        
-        if not os.path.isdir( project_root_folder ):
-            os.makedirs( project_root_folder )
-        
-        self.__project_root_folder = project_root_folder
-        
-    def get_root_folder( self ):
-        return self.__project_root_folder
     
-    def get_project_name( self ):
+    def project_name( self ):
         return self.__project_name
-    
-    def __set_project_name( self, project_name ):
         
-        # Private method, called once from constructor.
-        
-        if not project_name is None:
-            # i provided custom project name
-            self.__project_name = project_name
-            return
-            
-        # i assume that root folder name is
-        # the same as the project name
-        
-        basename = os.path.basename( self.__project_root_folder )
-        #name, _ = os.path.splitext( basename )
-        
-        name = basename.replace( Conv.PROJECT_NAME_PREFIX, '' )
-        
-        self.__project_name = name
-        
-    def create_default_environment( self ):
+    def default_environment_definition( self ):
         
         src = self.Files.ENVIRONMENT
         
         if os.path.isfile( src ):
-            log.warning( f'file already exists: {src}, not doing anything' )
+            log.info( f'file already exists: {src}, not doing anything' )
             return
         
-        text = Conv.create_environment( self.__project_name )
+        text = Conv.default_environment_definition( self.__project_name )
         
         savef( src, text )
         
-    def create_default_project_definition( self ):
+    def default_project_definition( self ):
         
         src = self.Files.PROJECT_DEFINITION
         
         if os.path.isfile( src ):
-            log.warning( f'file already exists: {src}, not doing anything' )
+            log.info( f'file already exists: {src}, not doing anything' )
             return
         
-        text = Conv.create_project_definition( self.__project_name )
+        text = Conv.default_project_definition( self.__project_name )
         
         savef( src, text )
-        
-    def __set_file( self, filename ):
-        
-        # Private method, called once from constructor.
-        
-        src = os.path.join(
-            self.__project_root_folder,
-            filename
-            )
-        
-        return src
     
     def get_products( self, force_refresh=False ):
         
@@ -160,5 +119,5 @@ class ContextProject( object ):
                 )
     
 #---------------------------------------------------------------------------+++
-# end 2023.04.08
-# created
+# end 2023.05.19
+# untested qol update, switched to subclass of SomeDoer
