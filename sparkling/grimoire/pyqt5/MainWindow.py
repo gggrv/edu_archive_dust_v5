@@ -8,6 +8,8 @@ import logging
 log = logging.getLogger(__name__)
 
 # embedded in python
+import importlib
+import os
 # pip install
 from PyQt5.QtCore import pyqtSignal
 # same project
@@ -16,12 +18,33 @@ from sparkling.common.pyqt5.parentless.MainWindow import (
 from sparkling.common.pyqt5 import set_actions
 from sparkling.grimoire.pyqt5.CentralWidget import CentralWidget
         
+# each plugin should have the following file
+# with at least two methods: autoenable( parent_main_window ),
+# autodisable( parent_main_window )
+PLUGIN_ENTRY_FILE = 'main.py'
+
 class MainWindow( ParentlessMainWindow ):
     
     # Main window of my complex PyQt5 application.
+    
+    # Regarding plugins and custom QActions (menu items):
+    # https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QAction.html#more
+    # recommends that each QAction( parent=CorrespondingMainWindow ),
+    # so grimoire plugins should be managed by this MainWindow class,
+    # not the CentralWidget class.
+    # Each plugin's autoenable() function will receive
+    # a pointer to this MainWindow. This way each plugin will have access
+    # to the whole widget architecture. Unsafe, useful.
 
     OK_TO_CLOSE = pyqtSignal( str )
 
+    _own_doer = None
+    
+    # loaded plugins will be here
+    # i can enable/disable them freely via gui
+    # all plugins will be unloaded when i close the MainWindow
+    _plugins = None # future dictionary
+    
     def __init__( self,
                   own_doer,
                   parent=None,
@@ -29,13 +52,25 @@ class MainWindow( ParentlessMainWindow ):
         super( MainWindow, self ).__init__(
             own_doer, parent=parent, *args, **kwargs )
         
+        # dynamic
+        self._own_doer = own_doer
+        self._plugins = {}
+        
+        # settings
+        self.setWindowTitle( 'Main Window — grimoire' )
+        
+        # gui
+        
         cw = CentralWidget(
             self._own_doer,
             parent=self,
             )
         self.setCentralWidget( cw )
         
-        self.setWindowTitle( 'Main Window — grimoire' )
+        # signals
+        
+        cw.Gui.plugin_pane.REQUEST_PLUGIN_ENABLE.connect( self.__request_plugin_enable_event )
+        cw.Gui.plugin_pane.REQUEST_PLUGIN_DISABLE.connect( self.__request_plugin_disable_event )
         
         self.__init_menu()
         
@@ -72,37 +107,55 @@ class MainWindow( ParentlessMainWindow ):
         self.OK_TO_CLOSE.emit( self.objectName() )
         ev.ignore() # !!!
         
-    """
-    def load_plugin( self, _ ):
+    def __request_plugin_disable_event( self, plugin_name ):
+        
+        # Removes this pugin's additional functionality
+        # from playlist context menu, etc.
+        
+        # Right now I keep loaded plugins until grimoire's main
+        # window is closed.
+        
+        if not plugin_name in self._plugins:
+            log.error( f'attempt to remove unloaded plugin functionality: {plugin_name}' )
+            return
+        
+        self._plugins[plugin_name].autodisable( self )
+        
+    def __request_plugin_enable_event( self, plugin_name ):
+        
+        # Adds this pugin's additional functionality
+        # into playlist context menu, etc.
         
         # help:
         # https://www.geeksforgeeks.org/how-to-import-a-python-module-given-the-full-path/
         
-        if self.__blackboard is None:
-            msg = 'can\'t use plugins without blackboard, proceeding without them'
-            log.error( msg )
+        if plugin_name is self._plugins:
+            # this plugin is already loaded
+            # enable it again
+            p = self._plugins[plugin_name].autoenable( self )
             return
         
-        plugin_dir = str(self.__conn.current_db)
-        plugin_name = str(self.__conn.current_label)
+        # i need to load this plugin
         
+        # load it
         plugin_src = os.path.join(
-            self.__conn.get_dedicated_root(),
-            Paths.PLUGINS, plugin_dir, '%s.py'%plugin_name )
+            self._own_doer.Folders.PLUGINS,
+            plugin_name,
+            PLUGIN_ENTRY_FILE )
+        spec = importlib.util.spec_from_file_location(
+            plugin_name, plugin_src )
+        if spec is None:
+            log.error( f'failed to load invalid plugin {plugin_name}' )
+            return
+        p = importlib.util.module_from_spec( spec )
+        spec.loader.exec_module( p )
         
-        if os.path.isfile( plugin_src ):
-            spec = importlib.util.spec_from_file_location(
-                plugin_name, plugin_src )
-            self.current_plugin = importlib.util.module_from_spec( spec )
-            spec.loader.exec_module( self.current_plugin )
-            self.current_plugin.autorun( self )
-            
-        else:
-            
-            if self.current_plugin is not None:
-                self.current_plugin.autokill()
-    """
+        # remember
+        self._plugins[plugin_name] = p
+        
+        # enable
+        p.autoenable( self )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# switched to standardised headless doer
+# end 2023.05.20
+# moved plugin functionality here
