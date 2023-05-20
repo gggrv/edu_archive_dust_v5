@@ -13,11 +13,12 @@ import subprocess
 # pip install
 import pandas as pd
 # same project
-from sparkling.contech.Conventions import Conventions as Conv
+from sparkling.contech.Conventions import Conventions
+from sparkling.contech.Commands import Commands
 from sparkling.common import (
     readf, savef, chop, select_files )
 
-def get_components( product_root, prefix=Conv.COMPONENT_NAME_PREFIX, dot_ext='.tex' ):
+def get_components( product_root, prefix=Conventions.COMPONENT_NAME_PREFIX, dot_ext='.tex' ):
 
     # Gets all c_whatever.tex in product_root.
     # Returns { whatever: full_path_to_c_whatever.tex }.
@@ -34,14 +35,14 @@ def get_components( product_root, prefix=Conv.COMPONENT_NAME_PREFIX, dot_ext='.t
         _,f = os.path.split(src)
         name,_ = os.path.splitext(f)
         
-        if name.startswith( Conv.COMPONENT_NAME_PREFIX ):    
-            name = name.replace( Conv.COMPONENT_NAME_PREFIX, '', 1 )
+        if name.startswith( Conventions.COMPONENT_NAME_PREFIX ):    
+            name = name.replace( Conventions.COMPONENT_NAME_PREFIX, '', 1 )
 
         table.setdefault( name, src )
 
     return table
 
-def get_products( project_root, prefix=Conv.PRODUCT_NAME_PREFIX, dot_ext='.tex' ):
+def get_products( project_root, prefix=Conventions.PRODUCT_NAME_PREFIX, dot_ext='.tex' ):
 
     # Gets all prd_whatever.tex in project_root.
     # Returns { whatever: full_path_to_prd_whatever.tex }.
@@ -58,8 +59,8 @@ def get_products( project_root, prefix=Conv.PRODUCT_NAME_PREFIX, dot_ext='.tex' 
         _,f = os.path.split(src)
         name,_ = os.path.splitext(f)
 
-        if name.startswith( Conv.PRODUCT_NAME_PREFIX ):    
-            name = name.replace( Conv.PRODUCT_NAME_PREFIX, '', 1 )
+        if name.startswith( Conventions.PRODUCT_NAME_PREFIX ):    
+            name = name.replace( Conventions.PRODUCT_NAME_PREFIX, '', 1 )
             
         table.setdefault( name,src )
 
@@ -78,7 +79,7 @@ def get_referenced_componenets( product_src ):
 
     for line in readf( product_src, join_lines=False ):
         
-        if not f'\\component {Conv.COMPONENT_NAME_PREFIX}' in line:
+        if not f'\\component {Conventions.COMPONENT_NAME_PREFIX}' in line:
             continue
 
         name = chop( line, '\component ', None )
@@ -86,8 +87,8 @@ def get_referenced_componenets( product_src ):
         if '%' in name: name=chop(name,None,'%')
         if '\n' in name: name=chop(name,None,'\n')
 
-        if name.startswith( Conv.COMPONENT_NAME_PREFIX ):    
-            name = name.replace( Conv.COMPONENT_NAME_PREFIX, '', 1 )
+        if name.startswith( Conventions.COMPONENT_NAME_PREFIX ):    
+            name = name.replace( Conventions.COMPONENT_NAME_PREFIX, '', 1 )
             
         src = os.path.join( prd_root, f'{name}.tex' )
         
@@ -179,16 +180,16 @@ def get_component_tags( src, tags=None ):
                     }
                 found.append( PLACEHOLDER )
 
-    return pd.DataFrame(found)
+    return pd.DataFrame( found, columns=['src','iloc','tag','value'] )
 
-def get_product_tags( product_root, tags, skip ):
+def get_product_tags( product_root, tags, skip_components ):
 
     components = get_components( product_root )
 
     dfs = []
 
     for name, src in components.items():
-        if name in skip or src in skip:
+        if name in skip_components or src in skip_components:
             continue
         found = get_component_tags( src, tags )
         dfs.append( found )
@@ -275,23 +276,46 @@ def find_in_project( project_root, texts ):
 
     return pd.concat( dfs, axis=0, sort=False )
 
-def render_product( product_src, context_console_command='context' ):
+def render_product( prd_src, context_console_command='context' ):
     
     # Renders chosen .tex file as if it was
     # a product.
     
     prev_root = os.getcwd()
-    product_root, f = os.path.split(product_src)
-    os.chdir( product_root )
+    prd_root, basename = os.path.split( prd_src )
     
-    subprocess.call( f'{context_console_command} {f}' )
-    
+    os.chdir( prd_root )
+    subprocess.call( f'{context_console_command} {basename}' )
     os.chdir( prev_root )
     
-    name,_ = os.path.splitext(f)
+    prd_name, _ = os.path.splitext(basename)
     
-    return os.path.join( product_root, f'{name}.pdf' )
+    return os.path.join( prd_root, f'{prd_name}.pdf' )
 
+def get_references_definitions_for_product(
+        product_root, tags=[Commands.REFERENCE2], skip_components=[]
+        ):
+
+    # Parses given product (all existing components).
+    # Generates references definitions for any
+    # references found.
+    
+    # TODO:
+    # allow user to specify custom reference
+    # text for each known reference value
+
+    # get tag values - who was referenced?
+    df = get_product_tags( product_root, tags, skip_components )
+    found_references = df['value'].unique()
+
+    # generate valid .tex contents
+    lines = []
+    for reference in found_references:
+        line = Commands.REFERENCE.replace('%value%',reference).replace('%text%',reference)
+        lines.append(line)
+        
+    return lines
+    
 #---------------------------------------------------------------------------+++
-# end 2023.04.08
-# cleaned, updated
+# end 2023.05.19
+# added function for generating references definitions
