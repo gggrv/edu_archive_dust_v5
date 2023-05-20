@@ -202,7 +202,7 @@ def select_files( folder, prefix, dot_ext, check_subfolders ):
         for f in fs:
 
             name,ext = os.path.splitext(f)
-            if not name[ :len(prefix) ]==prefix: continue
+            if not name.startswith(prefix): continue
             if not ext==dot_ext: continue
 
             src = os.path.join( root,f )
@@ -211,5 +211,5 @@ def select_files( folder, prefix, dot_ext, check_subfolders ):
     return selected
 
 #---------------------------------------------------------------------------+++
-# end 2023.04.08
-# added select_files
+# end 2023.05.19
+# updated select_files()
