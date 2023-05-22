@@ -10,8 +10,7 @@ log = logging.getLogger(__name__)
 # embedded in python
 import os
 # pip install
-#from PyQt5.QtCore import ( Qt )
-from PyQt5.QtWidgets import ( QAction, QTreeWidgetItemIterator )
+from PyQt5.QtWidgets import QAction
 # same project
 
 def remove_actions( widget ):
@@ -38,6 +37,9 @@ def convert_action_definitions( widget, action_definitions ):
                 action.setShortcut( row['shortcut'] )
             if 'method' in row:
                 action.triggered.connect( row['method'] )
+            if 'owner' in row:
+                # custom parameter
+                action._owner = row['owner']
             
             act_objects.append( action )
             
@@ -78,5 +80,5 @@ def mime2file( mimeData ):
     return [  os.path.normpath(path) for path in paths ]
             
 #---------------------------------------------------------------------------+++
-# end 2022.08.26
-# removed tree clearing
+# end 2022.05.22
+# adde custom owner to action definitions
