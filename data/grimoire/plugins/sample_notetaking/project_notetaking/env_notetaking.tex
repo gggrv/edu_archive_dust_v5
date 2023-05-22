@@ -1,0 +1,104 @@
+\startenvironment env_notetaking
+\project project_notetaking
+
+% where to look for images (relative to any product)
+\setupexternalfigures[directory={../../images,../images}]
+
+%\definecolor[white][h=ffffff]
+%\definecolor[white_transparent][r=1,g=1,b=1,t=0.5,a=1]
+%\definecolor[transparent][r=1,g=1,b=1,t=0.5,a=0]
+
+%\definefontfamily [mainface][sans] [write font name]
+%\definefontfamily [eface]   [sans] [segoeuisymbol]
+  
+\setuplayout[
+  % margins
+  %backspace={16em},
+  leftedge=0em,leftedgedistance=0em,leftmargin=0em,leftmargindistance=1em,
+  rightmargindistance=1em,rightmargin=0em,rightedgedistance=0em,rightedge=0em,
+  % top
+  topspace=0em,
+  top=1em,topdistance=0mm,
+  % main page
+  height=fit,
+  width=fit,
+  header=1em,headerdistance=1em,
+  footerdistance=1em,footer=1em,
+  %
+  bottom=0em,bottomdistance=0em,
+  ]
+% debug - show layout blocks
+%\showframe
+
+%-+-------------------------------------------------------------------------+++
+% Everything about references.
+
+% help:
+% https://wiki.contextgarden.net/Bibliography
+
+\usebtxdataset[default][refs.bib]
+\setupbtx[dataset=default]
+\usebtxdefinitions[apa]
+\placelistofpublications
+
+% i want all lines and paragraphs to be clearly visually separated
+\parskip 15pt plus 0pt minus 0pt % space after paragraphs
+
+%-+-------------------------------------------------------------------------+++
+% Everything about quotations.
+
+%\definedelimitedtext[customname][quotation]
+
+%\setupdelimitedtext[customname][
+  %left={“},right={”},
+  %location=text, % i want it to be inline
+  %]
+
+% here i define short commands for delimited text
+%\def\customname#1{\startcustomname #1\stopcustomname}
+
+%-+-------------------------------------------------------------------------+++
+% Everything about paper.
+
+\setuppapersize[A4,portrait]
+
+%-+-------------------------------------------------------------------------+++
+% Everything about headers and footers.
+
+% do not show default page numbers in the middle of the header:
+% location=
+\setuppagenumbering[
+  location=,
+  alternative=singlesided,
+  ]
+
+\setuptoptexts
+  [text] % location
+  [] % odd page left
+  [] % odd page right
+  [] % even page right
+  [] % even page left
+\setupheadertexts
+  [text] % location
+  [] % odd page left
+  [] % odd page right
+  [] % even page right
+  [] % even page left
+\setupfootertexts
+  [] % location
+  [] % odd page left
+  [] % odd page right
+  [] % even page right
+  [] % even page left
+\setupbottomtexts
+  [margin] % location
+  [] % odd page left
+  [\pagenumber] % odd page right
+  [] % even page right
+  [\pagenumber] % even page left
+
+\mainlanguage[english]
+
+%\setupbodyfont[mainface,sans]
+
+\stopenvironment

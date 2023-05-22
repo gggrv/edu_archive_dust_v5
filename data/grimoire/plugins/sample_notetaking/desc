@@ -1,0 +1,8 @@
+This is an example relatively complex <i>plugin</i>.<br/>
+<br/>
+It transforms any chosen <i>playlist</i> into <sub>minimalistic yet extensible</sub> desktop note-taking app powered by <i>ConTeXt</i>.<br/>
+<br/>
+In order to use it you should have <i>ConTeXt</i> installed and added to <i>system path</i>
+<sub>or you could mod the plugin to include full path to <i>something_similar_to\tex\texmf-win64\bin\context.exe</i></sub><br/>
+ <br/>
+The purpose of this is to demonstrate one possible way of coding a custom <i>plugin</i>.
