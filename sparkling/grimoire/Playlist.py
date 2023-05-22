@@ -349,7 +349,7 @@ class Playlist:
         self.__load( False, True )
         
         if self.__playlist_data is None:
-            self.__playlist_data = ''
+            self.__playlist_data = []
     
     def is_open( self ):
         
