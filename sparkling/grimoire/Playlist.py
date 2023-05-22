@@ -40,6 +40,8 @@ def save_playlist( src, screen_name, order, db_name, playlist_data ):
         # convert list of identities
         # into string with whitespaces
         playlist_data = ' '.join(playlist_data)
+    elif playlist_data is None:
+        playlist_data = ''
     
     # order is important
     data = [
@@ -412,5 +414,5 @@ class Playlist:
         return df
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.12
-# simplified
+# end 2023.05.22
+# fix playlist_data can be None during save
