@@ -11,11 +11,13 @@ log = logging.getLogger(__name__)
 import os
 # pip install
 from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (
     QWidget, QGridLayout,
-    QPushButton, QCheckBox, QLabel
+    QPushButton, QCheckBox, QLabel, QToolTip
     )
 # same project
+from sparkling.common import readf
 from sparkling.grimoire.PlaylistPluginsPresets import PlaylistPluginsPresets
 from sparkling.grimoire.PlaylistManager import (
     DEFAULT_PLAYLIST_SCREEN_NAME, DEFAULT_PLAYLIST_BASENAME
@@ -25,6 +27,8 @@ class CustomCheckbox( QCheckBox ):
     
     # Custom Checkbox that emits not only current text,
     # but also some associated text that helps identify it.
+    
+    # Immediately shows tooltip.
     
     STATE_CHANGED = pyqtSignal( str, bool )
 
@@ -38,6 +42,21 @@ class CustomCheckbox( QCheckBox ):
         
     def state_changed_event( self, new_state ):
         self.STATE_CHANGED.emit( self.text(), new_state )
+    
+    def mouseMoveEvent( self, ev ):
+        
+        # remove tooltip delay
+        # help:
+        # https://stackoverflow.com/questions/13720465/how-to-remove-the-time-delay-before-a-qtooltip-is-displayed
+        # https://stackoverflow.com/questions/59914185/pyqt5-mouse-tracking-over-qlabel-object
+        # https://stackoverflow.com/questions/31364809/pyside-instant-tooltips-no-delay-before-showing-the-tooltip
+        
+        QToolTip.showText(
+            QCursor.pos(), #ev.pos(), # ev pos is relative to widget
+            self.toolTip()
+            )
+        
+        super( CustomCheckbox, self ).mouseMoveEvent( ev ) #hoverMoveEvent( ev )
         
 class PlaylistPluginsPresetsEditor( QWidget ):
     
@@ -53,6 +72,10 @@ class PlaylistPluginsPresetsEditor( QWidget ):
     class Files:
         
         PLUGINS_PRESETS = None
+        
+        # each plugin may have this plain/rich text file
+        # with description that will be shown in a tooltip
+        PLUGIN_DESCRIPTION = 'desc'
         
     class Presets:
         
@@ -104,6 +127,14 @@ class PlaylistPluginsPresetsEditor( QWidget ):
             
             lab = CustomCheckbox( plugin_name, parent=self )
             lab.STATE_CHANGED.connect( self.checkbox_state_changed_event )
+            
+            # set description as tooltip if it exists
+            desc_src = os.path.join( self.Folders.PLUGINS, plugin_name, PlaylistPluginsPresetsEditor.Files.PLUGIN_DESCRIPTION )
+            if os.path.isfile( desc_src ):
+                # add tooltip
+                desc_text = readf( desc_src )
+                lab.setToolTip( desc_text )
+                lab.setMouseTracking( True ) # track only if tooltip
             
             #bt = QPushButton( '►', parent=self )
             #bt.setToolTip( 'Manually run.' )
