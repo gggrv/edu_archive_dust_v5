@@ -22,6 +22,9 @@ class Conventions:
     
     class Folders:
         
+        # where the template conventional files are located
+        TEMPLATES = os.path.dirname(__file__)
+        
         IMAGES = 'images' # same as the one in the default environment definition file
     
     class Files:
@@ -34,7 +37,10 @@ class Conventions:
         
         # Creates the environment file contents.
         
-        src = Conventions.Files.ENVIROMENT_DEFINITION
+        src = os.path.join(
+            Conventions.Folders.TEMPLATES,
+            Conventions.Files.ENVIROMENT_DEFINITION
+            )
         
         if not os.path.isfile( src ):
             log.error( f'no default template for environment: {src}' )
@@ -54,7 +60,10 @@ class Conventions:
         
         # Creates the project file contents.
         
-        src = Conventions.Files.PROJECT_DEFINITION
+        src = os.path.join(
+            Conventions.Folders.TEMPLATES,
+            Conventions.Files.PROJECT_DEFINITION
+            )
         
         if not os.path.isfile( src ):
             log.error( f'no default template for project definition: {src}' )
@@ -96,5 +105,5 @@ class Conventions:
         savef( src, text )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.19
-# usability update
+# end 2023.05.22
+# allowed to remember template folder
