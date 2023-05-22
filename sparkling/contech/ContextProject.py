@@ -12,7 +12,7 @@ import os
 # pip install
 # same project
 from sparkling.common.SomeDoer import SomeDoer
-from sparkling.contech.Conventions import Conventions as Conv
+from sparkling.contech.Conventions import Conventions
 from sparkling.contech.main import (
     render_product, get_products
     )
@@ -38,22 +38,29 @@ class ContextProject( SomeDoer ):
             project_root_folder
             ):
         
+        # make sure given project_root_folder has appropriate prefix
+        basename = os.path.basename( project_root_folder )
+        if not Conventions.PROJECT_NAME_PREFIX in basename:
+            raise NameError( f'please include {Conventions.PROJECT_NAME_PREFIX} in the project directory name' )
+            
+        # proceed to set up doer's folder
         super( ContextProject, self ).__init__( project_root_folder )
         
-        self.__project_name = os.path.basename( project_root_folder )
+        # remember unprefixed project name
+        self.__project_name = basename.replace( Conventions.PROJECT_NAME_PREFIX, '' )
         
         # set paths
-        self.Files.ENVIRONMENT = self.__set_file(
-            f'{Conv.ENVIRONMENT_NAME_PREFIX}{self.__project_name}.tex' )
-        self.Files.PROJECT_DEFINITION = self.__set_file(
-            f'{Conv.PROJECT_NAME_PREFIX}{self.__project_name}.tex' )
+        self.Files.ENVIRONMENT = self.set_file(
+            f'{Conventions.ENVIRONMENT_NAME_PREFIX}{self.__project_name}.tex' )
+        self.Files.PROJECT_DEFINITION = self.set_file(
+            f'{Conventions.PROJECT_NAME_PREFIX}{self.__project_name}.tex' )
         
         # dynamic
         self.__products = {}
         
         # make sure needed files exist
         self.default_environment_definition()
-        self.create_default_project_definition()
+        self.default_project_definition()
     
     def project_name( self ):
         return self.__project_name
@@ -66,7 +73,7 @@ class ContextProject( SomeDoer ):
             log.info( f'file already exists: {src}, not doing anything' )
             return
         
-        text = Conv.default_environment_definition( self.__project_name )
+        text = Conventions.default_environment_definition( self.__project_name )
         
         savef( src, text )
         
@@ -78,7 +85,7 @@ class ContextProject( SomeDoer ):
             log.info( f'file already exists: {src}, not doing anything' )
             return
         
-        text = Conv.default_project_definition( self.__project_name )
+        text = Conventions.default_project_definition( self.__project_name )
         
         savef( src, text )
     
@@ -119,5 +126,5 @@ class ContextProject( SomeDoer ):
                 )
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.19
-# untested qol update, switched to subclass of SomeDoer
+# end 2023.05.22
+# fixed method names
