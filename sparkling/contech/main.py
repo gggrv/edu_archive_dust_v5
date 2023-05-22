@@ -96,7 +96,7 @@ def get_referenced_componenets( product_src ):
 
     return table
 
-def get_unreferenced_components( product_src ):
+def get_unreferenced_components( product_src, prefix=Conventions.COMPONENT_NAME_PREFIX ):
 
     # Finds all unreferenced components in a product.
 
@@ -105,7 +105,7 @@ def get_unreferenced_components( product_src ):
 
     prd_root = os.path.dirname( product_src )
 
-    existing = get_components(prd_root)
+    existing = get_components( prd_root, prefix=prefix )
     referenced = get_referenced_componenets(product_src)
 
     table = {}
@@ -182,10 +182,13 @@ def get_component_tags( src, tags=None ):
 
     return pd.DataFrame( found, columns=['src','iloc','tag','value'] )
 
-def get_product_tags( product_root, tags, skip_components ):
+def get_product_tags( product_root, tags, skip_components, prefix=Conventions.COMPONENT_NAME_PREFIX ):
 
-    components = get_components( product_root )
-
+    components = get_components( product_root, prefix=prefix )
+    
+    if len( components )==0:
+        return pd.DataFrame( [], columns=['src','iloc','tag','value'] )
+    
     dfs = []
 
     for name, src in components.items():
@@ -193,7 +196,7 @@ def get_product_tags( product_root, tags, skip_components ):
             continue
         found = get_component_tags( src, tags )
         dfs.append( found )
-
+        
     df = pd.concat( dfs, axis=0 )
     df.sort_values( ['iloc','src'], inplace=True )
     df.reset_index( drop=True, inplace=True )
@@ -213,9 +216,9 @@ def replace_in_file( src, replacements ):
     if changed_text:
         savef( src, text )
 
-def replace_in_product( product_root, replacements ):
+def replace_in_product( product_root, replacements, prefix=Conventions.COMPONENT_NAME_PREFIX ):
 
-    components = get_components( product_root )
+    components = get_components( product_root, prefix=prefix )
     for _, src in components.items():
         replace_in_file( src, replacements )
 
@@ -251,11 +254,11 @@ def find_in_file( src, texts ):
 
     return pd.DataFrame(found)
 
-def find_in_product( product_root, texts ):
+def find_in_product( product_root, texts, prefix=Conventions.COMPONENT_NAME_PREFIX ):
 
     dfs = []
 
-    cs = get_components( product_root )
+    cs = get_components( product_root, prefix=prefix )
     for _, c_src in cs.items():
         df = find_in_file( c_src, texts )
         df['prd'] = product_root
@@ -293,7 +296,8 @@ def render_product( prd_src, context_console_command='context' ):
     return os.path.join( prd_root, f'{prd_name}.pdf' )
 
 def get_references_definitions_for_product(
-        product_root, tags=[Commands.REFERENCE2], skip_components=[]
+        product_root, tags=[Commands.REFERENCE2], skip_components=[],
+        prefix=Conventions.COMPONENT_NAME_PREFIX
         ):
 
     # Parses given product (all existing components).
@@ -305,7 +309,7 @@ def get_references_definitions_for_product(
     # text for each known reference value
 
     # get tag values - who was referenced?
-    df = get_product_tags( product_root, tags, skip_components )
+    df = get_product_tags( product_root, tags, skip_components, prefix=prefix )
     found_references = df['value'].unique()
 
     # generate valid .tex contents
@@ -317,5 +321,5 @@ def get_references_definitions_for_product(
     return lines
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.19
-# added function for generating references definitions
+# end 2023.05.22
+# propagated prefix
