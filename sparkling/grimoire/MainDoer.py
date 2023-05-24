@@ -21,9 +21,10 @@ from sparkling.grimoire.PlaylistManager import PlaylistManager
 def generate_neo4j_settings( src ):
         
     text = """---
-socket: bolt://localhost:7687
-username: <username>
-password: <password>
+# grimoire will not work in it's entirety without valid connection settings
+socket: #bolt://localhost:7687
+username: SOME_USERNAME
+password: SOME_PASSWORD
 ..."""
         
     savef( src, text )
@@ -121,6 +122,7 @@ class MainDoer( BaseSomeDoer ):
     def __establish_connection( self ):
         
         # Connect to predefined neo4j server.
+        # Return True/False depending on success.
         
         # TODO
         # do it safely
@@ -128,9 +130,18 @@ class MainDoer( BaseSomeDoer ):
         if not self.conn is None:
             # i already have conn, not doing anything
             log.info( 'i already have conn, not doing anything' )
-            return
+            return True
         
-        settings = readf_yaml( self.Files.NEO4J_SETTINGS )
+        src = self.Files.NEO4J_SETTINGS
+        if not os.path.isfile( src ):
+            # no connection settings exist yet,
+            # prompt user, abort
+            log.error( f'no connection settings exist yet, can\'t access server, please provide necessary data and restart the app: {src}' )
+            generate_neo4j_settings( src )
+            os.startfile( src )
+            return False
+            
+        settings = readf_yaml( src )
         
         conn = Connection(
             socket=settings['socket'],
@@ -140,9 +151,11 @@ class MainDoer( BaseSomeDoer ):
         
         if not conn.is_valid():
             log.error( 'this connection is not valid, not doing anything' )
-            return
+            os.startfile( src )
+            return False
         
         self.conn = conn
+        return True
         
     def export_playlist_to_csv( self, p ):
         
@@ -205,14 +218,25 @@ class MainDoer( BaseSomeDoer ):
             )
             
     def autorun( self ):
-        self.__establish_connection()
         
+        # attempt to connect to server
+        success = self.__establish_connection()
+        
+        if not success:
+            msg = 'grimoire can\'t launch without connection to server, not doing anything'
+            log.fatal( msg )
+            return False, msg
+        
+        # i end up here only when i 100% have a valid
+        # functional connection
         if len( self.conn._db_names )==0:
             self.conn.dl_db_names()
         
         # TODO
         # remember last used playist, auto load it
+        
+        return True, 'ok'
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.13
-# simplified
+# end 2023.05.25
+# fix crash when no settings available, autorun verification
