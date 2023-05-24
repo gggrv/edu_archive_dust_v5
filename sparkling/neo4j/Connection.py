@@ -46,6 +46,14 @@ def _response2df( response, columns=None, identity=False, node_variable_name=Non
     
     return pd.DataFrame([ dict(record) for record in response ])
 
+def _convert_to_safe_string( some_string ):
+    
+    # Converts given python str into
+    # an escaped string that can be safely sent in some neo4j query.
+    
+    safe_new = resubstitute( r'([\\\"\'])', r'\\\1', some_string )
+    return f'\'{safe_new}\''
+
 def _convert_parameters( param_dict ):
     
     # Converts python dictionary into a string with neo4j parameters.
@@ -115,6 +123,7 @@ class Connection:
     response2df = staticmethod( _response2df )
     convert_node = staticmethod( _convert_node )
     convert_parameters = staticmethod( _convert_parameters )
+    convert_to_safe_string = staticmethod( _convert_to_safe_string )
     
     df2nodes = staticmethod( _df2nodes )
     
@@ -188,5 +197,5 @@ class Connection:
         return response
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.12
-# simplified
+# end 2023.05.24
+# added _convert_to_safe_string
