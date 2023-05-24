@@ -11,22 +11,23 @@ log = logging.getLogger(__name__)
 import os
 # pip install
 # same project
-from sparkling.common import (
-    savef, readf_yaml )
-from sparkling.common.SomeDoer import (
-    SomeDoer as BaseSomeDoer )
+from sparkling.common import ( savef, readf_yaml )
+from sparkling.common.SomeDoer import SomeDoer
 
 def generate_custom_gestures( src ):
         
     text = """---
-# eval( python_method(some_params) ): [moosegesture]
-self.tray_menu_toggle(): ['DR','U','DL']
-self._request_custom_program_event('grimoire'): ['D']
+# please define custom gestures here
+# gestures are invoked by holding right mouse button inside the followindow
+# U=up, D=down, L=left, R=right
+# some method that will be eval(..): [moosegesture]
+self.tray_menu_toggle(): ['DR','U','DL'] # draw a cross to close this followindow
+self._request_custom_program_event('grimoire'): ['D'] # swipe down to summon grimoire
 ..."""
         
     savef( src, text )
         
-class MainDoer( BaseSomeDoer ):
+class MainDoer( SomeDoer ):
     
     PREFERRED_SAVE_DIR_NAME = 'followindow'
     
@@ -48,26 +49,37 @@ class MainDoer( BaseSomeDoer ):
         self.Files.CUSTOM_GESTURES = self.set_file( self.Files.CUSTOM_GESTURES )
         self.Files.ICON = self.set_file( self.Files.ICON )
         
-    def get_gestures( self, force=False ):
+        # dynamic
+        self.__gestures = {}
         
-        need_to_read = self.__gestures is None or force
-        if not need_to_read:
-            return self.__gestures
+    def _load_gestures( self ):
         
-        src = self.Files.CUSTOM_GESTURES
-        if not os.path.isfile( src ):
-            log.error( f'no custom gestures found: {src}' )
-            self.__gestures = {}
-            return
+        # Reads gesture definitions from disk.
         
         # TODO
         # do it safely
         
+        src = self.Files.CUSTOM_GESTURES
+        if not os.path.isfile( src ):
+            log.error( f'no custom gestures found, generating default ones: {src}' )
+            # make deafault ones
+            generate_custom_gestures( src )
+            # prompt user to edit them
+            os.startfile( src )
+        
+        # read file from disk
         self.__gestures = readf_yaml(src)
-        log.debug( f'successfully reloaded gestures from {src}' )
+        
+    def get_gestures( self ):
+        
+        # For external use only.
+        
+        if len( self.__gestures )==0:
+            self._load_gestures()
         
         return self.__gestures
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# separated from another file
+# end 2023.05.25
+# fixed errors when __gestures = None
+# allow to automatically create default gestures when they are absent

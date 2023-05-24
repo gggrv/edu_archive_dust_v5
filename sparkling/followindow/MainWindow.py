@@ -20,7 +20,12 @@ from PyQt5.QtWidgets import ( QWidget, QVBoxLayout, QLabel )
 from sparkling.common.pyqt5.parentless.MainWindow import (
     MainWindow as ParentlessMainWindow )
 from sparkling.common.pyqt5 import ( append_actions )
-    
+   
+FOLLOWINDOW_MANUAL = """What to do?
+1) Hold right mouse button.
+2) Draw something while holding right mouse button.
+"""
+
 def ellipse_equation( x,y,a,b ):
     result = (x*x)/(a*a) + (y*y)/(b*b)
     return result
@@ -51,6 +56,9 @@ def followindow_enlarge( w ):
 def followindow_shrink( w ):
 
     # Show small window near the mouse.
+    
+    # hide custom label
+    w.Gui.lab.setVisible( False )
 
     current_w,current_h = w.width(),w.height()
     current_x,current_y = w.x(), w.y()
@@ -106,7 +114,8 @@ class Followindow( QWidget ):
     OK_TO_CLOSE = pyqtSignal( str )
 
     REQUEST_PATH_EATER = pyqtSignal( list )
-    REQUEST_GESTURE_COMMAND = pyqtSignal( list )
+    REQUEST_GESTURE_COMMAND = pyqtSignal( QWidget, list )
+    REQUEST_MANUAL = pyqtSignal( QWidget )
     
     # where to stop near the mouse
     MOUSE_DISTANCE_X = 80
@@ -123,8 +132,10 @@ class Followindow( QWidget ):
 
     __mouse_coord_history = None
     
-    # gui widgets
-    __hungry_widget = None
+    class Gui:
+        bg = None
+        hungry_widget = None
+        lab = None
 
     def __init__( self,
                   parent=None,
@@ -139,14 +150,25 @@ class Followindow( QWidget ):
 
         # background widget
         # without it followindow doesnt accept drops
-        bg = QWidget( parent=self )
+        self.Gui.bg = QWidget( parent=self )
 
         # hidden hungry widget
-        self.__hungry_widget = HungryWidget( parent=bg )
-        self.__hungry_widget.setVisible( False )
+        self.Gui.hungry_widget = HungryWidget( parent=self.Gui.bg )
+        self.Gui.hungry_widget.setVisible( False )
+        
+        # hidden label for text display
+        self.Gui.lab = QLabel( parent=self )
+        self.Gui.lab.setVisible( False )
 
-        # assemble self
-        lyt.addWidget( bg )
+        # assemble
+        
+        bg_lyt = QVBoxLayout()
+        bg_lyt.setContentsMargins(0,0,0,0)
+        bg_lyt.addWidget( self.Gui.lab )
+        self.Gui.bg.setLayout( bg_lyt )
+        
+        lyt.addWidget( self.Gui.bg )
+        
         self.setLayout( lyt )
         
         # i must call self.show() at least once,
@@ -228,19 +250,28 @@ class Followindow( QWidget ):
             gesture = moosegesture.getGesture(
                 self.__mouse_coord_history )
             self.__mouse_coord_history = []
-            self.REQUEST_GESTURE_COMMAND.emit( gesture )
+            self.REQUEST_GESTURE_COMMAND.emit( self, gesture )
+            
+        else:
+            self.REQUEST_MANUAL.emit( self )
 
     def mouseMoveEvent( self, ev ):
 
         # help:
         # https://stackoverflow.com/questions/46147290/pyqt5-check-if-mouse-is-held-down-in-enter-event
 
-        # im drawing a gesture with right mouse button
         if ev.buttons() & Qt.RightButton:
+            # im drawing a gesture with right mouse button
             
             self.__mouse_coord_history.append(
                 pyautogui.position()
                 )
+            
+        elif ev.buttons():
+            # i'm drawing something with some other buttons
+            self.REQUEST_MANUAL.emit( self )
+            
+        # i'm just hovering the mouse
         
 class MainWindow( ParentlessMainWindow ):
 
@@ -368,6 +399,7 @@ class MainWindow( ParentlessMainWindow ):
         
         #w.REQUEST_PATH_EATER.connect( self.__request_path_eater_event )
         w.REQUEST_GESTURE_COMMAND.connect( self.__request_gesture_command_event )
+        w.REQUEST_MANUAL.connect( self.show_manual_event )
         
         w.show()
         
@@ -416,7 +448,7 @@ class MainWindow( ParentlessMainWindow ):
         
         self.REQUEST_CUSTOM_PROGRAM.emit( custom_program_name )
         
-    def __request_gesture_command_event( self, gesture ):
+    def __request_gesture_command_event( self, followindow, gesture ):
         
         # Receives an array with a moosegesture, checks predefined
         # methods, runs suitable one.
@@ -424,6 +456,7 @@ class MainWindow( ParentlessMainWindow ):
         gestures = self._own_doer.get_gestures()
         
         for method, predefined_gesture in gestures.items():
+            # iterate all known predefined gestures
             
             if gesture==predefined_gesture:
                 
@@ -438,6 +471,18 @@ class MainWindow( ParentlessMainWindow ):
                     
                 # no need to check other gestures
                 return
+            
+        # i end up here when i fail to find a predefined gesture
+        log.error( f'unknown gesture: {gesture}' )
+        followindow.Gui.lab.setText( 'Unknown gesture.' )
+        os.startfile( self._own_doer.Files.CUSTOM_GESTURES )
+
+    def show_manual_event( self, followindow ):
+        
+        # Is triggered by incorrect followindow input.
+        
+        followindow.Gui.lab.setText( FOLLOWINDOW_MANUAL )
+        followindow.Gui.lab.setVisible( True )
             
     """
     def __request_path_eater_event( self, paths ):
@@ -454,8 +499,8 @@ class MainWindow( ParentlessMainWindow ):
             )
         self._register_parentless_window(w)
         w.show()
-   """
+    """
 
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# simplified
+# end 2023.05.25
+# shows manual when user input is chaoticc
