@@ -18,6 +18,7 @@ from sparkling.grimoire.pyqt5.PlaylistSelectorView import PlaylistSelectorView
 from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
 from sparkling.grimoire.pyqt5.PlaylistPluginsPresetsEditor import PlaylistPluginsPresetsEditor
+from sparkling.grimoire.pyqt5.TabWidgetForPlaylistViewers import TabWidgetForPlaylistViewers
 #from sparkling.grimoire.pyqt5.TreeFilter import TreeFilter
 
 class CentralWidget( QWidget ):
@@ -84,8 +85,7 @@ class CentralWidget( QWidget ):
         
         
         
-        self.Gui.tab_widget = QTabWidget( parent=self )
-        self.Gui.tab_widget.setContentsMargins(0,0,0,0)
+        self.Gui.tab_widget = TabWidgetForPlaylistViewers( parent=self )
         
         self.Gui.side_tab_widget = QTabWidget( parent=self )
         self.Gui.side_tab_widget.setContentsMargins(0,0,0,0)
