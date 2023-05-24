@@ -1,0 +1,144 @@
+QWidget {
+  background-color: #3f3f3f;
+  selection-background-color: #6f7354;
+  color: #bfbfbf;
+  }
+
+QLineEdit {
+  border: 1px solid rgba( 0,0,0, 0.2 );
+  background-color: rgba( 0,0,0, 0.2 );
+}
+
+QWidget:disabled {
+  border: 1px solid rgba( 255,255,255, 0.1 );
+  background-color: rgba( 255,255,255, 0.1 );
+  color: rgba( 255,255,255, 1 );
+  }
+
+QTableView {
+  border: none;
+  background-color: #3f3f3f;
+  alternate-background-color: #393939;
+  selection-background-color: #6f7354;
+  selection-color: #bfbfbf;
+  color: #daaeb3;
+  }
+
+QTreeView {
+  border: none;
+  background-color: #3f3f3f;
+  alternate-background-color: #393939;
+  selection-background-color: #6f7354;
+  selection-color: #bfbfbf;
+  color: #daaeb3;
+  }
+
+/*
+help:
+  https://doc.qt.io/archives/qt-4.8/stylesheet-examples.html#customizing-qtabwidget-and-qtabbar
+*/
+/* frame */
+QTabWidget::pane {
+  border: none;
+  /*background-color: #393939;*/
+}
+/* space behind clickable tab names  */
+QTabWidget::tab-bar {
+  background-color: #2f2f2f;
+}
+QTabBar::tab {
+  background-color: #3f3f3f;
+  /*border: 1px solid #black;
+  min-width: 8ex;
+  padding: 2px;*/
+}
+QTabBar::tab:!selected {
+  opacity: 0.4;
+  background-color: #2f2f2f;
+  color: black;
+  /*border: 1px solid #black;
+  min-width: 8ex;
+  padding: 2px;*/
+}
+
+QSplitter {
+  background-color: #393939;
+  }
+QSplitter::handle {
+  /*
+  help: 
+  https://doc.qt.io/qt-5/stylesheet-reference.html
+  https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qsplitter
+  */
+  background-color: #2f2f2f;
+  }
+
+QComboBox {
+  padding: 0.5em;
+}
+QComboBox::drop-down {
+  
+  subcontrol-origin: padding;
+  subcontrol-position: top right;
+  width: 1em;
+  background-color: transparent;
+
+}
+QComboBox::down-arrow {
+  image: url(C:/PO/PR/python/python39/Lib/site-packages/spyder/plugins/help/utils/static/images/down_arrow.png);
+}
+
+QScrollBar:horizontal {
+  height: 1em;
+  background: transparent;
+}
+QScrollBar:vertical {
+  width: 1em;
+  background: transparent;
+}
+QScrollBar::handle:horizontal {
+  padding: 0.5em;
+  margin: 0.3em;
+  background: #6f7354;
+  min-width: 1em;
+}
+QScrollBar::handle:vertical {
+  padding: 0.5em;
+  margin: 0.3em;
+  background: #6f7354;
+  min-height: 1em;
+}
+QScrollBar::add-page, QScrollBar::sub-page{
+  /*
+  https://stackoverflow.com/questions/17935691/stylesheet-on-qscrollbar-leaves-background-of-scrollbar-with-checkerboard-patter
+  */
+  background: none;
+}
+QScrollBar::add-line:horizontal {
+  image: url(C:/PO/PR/python/python39/Lib/site-packages/spyder/plugins/help/utils/static/images/up_arrow_horizontal.png);
+}
+QScrollBar::sub-line:horizontal {
+  image: url(C:/PO/PR/python/python39/Lib/site-packages/spyder/plugins/help/utils/static/images/down_arrow_horizontal.png);
+}
+QScrollBar::add-line:vertical {
+  image: url(C:/PO/PR/python/python39/Lib/site-packages/spyder/plugins/help/utils/static/images/down_arrow.png);
+}
+QScrollBar::sub-line:vertical {
+  image: url(C:/PO/PR/python/python39/Lib/site-packages/spyder/plugins/help/utils/static/images/up_arrow.png);
+}
+
+QHeaderView::section:horizontal {
+  background: transparent;
+  font-weight: normal;
+  text-decoration: none;
+  font-style: normal;
+  padding: 0.5em;
+}
+QHeaderView::section:vertical {
+  hidden: true;
+  width: 0px;
+}
+
+.followindow {
+  background-color: #2f2f2f;
+}
