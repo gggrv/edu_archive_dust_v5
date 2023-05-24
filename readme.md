@@ -8,6 +8,11 @@ GUI python application made with `PyQt5`. Resides in system icon tray. Allows to
 
 Requires a `data` subfolder to function properly.
 
+### Links
+
+Development progress: [click](https://gggrv.github.io/something/2022/05/17/devinfo-dust/#development-status).  
+Documentation: `to be added`.
+
 ## Architecture
 
 root folder  
@@ -15,7 +20,7 @@ root folder
 →→ reusable common tools  
 →→ various user-defined `extensions`   
 → `data` folder  
-→→ all `extensions` can save things here
+→→ all `extensions` can save items here
 
 ## Extensions
 
