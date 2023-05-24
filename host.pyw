@@ -243,6 +243,12 @@ class HostApp( QApplication ):
         # some necessary data will
         # be remembered.
         
+        # Right now it requires that any extention has both
+        # headless `MainDoer` and gui `MainWindow`.
+        # `MainDoer.autorun` must return a tuple:
+        # either ( True, 'ok blablabla' )
+        # or ( False, 'explanation why' )
+        
         # TODO
         # allow to manage SomeDoers in host app's main window
         # generalize this function so that
@@ -270,7 +276,17 @@ class HostApp( QApplication ):
             
         # autorun headless
         # will be saved
-        custom_doer.autorun()
+        success, message = custom_doer.autorun()
+        if not success:
+            # headless part of this extension failed to initialize!
+            # no need to load gui
+            
+            # TODO
+            # show message
+            
+            return
+        
+        # headless ok, can proceed
         
         # autorun gui
         # will be destroyed
@@ -288,5 +304,5 @@ if __name__ == '__main__':
     autorun()
 
 #---------------------------------------------------------------------------+++
-# end 2023.05.13
-# fixed recreating doer every time
+# end 2023.05.25
+# added verification that extentions' MainDoers actually initialized correctly

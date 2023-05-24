@@ -78,8 +78,10 @@ class MainDoer( SomeDoer ):
             self._load_gestures()
         
         return self.__gestures
+    
+    def autorun( self ):
+        return True, 'ok'
         
 #---------------------------------------------------------------------------+++
 # end 2023.05.25
-# fixed errors when __gestures = None
-# allow to automatically create default gestures when they are absent
+# added verified autorun
