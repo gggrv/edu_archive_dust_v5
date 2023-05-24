@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 from re import sub as resubstitute
 # pip install
 from neo4j import GraphDatabase
+from neo4j.exceptions import ConfigurationError
 import pandas as pd
 # same project
 from sparkling.neo4j.Columns import (
@@ -130,13 +131,17 @@ class Connection:
     __driver = None
     
     def __init__( self, socket, username, password ):
-            
-        # initiate driver
         
-        self.__driver = GraphDatabase.driver(
-            socket,
-            auth=( username, password ),
-            )
+        try:
+            
+            self.__driver = GraphDatabase.driver(
+                socket,
+                auth=( username, password ),
+                )
+            
+        except ConfigurationError:
+            
+            return
     
     def close( self ):
         
@@ -197,5 +202,5 @@ class Connection:
         return response
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.24
-# added _convert_to_safe_string
+# end 2023.05.25
+# init configuration error checker
