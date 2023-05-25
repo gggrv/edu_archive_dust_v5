@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 # pip install
 from PyQt5.QtWidgets import ( QTabWidget )
 # same project
+from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
 
 class TabWidgetForPlaylistViewers( QTabWidget ):
 
@@ -33,6 +34,34 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
         
         # trigger focusInEvent
         w.setFocus()
+        
+    def get_playlist_viewer( self, p ):
+        
+        # Finds an existing PlaylistViewer that corresponds to
+        # given playlist p.
+        
+        iloc = 0
+        count = self.count()
+        
+        while iloc < count:
+            
+            w = self.widget(iloc)
+            if type(w)==PlaylistViewer:
+                # this is correct class
+                
+                if w._playlist.basename() == p.basename():
+                    # found it
+                    return w
+                
+            # wrong view, advane to next one
+            iloc += 1
+            
+        # did not find it
+        
+    def addTab( self, widget, tab_title ):
+        
+        super( TabWidgetForPlaylistViewers, self ).addTab( widget, tab_title )
+        self.__focus_chosen_playlist_viewer( self.count()-1 )
         
 #---------------------------------------------------------------------------+++
 # end 2023.05.25
