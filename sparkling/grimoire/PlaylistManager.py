@@ -87,12 +87,14 @@ class PlaylistManager( SomeDoer ):
         
         # Creates an empty playlist, does not write on disk yet.
             
+        basename = unique_loc()
+        
         src = os.path.join(
             self.get_save_folder(),
-            unique_loc()
+            basename
             )
     
-        p = Playlist( src )
+        p = Playlist( src, screen_name=basename )
     
         self._playlists.append( p )
         return p
@@ -161,26 +163,15 @@ class PlaylistManager( SomeDoer ):
         # Saves on disk.
         # For external use only.
         
-        c = Playlist.Columns
-        
         for p in self._playlists:
             if not p.basename()==basename:
                 continue
             
-            if c.SCREEN_NAME in new_data:
-                p.set_screen_name( new_data[c.SCREEN_NAME] )
-            if c.ORDER in new_data:
-                p.set_order( new_data[c.ORDER] )
-            if c.DB_NAME in new_data:
-                p.set_db_name( new_data[c.DB_NAME] )
-            if c.PLAYLIST_DATA in new_data:
-                p.set_playlist_data( new_data[c.PLAYLIST_DATA] )
-                
-            p.save()
+            p.set_data( new_data, save=True )
         
             # no need to do anything else
             return p
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.12
+# end 2023.05.25
 # simplified
