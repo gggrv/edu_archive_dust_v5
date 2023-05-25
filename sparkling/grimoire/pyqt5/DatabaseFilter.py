@@ -126,7 +126,7 @@ class DatabaseFilter( QWidget ):
             Playlist(
                 src=old_p.src(),
                 db_name=self.__db_name,
-                playlist_data=old_p.query()
+                playlist_data=old_p.autoquery()
                 )
         
         self.Gui.result_view.switch_playlist( p )
@@ -148,5 +148,5 @@ class DatabaseFilter( QWidget ):
         self.SEND_TO_CURRENT_ACTIVE_PLAYLIST.emit( df )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# simplified
+# end 2023.05.25
+# switched to autoquery

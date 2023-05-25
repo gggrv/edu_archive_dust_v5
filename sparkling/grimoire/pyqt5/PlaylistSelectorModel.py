@@ -93,13 +93,16 @@ class PlaylistSelectorModel( QAbstractTableModel ):
             # set value
             coliloc = index.column()
             if coliloc==0:
-                p.set_basename( value )
+                if not value.strip()=='':
+                    # TODO
+                    # proper basename validation
+                    p.set_data( {Columns.BASENAME:value} )
             if coliloc==1:
-                p.set_screen_name( value )
+                p.set_data( {Columns.SCREEN_NAME:value} )
             if coliloc==2:
-                p.set_order( value )
+                p.set_data( {Columns.ORDER:value} )
             if coliloc==3:
-                p.set_db_name( value )
+                p.set_data( {Columns.DB_NAME:value} )
             
             self.dataChanged.emit( index, index )
             return True
@@ -159,5 +162,5 @@ class PlaylistSelectorModel( QAbstractTableModel ):
         return self.mgr.current_active_playlist()
                 
 #---------------------------------------------------------------------------+++
-# end 2023.05.13
-# global active playlist
+# end 2023.05.25
+# switched to Playlist.set_data()

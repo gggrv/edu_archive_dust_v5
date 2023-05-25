@@ -126,9 +126,6 @@ class CentralWidget( QWidget ):
         self.Gui.database_filter.SEND_TO_CURRENT_ACTIVE_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
         #self.Gui.tree_filter.Gui.tree_view.SEND_TO_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
         
-        #self.Gui.plugin_pane.REQUEST_PLUGIN_ENABLE.connect( self.REQUEST_PLUGIN_ENABLE.emit )
-        #self.Gui.plugin_pane.REQUEST_PLUGIN_DISABLE.connect( self.REQUEST_PLUGIN_DISABLE.emit )
-        
         # autorun
         
         self.CONN_CHANGED.emit( self._own_doer.conn )
@@ -141,16 +138,12 @@ class CentralWidget( QWidget ):
         
         # For each opened playlist I create a separate viewer.
         
-        for iloc in range( self.Gui.tab_widget.count() ):
-            w = self.Gui.tab_widget.widget(iloc)
-            if type(w)==PlaylistViewer:
-                # this is correct class
-                if w._playlist == p:
-                    # this is correct playlist
-                    # it is already opened,
-                    # it already has dedicated viewer
-                    # no need to create another one
-                    return
+        w = self.Gui.tab_widget.get_playlist_viewer( p )
+        if not w is None:
+            # this playlist is already opened,
+            # a viewer exists
+            # no need to create another one
+            return
         
         # need to create dedicated viewer
         
@@ -189,9 +182,10 @@ class CentralWidget( QWidget ):
             w = self.Gui.tab_widget.widget(iloc)
             if type(w)==PlaylistViewer:
                 # this is correct class
-                if w._playlist == p:
+                if w._playlist.basename() == p.basename():
                     # this is correct playlist
                     # delete viewer
+                    w.deleteLater()
                     self.Gui.tab_widget.removeTab( iloc )
                     continue
             
@@ -211,7 +205,7 @@ class CentralWidget( QWidget ):
                 # this is correct class
                 if w._playlist.basename() == dest_p.basename():
                     # this is correct playlist
-                    w.add_df( df )
+                    w.add_identities( list(df.index.astype(str)) )
                     # nothing to do anymore
                     return
                 
@@ -236,30 +230,33 @@ class CentralWidget( QWidget ):
         for src in fs:
                 
             # send the csv to db
+            # TODO
+            # validate/replace unsupported column names
             identities = self._own_doer.conn.import_from_csv(
                 src, p.db_name()
                 )
             
-            # no view exists
+            # this playlist was closed
+            # that means that no PlaylistViewer exists
+            # i can do everything headlessly
             if not p.is_open():
-                # add to playlist
-                p.add_playlist_data( identities, save=True )
+                p.open_playlist()
+                p.add_identities( identities, save=True )
+                p.close()
                 # nothing to do anymore
                 return
             
-            # update corresponding view
-            iloc = 0
-            count = self.Gui.tab_widget.count()
-            while iloc < count:
-                w = self.Gui.tab_widget.widget(iloc)
-                if type(w)==PlaylistViewer:
-                    # this is correct class
-                    if w._playlist.basename() == p.basename():
-                        w.add_identities( identities )
-                        # nothing to do anymore
-                        return
-                # wrong view, advane to next one
-                iloc += 1
+            # this playlist was opened
+            # that means that PlaylistViewer exists
+            # i should update gui
+            w = self.Gui.tab_widget.get_playlist_viewer( p )
+            if w is None:
+                # this playlist is open, but no PlaylistViewer exists???
+                # that should not be possible, but i will
+                # proceed as if everything is ok
+                p.add_identities( identities, save=True )
+                return
+            w.add_identities( identities )
         
     def _export_db_to_csv_event( self, db_name ):
         self._own_doer.export_db_to_csv( db_name )
@@ -268,5 +265,5 @@ class CentralWidget( QWidget ):
         self._own_doer.export_playlist_to_csv( p )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.17
-# wip plugins
+# end 2023.05.25
+# simplified

@@ -9,7 +9,6 @@ log = logging.getLogger(__name__)
 
 # embedded in python
 import os
-import shutil
 # pip install
 import pandas as pd
 from PyQt5.QtCore import ( Qt, pyqtSignal )
@@ -20,7 +19,7 @@ from sparkling.common.pyqt5.PandasTableView import PandasTableView
 from sparkling.grimoire.Playlist import Playlist
 from sparkling.common.pyqt5.parentless.DfEditor import DfEditor
 from sparkling.common.pyqt5.parentless.FileRenamer import FileRenamer
-from sparkling.common.pyqt5 import ( set_actions, remove_actions, mime2file )
+from sparkling.common.pyqt5 import ( set_actions, mime2file )
 from sparkling.common import ( unique_loc, delrem )
 
 def _open_path( df, dirname=False ):
@@ -159,28 +158,18 @@ class PlaylistViewer( PandasTableView ):
         df = p.df( self._conn )
         self.switch_df( df )
         
-    def add_df( self, df ):
-        
-        # Appends existing internal data with compatible df.
-        # I know about this compatibility beforehand
-        # and am 100% sure.
-        
-        identities = list( df.index.astype(str) )
-        self._playlist.add_playlist_data( identities, save=True )
-        
-        super( PlaylistViewer, self ).add_df( df )
-        
     def add_identities( self, identities ):
         
         # Appends existing internal data with some identities.
         
         # add to own playlist
-        self._playlist.add_playlist_data( identities, save=True )
+        self._playlist.add_identities( identities, save=True )
         
-        #add to view
+        # add to view without redownloading existing data
         query = self._conn.standard_identities_query( identities )
-        temp_p = Playlist( 'temp', playlist_data=query )
-        super( PlaylistViewer, self ).add_df( temp_p.df(self._conn) )
+        temp_p = Playlist( 'temp', db_name=self._playlist.db_name(), playlist_data=query )
+        df = temp_p.df(self._conn)
+        super( PlaylistViewer, self ).add_df( df )
                 
     def conn_changed_event( self, conn ):
         self._conn = conn
@@ -236,7 +225,7 @@ class PlaylistViewer( PandasTableView ):
         
     def dragEnterEvent( self, ev ):
         
-        if not self._playlist.query() is None:
+        if self._playlist.autoquery():
             # this playlist is rule-based,
             # i don't want to edit it manually
             ev.ignore()
@@ -248,7 +237,7 @@ class PlaylistViewer( PandasTableView ):
         
     def dragMoveEvent( self, ev ):
         
-        if not self._playlist.query() is None:
+        if self._playlist.autoquery():
             # this playlist is rule-based,
             # i don't want to edit it manually
             ev.ignore()
@@ -361,7 +350,7 @@ class PlaylistViewer( PandasTableView ):
 
     def dropEvent( self, ev ):
     
-        if not self._playlist.query() is None:
+        if self._playlist.autoquery():
             # this playlist is rule-based,
             # i don't want to edit it manually
             ev.ignore()
@@ -452,11 +441,13 @@ class PlaylistViewer( PandasTableView ):
         
         # I want to delete rows from current view.
         
+        # del from view
         self.delete_selection()
         
         # del from playlist
-        identities = list( self.get_df_index().astype(str) )
-        self._playlist.set_playlist_data( identities, save=True )
+        remaining_identities = list( self.get_df_index().astype(str) )
+        new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
+        self._playlist.set_data( new_data, save=True )
     
     def del_from_view_db( self ):
         
@@ -499,8 +490,9 @@ class PlaylistViewer( PandasTableView ):
         self.select_next_row( rowilocs[0] )
         
         # del from playlist
-        identities = list( self.get_df_index().astype(str) )
-        self._playlist.set_playlist_data( identities, save=True )
+        remaining_identities = list( self.get_df_index().astype(str) )
+        new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
+        self._playlist.set_data( new_data, save=True )
         
     def del_from_view_db_disk( self ):
         
@@ -549,8 +541,9 @@ class PlaylistViewer( PandasTableView ):
         self.select_next_row( rowilocs[0] )
         
         # del from playlist
-        identities = list( self.get_df_index().astype(str) )
-        self._playlist.set_playlist_data( identities, save=True )
+        remaining_identities = list( self.get_df_index().astype(str) )
+        new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
+        self._playlist.set_data( new_data, save=True )
     
     def _cm_open_file( self ):
         _open_path( self.selectedSubdf(), dirname=False )
@@ -588,5 +581,5 @@ class PlaylistViewer( PandasTableView ):
                 return
             
 #---------------------------------------------------------------------------+++
-# end 2023.05.13
-# fixed deleting from playlist
+# end 2023.05.25
+# simplified
