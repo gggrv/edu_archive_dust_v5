@@ -252,6 +252,11 @@ class PlaylistViewer( PandasTableView ):
         # Accepts custom metadata that is not in db.
         # For external use only (plugins for example).
         
+        if self._playlist.autoquery():
+            msg = 'this playlist is rule-based, don\'t edit it manually!'
+            log.error( msg )
+            return
+        
         identities = []
         
         if type(metadata)==pd.DataFrame:
