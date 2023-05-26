@@ -28,6 +28,25 @@ class FileRenamerPresets( PresetManager ):
         
         super( FileRenamerPresets, self ).__init__( file_name )
         
+    def get_presets( self ):
+        
+        # Returns saved presets.
+        
+        # load them as they are supposed to be
+        super( FileRenamerPresets, self ).get_presets()
+        
+        # fix quotation marks around complex
+        # "r''..[no,ok][if]" rules
+        
+        for k, v in self._presets.items():
+            rule = v[Columns.RULE]
+            if rule.startswith('"') and rule.endswith('"'):
+                rule = rule[1:]
+                rule = rule[:-1]
+                self._presets[k][Columns.RULE] = rule
+        
+        return self._presets
+        
     def new_preset(
             self,
             unique_name,
