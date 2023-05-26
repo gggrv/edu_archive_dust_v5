@@ -19,7 +19,8 @@ from sparkling.common.pyqt5.PandasTableView import PandasTableView
 from sparkling.grimoire.Playlist import Playlist
 from sparkling.common.pyqt5.parentless.DfEditor import DfEditor
 from sparkling.common.pyqt5.parentless.FileRenamer import FileRenamer
-from sparkling.common.pyqt5 import ( set_actions, mime2file )
+from sparkling.common.pyqt5 import ( set_actions, mime2file,
+    get_QItemSelection_rowilocs )
 from sparkling.common import ( unique_loc, delrem )
 
 def _open_path( df, dirname=False ):
@@ -97,6 +98,13 @@ class PlaylistViewer( PandasTableView ):
         
         # interactions
         self.__init_context_menu()
+        
+        # signals
+        
+        # help:
+        # https://stackoverflow.com/questions/14803315/connecting-qtableview-selectionchanged-signal-produces-segfault-with-pyqt
+        selectionModel = self.selectionModel()
+        selectionModel.selectionChanged.connect( self.__selection_changed_event )
         
     def __init_context_menu( self ):
         
@@ -196,6 +204,40 @@ class PlaylistViewer( PandasTableView ):
             return
         
         self.CURRENT_ACTIVE_PLAYLIST_CHANGED.emit( self._playlist )
+        
+    def __selection_changed_event( self, selected, deselected  ):
+        
+        # Whenever I change current selection, I may want to
+        # update the dependent widgets with new data.
+        
+        # help:
+        # https://doc.qt.io/qtforpython-5/PySide2/QtCore/QItemSelectionModel.html#PySide2.QtCore.PySide2.QtCore.QItemSelectionModel.selectionChanged
+        
+        # foolcheck
+        
+        if selected.isEmpty() and deselected.isEmpty():
+            # no changes, nothing to do
+            log.debug( 'how did i end up here?' )
+            return
+        
+        if len( self.__parentless_windows )==0:
+            # no dependent widgets, nothing to do
+            return
+        
+        # get rowilocs
+        selected_rowilocs = get_QItemSelection_rowilocs( selected )
+        deselected_rowilocs = get_QItemSelection_rowilocs( deselected )
+        
+        # when i add selection, i need whole subdf
+        new_subdf = self.get_df().iloc[ selected_rowilocs ]
+        
+        # when i remove selection, i need only indexes
+        rem_identities = list( self.get_df().iloc[ deselected_rowilocs ].index )
+        
+        for w in self.__parentless_windows:
+            
+            if type(w)==FileRenamer:
+                w.change_contents( new_subdf, rem_identities )
         
     def __playlist_data_edited_event( self, changes ):
         
@@ -432,10 +474,8 @@ class PlaylistViewer( PandasTableView ):
     
         # launch renamer
         
-        w = FileRenamer(
-            presets_mgr=self.Presets.FileRenamer,
-            parent=None, df=df
-            )
+        w = FileRenamer( presets_mgr=self.Presets.FileRenamer, parent=None )
+        w.change_contents( df, None ) # populate with initial data
             
         w.EDITING_FINISHED.connect( self.__playlist_data_edited_event )
         
@@ -586,5 +626,5 @@ class PlaylistViewer( PandasTableView ):
                 return
             
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# simplified
+# end 2023.05.26
+# suto update selected paths in FileRenamer

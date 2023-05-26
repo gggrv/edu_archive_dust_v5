@@ -12,7 +12,7 @@ import os
 import shutil
 # pip install
 import pandas as pd
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import ( QDialog, QVBoxLayout, QHBoxLayout,
     QComboBox, QPushButton, QListWidget, QLineEdit )
 # same project
@@ -23,8 +23,11 @@ class FileRenamer( QDialog ):
     OK_TO_CLOSE = pyqtSignal( str )
     EDITING_FINISHED = pyqtSignal( tuple )
     
-    df = None
-    old_df = None
+    # TODO
+    # get rid of local df copies,
+    # reference current playlist selection view instead
+    df = None # future df
+    old_paths = None # future serier
     
     class Gui:
         rules_cbx = None
@@ -32,8 +35,6 @@ class FileRenamer( QDialog ):
         output = None
     
     class Presets:
-        # TODO
-        # filter them by scope depending on data being renamed
         FileRenamer = None
     
     class Strings:
@@ -43,14 +44,12 @@ class FileRenamer( QDialog ):
 
     def __init__( self,
                   presets_mgr=None,
-                  df=None,
                   parent=None,
                   *args, **kwargs ):
         super( FileRenamer, self ).__init__(
             parent, *args, **kwargs )
 
-        self.df = pd.DataFrame() if df is None else df
-        self.old_df = pd.DataFrame() if df is None else df.copy()
+        # dynamic
         self.Presets.FileRenamer = presets_mgr
         
         # layout
@@ -77,6 +76,12 @@ class FileRenamer( QDialog ):
         lyt.addLayout( hbox )
         lyt.addWidget( self.Gui.output )
         self.setLayout( lyt )
+    
+        # appearance
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint
+            )
+        self.Gui.output.setMinimumWidth( 1000 )
         
         # autorun
         
@@ -89,12 +94,61 @@ class FileRenamer( QDialog ):
         bt_ok.clicked.connect( self.rename )
         
         self.__populate_cbx()
+        
+    def change_contents( self, add_df, remove_identities ):
+        
+        # For external use only.
+        
+        if not add_df is None:
             
+            need_to_add = len(add_df.index)>0
+            
+            if need_to_add:
+                self.__add_df( add_df )            
+            
+        if not remove_identities is None:
+            
+            need_to_rem = len(remove_identities)>0 \
+                and not self.df is None
+                
+            if need_to_rem:
+                self.__remove_identities( remove_identities )
+        
+        self.preview_rule()
+        
+    def __add_df( self, df ):
+        
+        # I want to rename rows is this additional df as well.
+        
+        if self.df is None:
+            # i have completely new
+            self.df = df
+            self.old_paths = df[Columns.PATH].copy()
+            return
+        
+        # i need to append existing
+        self.df = self.df.append( df )
+        self.old_paths = self.old_paths.append( df[Columns.PATH] )
+        
+    def __remove_identities( self, identities ):
+        
+        # I no longer want to rename those rows.
+        # I am 100% sure that those identities are in df.
+            
+        self.df = self.df[ ~self.df.index.isin(identities) ]
+        self.old_paths = self.old_paths[ ~self.old_paths.index.isin(identities) ]
+        
     def paste_rule( self, rule_name ):
         
         # Pastes chosen preexisting rule to the inp_rules field.
         
+        if self.Presets.FileRenamer is None:
+            return
+        
         presets = self.Presets.FileRenamer.get_presets()
+        if len( presets )==0:
+            return
+        
         c = self.Presets.FileRenamer.Columns
         
         for p in presets.values():
@@ -108,6 +162,9 @@ class FileRenamer( QDialog ):
     def preview_rule( self, *args ):
         
         # Generated new paths and outputs them to the list_view.
+        
+        if self.df is None:
+            return
         
         c = Columns
         
@@ -133,6 +190,9 @@ class FileRenamer( QDialog ):
         
         # Obtains new paths from the list_view
         # and attempts to rename files in source df.
+        
+        if self.df is None:
+            return
         
         c = Columns
 
@@ -179,12 +239,19 @@ class FileRenamer( QDialog ):
         self.Gui.rules_input.clear()
         
         if self.Presets.FileRenamer is None:
+            # no renamer, nohing to add
             self.blockSignals( False )
             return
             
         # show some presets
         
         presets = self.Presets.FileRenamer.get_presets()
+        if len( presets ) is None:
+            return
+        
+        # TODO
+        # access current db, filter irrelevant rules
+        
         c = self.Presets.FileRenamer.Columns
         
         screen_names = [ p[c.SCREEN_NAME] for p in presets.values() ]
@@ -199,5 +266,5 @@ class FileRenamer( QDialog ):
             self.Gui.rules_input.setText( rule )
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# simplified
+# end 2023.05.26
+# set df from the outside
