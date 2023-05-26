@@ -13,6 +13,28 @@ import os
 from PyQt5.QtWidgets import QAction
 # same project
 
+def get_QItemSelection_rowilocs( item_selection ):
+    
+    # Extracts rowilocs from QItemSelection.
+    
+    # TODO:
+    # add option for colilocs and both rowilocs & colilocs
+    
+    rowilocs = []
+    
+    for v in item_selection:
+        
+        start = v.topLeft().row()
+        end = v.bottomRight().row() + 1 # include the end as well
+        
+        if start==end:
+            rowilocs.append( start )
+            
+        else:
+            rowilocs.extend( list(range(start,end)) )
+            
+    return rowilocs
+
 def remove_actions( widget ):
     
     # Removes existing actions if they are present.
@@ -80,5 +102,5 @@ def mime2file( mimeData ):
     return [  os.path.normpath(path) for path in paths ]
             
 #---------------------------------------------------------------------------+++
-# end 2022.05.22
-# adde custom owner to action definitions
+# end 2022.05.26
+# added get_QItemSelection_rowilocs
