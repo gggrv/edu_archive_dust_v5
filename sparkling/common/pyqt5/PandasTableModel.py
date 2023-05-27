@@ -141,6 +141,15 @@ class PandasTableModel( QAbstractTableModel ):
             )
             
         self.layoutChanged.emit()
+            
+    def replace_values( self, new_s ):
+        
+        self.layoutAboutToBeChanged.emit()
+        
+        same_index = self.df.index.isin( new_s.index )
+        self.df.loc[ same_index, new_s.name ] = new_s.values
+        
+        self.layoutChanged.emit()
 
     def replace_subdf( self, df ):
         

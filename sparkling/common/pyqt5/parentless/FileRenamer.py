@@ -27,7 +27,7 @@ class FileRenamer( QDialog ):
     # get rid of local df copies,
     # reference current playlist selection view instead
     df = None # future df
-    old_paths = None # future serier
+    old_paths = None # future series
     
     class Gui:
         rules_cbx = None
@@ -226,7 +226,10 @@ class FileRenamer( QDialog ):
                 pass
             iloc+=1
 
-        self.EDITING_FINISHED.emit( (self.old_df,self.df) )
+        # emit two pd.Series
+        new_paths_s = pd.Series( new_paths, name=c.PATH, index=self.old_paths.index )
+        self.old_paths.name = c.PATH
+        self.EDITING_FINISHED.emit( (self.old_paths,new_paths_s) )
         self.close()
         
     def __populate_cbx( self ):
@@ -266,5 +269,5 @@ class FileRenamer( QDialog ):
             self.Gui.rules_input.setText( rule )
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.26
-# set df from the outside
+# end 2023.05.27
+# fixed EDITING_FINISHED.emit

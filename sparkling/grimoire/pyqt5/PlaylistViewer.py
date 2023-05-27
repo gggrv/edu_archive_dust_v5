@@ -245,25 +245,72 @@ class PlaylistViewer( PandasTableView ):
         # The playlist itself remains the same,
         # but data in the database should update.
         
-        old_df, new_df = changes
-        have_same_length = len(old_df.index) == len(new_df.index)
-        have_some_rows = len(old_df.index)>0
+        # detect what am i working with
+        old_value, new_value = changes
+        old_df, new_df = None, None
+        old_s, new_s = None, None
+        if type(old_value) == pd.DataFrame: old_df=old_value
+        if type(new_value) == pd.DataFrame: new_df=new_value
+        if type(old_value) == pd.Series: old_s=old_value
+        if type(new_value) == pd.Series: new_s=new_value
         
-        if not ( have_same_length and have_some_rows ):
-            log.error( f'failed to apply changes after editing the df - content length mismatch: expected {len(old_df.index)}, got {len(new_df.index)}' )
-            return
-        if old_df.equals(new_df):
-            log.info( 'the df was not edited - no changes detected, not doing anything' )
-            return
-            
-        # change in database
-        self._conn.replace_nodes( new_df, self._playlist.db_name() )
-            
-        # change in view
-        self.replace_subdf( new_df )
+        is_df_and_df = not old_df is None and not new_df is None
+        is_s_and_s = not old_s is None and not new_s is None
+        is_df_and_s = not old_df is None and not new_s is None
+        is_s_and_df = not old_s is None and not new_df is None
         
-        # no need to change in playlist because
-        # shown identities did not change
+        if is_df_and_df: # i have two dataframes
+            # completely replace old with the new one
+        
+            # make sure i have rows to work with
+            have_same_length = len(old_df.index) == len(new_df.index)
+            have_some_rows = len(old_df.index)>0
+            if not ( have_same_length and have_some_rows ):
+                log.error( f'failed to apply changes after editing the df - content length mismatch: expected {len(old_df.index)}, got {len(new_df.index)}' )
+                return
+            if old_df.equals(new_df):
+                log.info( 'the df was not edited - no changes detected, not doing anything' )
+                return
+                
+            # change in database
+            self._conn.replace_nodes( new_df, self._playlist.db_name() )
+                
+            # change in view
+            self.replace_subdf( new_df )
+            
+            # no need to change in playlist because
+            # shown identities did not change
+            
+        elif is_s_and_s: # i have two series
+            # completely replace old with the new one, bit keep
+            # other node parameters
+            
+            # make sure i have rows to work with
+            have_same_length = len(old_s.index) == len(new_s.index)
+            have_some_rows = len(old_s.index)>0
+            have_same_name = old_s.name==new_s.name
+            have_same_index = ( old_s.index==new_s.index ).all()
+            if not ( have_same_length and have_some_rows ):
+                log.error( f'failed to apply changes after editing the df - content length mismatch: expected {len(old_s.index)}, got {len(new_s.index)}' )
+                return
+            if not have_same_name or not have_same_index:
+                log.info( 'old and new values Series must have same name and index - how else will i be sure that they hold values for the same column?' )
+                return
+            if old_s.equals(new_s):
+                log.info( 'the df was not edited - no changes detected, not doing anything' )
+                return
+            
+            # actualy replace node parameter in db
+            for identity, value in new_s.iteritems():
+                safe_value = self._conn.convert_to_safe_string( value )
+                query = f'MATCH (n) WHERE ID(n) = {identity} SET n.{new_s.name} = {safe_value}'
+                self._conn.query( query, self._playlist.db_name() )
+                
+            # update view
+            self.replace_values( new_s )
+        
+        else:
+            raise NotImplementedError
         
     def dragEnterEvent( self, ev ):
         

@@ -123,6 +123,17 @@ class PandasTableView( QTableView ):
         if hidden_colilocs is not None:
             for coliloc in hidden_colilocs:
                 self.setColumnHidden(coliloc,True)
+                
+    def replace_values( self, new_s ):
+        
+        # Replaces some df values.
+        
+        self.__MODEL.replace_values( new_s )
+                
+        # make sure rows have appropriate height
+        font_height = self.fontMetrics().height()
+        for rowiloc in range( self.__MODEL.rowCount() ):
+            self.setRowHeight( rowiloc, font_height )
     
     def replace_subdf( self, df ):
         
