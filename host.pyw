@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import ( QWidget, QMainWindow, QApplication,
 # same project
 from sparkling import MainPaths
 from sparkling.common import ( readf, unique_loc )
-from sparkling.common.SomeDoer import ( SomeDoer as BaseSomeDoer )
+from sparkling.common.SomeDoer import SomeDoer
 from sparkling.common.pyqt5 import ( set_actions )
 
 class CentralWidget( QWidget ):
@@ -54,11 +54,9 @@ class MainWindow( QMainWindow ):
         
         self.setVisible( False )
 
-class OwnDoer( BaseSomeDoer ):
+class OwnDoer( SomeDoer ):
     
     PREFERRED_SAVE_DIR_NAME = 'host_qtapp'
-    
-    _generate_file_functions = {} # none are needed
         
     def __init__( self, save_folder ):
         
@@ -71,9 +69,9 @@ class HostApp( QApplication ):
     
     # standard managers for different custom programs
     # will be remembered here
-    __doers = None # future dictionary
+    __SomeDoers = None # future dictionary
     
-    __own_doer = None
+    __OwnDoer = None
     
     class Files:
         CSS = 'app.css'
@@ -94,14 +92,15 @@ class HostApp( QApplication ):
         
         # initialize dynamic things
         self.__parentless_windows = []
-        self.__doers = {}
+        self.__SomeDoers = {}
         
-        # create personal standard manager,
-        # set folders and files
+        # own doer
         self.Folders.PERSONAL_DATA = MainPaths.set_folder( self.Folders.PERSONAL_DATA )
-        self.__own_doer = OwnDoer( self.Folders.PERSONAL_DATA )
-        self.Files.CSS = self.__own_doer.set_file( self.Files.CSS )
-        self.Files.ICON_TRAY = self.__own_doer.set_file( self.Files.ICON_TRAY )
+        self.__OwnDoer = OwnDoer( self.Folders.PERSONAL_DATA )
+        
+        # paths
+        self.Files.CSS = self.__OwnDoer.set_file( self.Files.CSS )
+        self.Files.ICON_TRAY = self.__OwnDoer.set_file( self.Files.ICON_TRAY )
 
         # create invisible main window for the application
         # otherwise it won't work
@@ -211,9 +210,9 @@ class HostApp( QApplication ):
 
     def __remove_parentless_window_event( self, object_name ):
         
-        # I no longer need this parentless dialog.
+        # I no longer need this parentless window.
         # I destroy the object and
-        # remove reference to it from self.dialogs.
+        # remove reference to it.
 
         for iloc, w in enumerate(self.__parentless_windows):
             
@@ -226,27 +225,29 @@ class HostApp( QApplication ):
                 # just die already
                 return
             
-    def __register_doer( self, custom_doer, name ):
-        self.__doers[name] = custom_doer
+    def __register_doer( self, custom_doer, unique_name ):
         
-    def __remove_doer( self, k ):
+        # I may want to remember a custom `SomeDoer`
+        # that was created by some `custom_program` -
+        # this way I will be able quickly open this `custom_program` again
+        # when needed.
         
-        if not k in self.__doers:
-            raise KeyError
+        self.__SomeDoers[unique_name] = custom_doer
+        
+    def __remove_doer( self, unique_name ):
+        
+        # I no longer need to remember this custom `SomeDoer`.
             
-        self.__doers.pop(k)
+        self.__SomeDoers.pop( unique_name )
             
-    def _request_custom_program_event( self, name ):
+    def _request_custom_program_event( self, unique_name ):
         
-        # Opens predefined PyQt5 program, remembers some data.
-        # Even if you close this custom program,
-        # some necessary data will
-        # be remembered.
+        # Opens predefined program.
         
         # Right now it requires that any extention has both
         # headless `MainDoer` and gui `MainWindow`.
         # `MainDoer.autorun` must return a tuple:
-        # either ( True, 'ok blablabla' )
+        # either ( True, 'ok blablabla/nothing' )
         # or ( False, 'explanation why' )
         
         # TODO
@@ -255,17 +256,17 @@ class HostApp( QApplication ):
         # there are no dedicated `if`s
         
         # import both gui and headless
-        if name=='grimoire':
+        if unique_name=='grimoire':
             from sparkling.grimoire.MainDoer import MainDoer as Md
             from sparkling.grimoire import MainWindow as Mw
-        elif name=='followindow':
+        elif unique_name=='followindow':
             from sparkling.followindow.MainDoer import MainDoer as Md
             from sparkling.followindow import MainWindow as Mw
             
         # get doer
-        if name in self.__doers:
+        if unique_name in self.__SomeDoers:
             # already exists
-            custom_doer = self.__doers[name]
+            custom_doer = self.__SomeDoers[unique_name]
         else:
             # need to make new
             # create save folder
@@ -278,7 +279,7 @@ class HostApp( QApplication ):
         # will be saved
         success, message = custom_doer.autorun()
         if not success:
-            # headless part of this extension failed to initialize!
+            # headless part of this custom_program failed to initialize
             # no need to load gui
             
             # TODO
@@ -295,7 +296,7 @@ class HostApp( QApplication ):
         
         # remember
         self.__register_parentless_window( w )
-        self.__register_doer( custom_doer, name )
+        self.__register_doer( custom_doer, unique_name )
 
 def autorun():
     ob = HostApp( sys.argv )
@@ -304,5 +305,5 @@ if __name__ == '__main__':
     autorun()
 
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# added verification that extentions' MainDoers actually initialized correctly
+# end 2023.07.14
+# simplified

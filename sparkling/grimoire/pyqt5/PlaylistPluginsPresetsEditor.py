@@ -189,7 +189,7 @@ class PlaylistPluginsPresetsEditor( QWidget ):
         self.Gui.info_lab.setText( p.screen_name() )
         self._basename = p.basename()
         
-        presets = self.Presets.PlaylistPlugins.get_presets()
+        presets = self.Presets.PlaylistPlugins.presets()
         if not self._basename in presets:
             # uncheck all checkboxes
             for w in self.findChildren( QCheckBox ):

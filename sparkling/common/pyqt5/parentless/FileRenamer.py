@@ -145,7 +145,7 @@ class FileRenamer( QDialog ):
         if self.Presets.FileRenamer is None:
             return
         
-        presets = self.Presets.FileRenamer.get_presets()
+        presets = self.Presets.FileRenamer.presets()
         if len( presets )==0:
             return
         
@@ -248,7 +248,7 @@ class FileRenamer( QDialog ):
             
         # show some presets
         
-        presets = self.Presets.FileRenamer.get_presets()
+        presets = self.Presets.FileRenamer.presets()
         if len( presets ) is None:
             return
         

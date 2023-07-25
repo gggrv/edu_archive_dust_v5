@@ -22,7 +22,7 @@ class Paths:
     # in the future
     # create object that will manage core paths
     # right now i don't need it
-    __DataManager = None
+    __OwnDoer = None
     
     @staticmethod
     def get_code_root():
@@ -42,37 +42,35 @@ class Paths:
         return Paths.__DATA_ROOT
     
     @staticmethod
-    def _get_data_manager():
+    def _get_own_doer():
         
         # Should not be used outside of this static class.
         # For how is hidden rather then private for
         # debug purposes.
         
         # make sure it exists
-        if( Paths.__DataManager is None ):
+        if( Paths.__OwnDoer is None ):
             
-            Paths.__DataManager = SomeDoer(
+            Paths.__OwnDoer = SomeDoer(
                 Paths.__DATA_ROOT
                 )
             
-        return Paths.__DataManager
+        return Paths.__OwnDoer
     
         
     @staticmethod
     def set_file( filename ):
         
-        Mgr = Paths._get_data_manager()
-        
-        src = Mgr.set_file( filename )
+        OwnDoer = Paths._get_own_doer()
+        src = OwnDoer.set_file( filename )
         
         return src
         
     @staticmethod
     def set_folder( dirname ):
         
-        Mgr = Paths._get_data_manager()
-        
-        src = Mgr.set_folder( dirname )
+        OwnDoer = Paths._get_own_doer()
+        src = OwnDoer.set_folder( dirname )
             
         return src
 

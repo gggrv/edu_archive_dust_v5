@@ -34,10 +34,6 @@ class MainDoer( SomeDoer ):
     class Files:
         ICON = 'grimoire.png'
         CUSTOM_GESTURES = 'custom_gestures.yaml'
-        
-    _generate_file_functions = {
-        Files.CUSTOM_GESTURES: generate_custom_gestures,
-        }
     
     __gestures = None
     
@@ -83,5 +79,5 @@ class MainDoer( SomeDoer ):
         return True, 'ok'
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# added verified autorun
+# end 2023.07.25
+# removed _generate_file_functions

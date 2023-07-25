@@ -96,29 +96,18 @@ class MainDoer( BaseSomeDoer ):
         
         super( MainDoer, self ).__init__( save_folder )
         
-        # associate functions
-        self._generate_file_functions = {
-            MainDoer.Files.NEO4J_SETTINGS: generate_neo4j_settings,
-            MainDoer.Files.TREES: generate_trees,
-            MainDoer.Files.RENAMING_RULES: self.__generate_file_renaming_rules,
-            }
-        
-        # set paths
-        
+        # paths
         self.Folders.PLAYLISTS = self.set_folder( self.Folders.PLAYLISTS )
         self.Folders.PLUGINS = self.set_folder( self.Folders.PLUGINS )
         self.Folders.EXPORTED_CSV = self.set_folder( self.Folders.EXPORTED_CSV )
         self.Folders.PLAYLIST_LAYOUTS = self.set_folder( self.Folders.PLAYLIST_LAYOUTS )
-        
         self.Files.NEO4J_SETTINGS = self.set_file( self.Files.NEO4J_SETTINGS )
         self.Files.TREES = self.set_file( self.Files.TREES )
         self.Files.RENAMING_RULES = self.set_file( self.Files.RENAMING_RULES )
         self.Files.PLAYLIST_PLUGINS = self.set_file( self.Files.PLAYLIST_PLUGINS )
-        
+        # presets
         self.Presets.FileRenamer = FileRenamerPresets( self.Files.RENAMING_RULES )
-    
-        # other
-        
+        # doers
         self.Doers.PlaylistManager = PlaylistManager( self.Folders.PLAYLISTS )
     
     def __establish_connection( self ):
@@ -240,5 +229,5 @@ class MainDoer( BaseSomeDoer ):
         return True, 'ok'
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# fix crash when no settings available, autorun verification
+# end 2023.07.25
+# simplified

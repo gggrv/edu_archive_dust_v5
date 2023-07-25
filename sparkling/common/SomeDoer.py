@@ -22,9 +22,6 @@ class SomeDoer:
     
     __SAVE_FOLDER = None
     
-    # future dictionary
-    _generate_file_functions = None
-    
     # for external use, my be ignored
     PREFERRED_SAVE_DIR_NAME = 'some_doer'
     
@@ -64,44 +61,6 @@ class SomeDoer:
             os.makedirs( src )
             
         return src
-    
-    def generate_files( self, src_list, force_list ):
-        
-        # Standard interface for generating automatic files.
-        # Either only missing are generated,
-        # or all are overwritten by default ones.
-        
-        if self._generate_file_functions is None:
-            raise NotImplementedError
-            
-        expected_len = len( self._generate_file_functions )
-        
-        # propagate force
-        if type(force_list) == bool:
-            force_list = [ force_list for _ in range(expected_len) ]
-            
-        # foolcheck
-        received_len = len(src_list)
-        if not( received_len==len(force_list)
-            and expected_len==received_len
-            ):    
-            raise IndexError
-            
-        # call dedicated functions
-        for iloc in range( expected_len ):
-            
-            # get settings
-            src = src_list[iloc]
-            k = os.path.basename(src)
-            force = force_list[iloc]
-            func = self._generate_file_functions[k]
-            
-            # call appropriate function
-            if os.path.exists( src ) and not force:
-                log.info( f'skipping generation - file already exists: {src}' )
-            else:
-                func( src )
-                log.debug( f'successfully wrote file: {src}' )
             
     def autorun( self ):
         
@@ -110,5 +69,5 @@ class SomeDoer:
         pass #raise NotImplementedError
 
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# updated
+# end 2023.07.14
+# removed `generate_files` because useless
