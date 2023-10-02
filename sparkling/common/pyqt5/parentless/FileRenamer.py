@@ -123,12 +123,12 @@ class FileRenamer( QDialog ):
         if self.df is None:
             # i have completely new
             self.df = df
-            self.old_paths = df[Columns.PATH].copy()
+            self.old_paths = df[Columns.path].copy()
             return
         
         # i need to append existing
         self.df = self.df.append( df )
-        self.old_paths = self.old_paths.append( df[Columns.PATH] )
+        self.old_paths = self.old_paths.append( df[Columns.path] )
         
     def __remove_identities( self, identities ):
         
@@ -177,7 +177,10 @@ class FileRenamer( QDialog ):
         try:
             
             for _, row in self.df.fillna('').iterrows():
-                new_path = os.path.normpath( eval(rule) ) # str -> expression -> str
+                
+                new_path = row[c.path]
+                if not c.is_protected( row ):
+                    new_path = os.path.normpath( eval(rule) ) # str -> expression -> str
                 new_paths.append( new_path )
                 
         except:
@@ -207,7 +210,7 @@ class FileRenamer( QDialog ):
 
         iloc = 0
         for loc, row in self.df.iterrows():
-            src = row[c.PATH]
+            src = row[c.path]
             dst = new_paths[iloc]
             new_catalogue = os.path.dirname( dst )
 
@@ -221,14 +224,14 @@ class FileRenamer( QDialog ):
     
             try:
                 shutil.move( src, dst )
-                self.df.loc[ loc,c.PATH ] = dst
+                self.df.loc[ loc,c.path ] = dst
             except:
                 pass
             iloc+=1
 
         # emit two pd.Series
-        new_paths_s = pd.Series( new_paths, name=c.PATH, index=self.old_paths.index )
-        self.old_paths.name = c.PATH
+        new_paths_s = pd.Series( new_paths, name=c.path, index=self.old_paths.index )
+        self.old_paths.name = c.path
         self.EDITING_FINISHED.emit( (self.old_paths,new_paths_s) )
         self.close()
         
@@ -269,5 +272,5 @@ class FileRenamer( QDialog ):
             self.Gui.rules_input.setText( rule )
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.27
-# fixed EDITING_FINISHED.emit
+# end 2023.10.02
+# allowed to skip protected files

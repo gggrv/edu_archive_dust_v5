@@ -265,12 +265,12 @@ class MainDoer( SomeDoer ):
             return
         
         df = playlist_viewer.selectedSubdf()
-        if not c.PATH in df.columns: return
+        if not c.path in df.columns: return
         
         # obtain unique roots
         # of all the products i want to render
-        mask = df[c.PATH].str.contains('.tex') & ( df[c.PATH].notna() )
-        c_srcs = df[mask][c.PATH]
+        mask = df[c.path].str.contains('.tex') & ( df[c.path].notna() )
+        c_srcs = df[mask][c.path]
         prd_roots = []
         for c_src in c_srcs:
             prd_root = os.path.dirname(c_src)
@@ -310,7 +310,7 @@ class MainDoer( SomeDoer ):
             'timestamp': date_human,
             'year': year, #date_path[:4],
             'month': month, #date_path[4:6],
-            Neo4jColumns.PATH: src,
+            Neo4jColumns.path: src,
             Neo4jColumns._NEO4J_LABELS: 'Note'
             }
         

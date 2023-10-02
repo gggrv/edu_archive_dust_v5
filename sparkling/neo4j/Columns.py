@@ -14,16 +14,36 @@ class Columns:
     
     # custom
     
-    DESC = 'desc' # description
+    comment = 'comment' # own comment
     
-    PATH = 'path' # full path to disk/net location, etc
+    desc = 'desc' # general description
     
-    TITLE = 'title' # beautiful title
+    path = 'path' # full path to disk/net location, etc
+    
+    timestamp = 'timestamp'
+    title = 'title' # user-friendly title
     
     # reserved and invalid
     
     _NEO4J_LABELS = 'neo4j Label'
+    _PROTECTED = 'protected'
+    
+    @staticmethod
+    def is_protected( dictionary ):
+        
+        # Standard way to detect whether
+        # this row is protected.
+        
+        c = Columns
+        
+        if not c._PROTECTED in dictionary:
+            return False
+        
+        if dictionary[c._PROTECTED] == '':
+            return False
+        
+        return True
     
 #---------------------------------------------------------------------------+++
-# end 2022.08.03
+# end 2023.10.02
 # update

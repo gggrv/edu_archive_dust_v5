@@ -48,7 +48,7 @@ class PathEater( QWidget ):
 
         mock_entries = []
         for path in self.paths: mock_entries.append(
-            {Sc.PATH:path}
+            {Sc.path:path}
             )
 
         self.editor = DfEditor(
@@ -80,7 +80,7 @@ class PathEater( QWidget ):
         
         if os.path.isfile( Paths.SAVE_LIST ):    
             prev_df = pd.read_csv( Paths.SAVE_LIST )
-            prev_df = prev_df[ prev_df[Sc.PATH].isin( new_df[Sc.PATH] ) ]
+            prev_df = prev_df[ prev_df[Sc.path].isin( new_df[Sc.path] ) ]
             new_df = pd.concat( [prev_df,new_df], axis=0, sort=False )
             
         new_df.to_csv( src, index=False )

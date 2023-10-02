@@ -28,9 +28,9 @@ def _open_path( df, dirname=False ):
     # Starts a file/folder with standard os methods.
     
     c = Neo4jColumns
-    if not c.PATH in df.columns: return
+    if not c.path in df.columns: return
     
-    for src in df[c.PATH]:
+    for src in df[c.path]:
         if type(src)==str:
             if os.path.exists(src):
                 if dirname:
@@ -47,12 +47,12 @@ def _delrem_df( df ):
     # better and safer
     
     c = Neo4jColumns
-    if not c.PATH in df.columns:
+    if not c.path in df.columns:
         return []
     
     exs = []
     
-    for path in df[c.PATH]:
+    for path in df[c.path]:
         if type(path)==str:
             try:
                 delrem(path)
@@ -422,7 +422,7 @@ class PlaylistViewer( PandasTableView ):
             # paths, db_name and label
             # also make it available in path_eater
             param_dict = {
-                c.PATH: src,
+                c.path: src,
                 c.TITLE: os.path.basename(src)
                 }
             
@@ -504,7 +504,7 @@ class PlaylistViewer( PandasTableView ):
         # TODO
         # external file with preferences
         # for each db and label
-        w.set_master_column( c.PATH )
+        w.set_master_column( c.path )
         
         self.__register_parentless_window(w)
         w.show()
@@ -513,7 +513,7 @@ class PlaylistViewer( PandasTableView ):
         
         c = Neo4jColumns
         
-        if not c.PATH in self.get_df_columns():
+        if not c.path in self.get_df_columns():
             return
         
         # obtain current selection
