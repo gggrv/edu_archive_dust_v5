@@ -1,1 +1,1 @@
-from .Connection import Connection, NODE, DEFAULT_DB
+from .Connection import Connection, NODE, DB_DEFAULT

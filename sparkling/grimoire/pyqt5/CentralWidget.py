@@ -13,17 +13,20 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import ( QWidget, QFileDialog,
     QHBoxLayout, QSplitter, QTabWidget, QVBoxLayout )
 # same project
-from sparkling.grimoire.Connection import Connection
-from sparkling.grimoire.pyqt5.PlaylistSelectorView import PlaylistSelectorView
-from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
+from sparkling.grimoire.GrimoireNeo4jConnection import Connection
+# playlist selector
+from sparkling.grimoire.pyqt5.PlaylistSelector import PlaylistSelector, ColumnsPlaylist
+#from sparkling.grimoire.pyqt5.PlaylistPluginsPresetsEditor import PlaylistPluginsPresetsEditor
+# playlist viewer
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
-from sparkling.grimoire.pyqt5.PlaylistPluginsPresetsEditor import PlaylistPluginsPresetsEditor
 from sparkling.grimoire.pyqt5.TabWidgetForPlaylistViewers import TabWidgetForPlaylistViewers
+# filters
+#from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
 #from sparkling.grimoire.pyqt5.TreeFilter import TreeFilter
 
 class CentralWidget( QWidget ):
     
-    CONN_CHANGED = pyqtSignal( Connection )
+    CONNECTION_CHANGED = pyqtSignal( Connection )
     
     class Gui:
         
@@ -59,9 +62,9 @@ class CentralWidget( QWidget ):
         self.Gui.split_vleft.setContentsMargins(0,0,0,0)
         self.Gui.split_hmid.setContentsMargins(0,0,0,0)
         
-        self.Gui.playlist_selector = PlaylistSelectorView( self._own_doer.Doers.PlaylistManager, parent=self )
+        self.Gui.playlist_selector = PlaylistSelector( parent=self )
         #self.Gui.tree_filter = TreeFilter( parent=self )
-        self.Gui.database_filter = DatabaseFilter( parent=self )
+        #self.Gui.database_filter = DatabaseFilter( parent=self )
         
         
         
@@ -74,23 +77,20 @@ class CentralWidget( QWidget ):
         
         side_widget2 = QWidget( parent=self )
         side_lyt2 = QVBoxLayout()
-        side_lyt2.addWidget( self.Gui.database_filter )
+        #side_lyt2.addWidget( self.Gui.database_filter )
         side_widget2.setLayout( side_lyt2 )
         
-        self.Gui.plugin_pane = PlaylistPluginsPresetsEditor(
-            self._own_doer.Folders.PLUGINS,
-            self._own_doer.Files.PLAYLIST_PLUGINS,
-            parent=self )
-        
-        
-        
+        #self.Gui.plugin_pane = PlaylistPluginsPresetsEditor(
+        #    self._own_doer.Folders.PLUGINS,
+        #    self._own_doer.Files.PLAYLIST_PLUGINS,
+        #    parent=self )
         
         self.Gui.tab_widget = TabWidgetForPlaylistViewers( parent=self )
         
         self.Gui.side_tab_widget = QTabWidget( parent=self )
         self.Gui.side_tab_widget.setContentsMargins(0,0,0,0)
         self.Gui.side_tab_widget.addTab( side_widget1, 'navi' )
-        self.Gui.side_tab_widget.addTab( self.Gui.plugin_pane, '⚙️' )
+        #self.Gui.side_tab_widget.addTab( self.Gui.plugin_pane, '⚙️' )
         self.Gui.side_tab_widget.addTab( side_widget2, 'filter' )
 
         # layouts
@@ -113,103 +113,90 @@ class CentralWidget( QWidget ):
         
         # signals
         
-        self.CONN_CHANGED.connect( self.Gui.playlist_selector.conn_changed_event )
-        self.CONN_CHANGED.connect( self.Gui.database_filter.conn_changed_event )
-        #self.CONN_CHANGED.connect( self.Gui.tree_filter.conn_changed_event )
+        self.CONNECTION_CHANGED.connect( self.connection_changed_event )
         
-        self.Gui.playlist_selector.PLAYLIST_OPENED.connect( self.__playlist_opened_event )
-        self.Gui.playlist_selector.PLAYLIST_CLOSED.connect( self.__playlist_closed_event )
-        self.Gui.playlist_selector.IMPORT_CSV_TO_PLAYLIST.connect( self._import_csv_to_playlist_event )
-        self.Gui.playlist_selector.EXPORT_PLAYLIST_TO_CSV.connect( self._export_playlist_to_csv_event )
-        self.Gui.playlist_selector.EXPORT_DB_TO_CSV.connect( self._export_db_to_csv_event )
+        self.Gui.playlist_selector.PLAYLIST_OPEN.connect( self._playlist_open_event )
+        self.Gui.tab_widget.tabCloseRequested.connect( self._playlist_close_event )
         
-        self.Gui.database_filter.SEND_TO_CURRENT_ACTIVE_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
+        #self.Gui.database_filter.SEND_TO_CURRENT_ACTIVE_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
         #self.Gui.tree_filter.Gui.tree_view.SEND_TO_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
         
         # autorun
         
-        self.CONN_CHANGED.emit( self._own_doer.conn )
+        # set all connections
+        self.CONNECTION_CHANGED.emit( self._own_doer.conn )
+        
+        # populate playlist selector
+        self.Gui.playlist_selector.download_playlists()
         
         # select and open first playlist
-        self.Gui.playlist_selector.selectRow( 0 )
-        self.Gui.playlist_selector.open_selected()
+        #self.Gui.playlist_selector.selectRow( 0 )
+        #self.Gui.playlist_selector.open_selected()
         
-    def __playlist_opened_event( self, p ):
+    def connection_changed_event( self, conn ):
         
-        # For each opened playlist I create a separate viewer.
+        # I trigger this event myself.
+        # Whenever needed, I may call `set_connection` on
+        # child widgets manually - without using this `event`.
         
-        w = self.Gui.tab_widget.get_playlist_viewer( p )
-        if not w is None:
-            # this playlist is already opened,
-            # a viewer exists
-            # no need to create another one
-            return
+        # update all playlist selectors
+        self.Gui.playlist_selector.set_connection( conn )
         
-        # need to create dedicated viewer
-        
-        w = PlaylistViewer( parent=self,
-            file_renamer_presets=self._own_doer.Presets.FileRenamer
-            )
-        
-        # signals
-        
-        self.CONN_CHANGED.connect( w.conn_changed_event )
-        
-        w.CURRENT_ACTIVE_PLAYLIST_CHANGED.connect( self.__current_active_playlist_changed_event )
-        
-        # populate
-        w._conn = self._own_doer.conn
-        w.switch_playlist( p )
-        
-        self.Gui.tab_widget.addTab( w, p.screen_name() )
-        
-    def __current_active_playlist_changed_event( self, p ):
-        
-        if p.basename()==self.Gui.playlist_selector.current_active_playlist().basename():
-            # no change - i focused in the save playlist viewer
-            return
-        
-        self.Gui.playlist_selector.set_current_active_playlist( p )
-        self.Gui.database_filter.set_current_active_playlist( p )
-        self.Gui.plugin_pane.set_current_active_playlist( p )
-        
-    def __playlist_closed_event( self, p ):
-        
-        # For each closed playlist I destroy separate viewer.
-        
+        # update all playlist viewers
+        tab_widget = self.Gui.tab_widget
         iloc = 0
-        while iloc<self.Gui.tab_widget.count():
-            w = self.Gui.tab_widget.widget(iloc)
-            if type(w)==PlaylistViewer:
-                # this is correct class
-                if w._playlist.basename() == p.basename():
-                    # this is correct playlist
-                    # delete viewer
-                    w.deleteLater()
-                    self.Gui.tab_widget.removeTab( iloc )
-                    continue
+        count = tab_widget.count()
+        while iloc < count:
+            w = tab_widget.widget(iloc)
+            w.set_connection( conn )
+        
+    def _playlist_open_event( self, df ):
+        
+        # Whenever I want to open some playlists,
+        # I do so by manipulating `playlist selector`.
+        # I create a separate viewer for each playlist.
+        # I don't close other currently open playlists.
+        
+        for loc, row in df.iterrows():
             
-            # this viewer does not need to be deleted,
-            # advance to the next one
-            iloc += 1
+            settings = dict(row)
+            settings[ColumnsPlaylist.id] = loc
+            
+            # attempt to get existing dedicated viewer
+            w = self.Gui.tab_widget.get_playlist_viewer( settings )
+            if not w is None:
+                # this playlist is already opened,
+                # a viewer exists
+                # no need to create another one
+                return
+            
+            # need to create dedicated viewer
+            
+            w = PlaylistViewer( parent=self,
+                file_renamer_presets=self._own_doer.Presets.FileRenamer
+                )
+            
+            w.set_connection( self._own_doer.conn )
+            w.set_settings( settings )
+            
+            c = ColumnsPlaylist
+            self.Gui.tab_widget.addTab( w, row[c.title] )
+            
+    def _playlist_close_event( self, tabiloc ):
         
-    def __send_to_current_active_playlist_event( self, df ):
+        # Whenever I want to close some playlists,
+        # I do so by manually closing tabs
+        # in `tab widget for playlist viewers`.
+        # I destroy a separate viewer for each playlist.
         
-        dest_p = self.Gui.playlist_selector.current_active_playlist()
+        # help:
+        # https://stackoverflow.com/questions/61342380/pyqt5-closeable-tabs-in-qtabwidget
         
-        iloc = 0
-        count = self.Gui.tab_widget.count()
-        while iloc<count:
-            w = self.Gui.tab_widget.widget(iloc)
-            if type(w)==PlaylistViewer:
-                # this is correct class
-                if w._playlist.basename() == dest_p.basename():
-                    # this is correct playlist
-                    w.add_identities( list(df.index.astype(str)) )
-                    # nothing to do anymore
-                    return
-                
-            iloc += 1
+        w = self.Gui.tab_widget.widget( tabiloc )
+        w.deleteLater()
+        del w
+        
+        self.Gui.tab_widget.removeTab( tabiloc )
         
     def _import_csv_to_playlist_event( self, p ):
         

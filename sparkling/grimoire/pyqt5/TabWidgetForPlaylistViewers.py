@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 # pip install
 from PyQt5.QtWidgets import ( QTabWidget )
 # same project
-from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
+from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer, ColumnsPlaylist
 
 class TabWidgetForPlaylistViewers( QTabWidget ):
 
@@ -23,11 +23,20 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
         
         self.setContentsMargins(0,0,0,0)
         
+        # make sure to connect tab closed signals externally
+        self.setTabsClosable(True)
+        
         # signals
+                                                      
+        # i want to trigger lots of code just by clicking the
+        # tab name - otherwise my
+        # code won't work until i click
+        # the tab widget's inner area
+        self.tabBarClicked.connect( self.__trigger_tab_focus_event )
         
-        self.tabBarClicked.connect( self.__focus_chosen_playlist_viewer )
+    def __trigger_tab_focus_event( self, iloc ):
         
-    def __focus_chosen_playlist_viewer( self, iloc ):
+        # For internal use only.
         
         # get playlist viewer from this tab
         w = self.widget( iloc )
@@ -35,25 +44,35 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
         # trigger focusInEvent
         w.setFocus()
         
-    def get_playlist_viewer( self, p ):
+    def get_playlist_viewer( self, settings ):
         
         # Finds an existing PlaylistViewer that corresponds to
-        # given playlist p.
+        # playlist with given `settings`.
         
+        c = ColumnsPlaylist
+        
+        # make sure i have means to compare
+        # `settings`
+        if not c.id in settings:
+            log.error( f'can\'t compare two NodeViewer `settings` because field `{c.id}` is missing' )
+            raise KeyError
+        
+        # iterate all
         iloc = 0
         count = self.count()
-        
         while iloc < count:
             
             w = self.widget(iloc)
             if type(w)==PlaylistViewer:
                 # this is correct class
                 
-                if w._playlist.basename() == p.basename():
-                    # found it
-                    return w
+                s = w.settings()
+                if c.id in s:
+                    if s[c.id] == settings[c.id]:
+                        # found it
+                        return w
                 
-            # wrong view, advane to next one
+            # wrong view, advance to the next one
             iloc += 1
             
         # did not find it
@@ -61,8 +80,8 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
     def addTab( self, widget, tab_title ):
         
         super( TabWidgetForPlaylistViewers, self ).addTab( widget, tab_title )
-        self.__focus_chosen_playlist_viewer( self.count()-1 )
+        self.__trigger_tab_focus_event( self.count()-1 )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# created
+# end 2023.10.06
+# simplified

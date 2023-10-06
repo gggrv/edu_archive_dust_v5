@@ -13,7 +13,7 @@ import re
 import pandas as pd
 from PyQt5.QtCore import ( Qt, pyqtSignal )
 # same project
-from sparkling.common.pyqt5 import ( set_actions )
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 from sparkling.common.TreeNode import TreeNode
 from sparkling.common.pyqt5.TreeModel import TreeModel
 from sparkling.common.pyqt5.TreeView import TreeView
@@ -158,14 +158,18 @@ class NeoTreeView( TreeView ):
                 
     def _init_context_menu( self ):
         
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
         actions = [
             {
-                'text': NeoTreeView.Strings.SEND_TO_PLAYLIST,
-                'method': self.selection_send,
+                c.identity: 'neo4j/neotreeview/row/send_to_playlist',
+                c.text: NeoTreeView.Strings.SEND_TO_PLAYLIST,
+                c.method: self.selection_send,
                 },
             ]
         
-        set_actions( self, actions )
+        c.add_actions( self, actions )
         
     def selection_send( self ):
         
@@ -198,8 +202,8 @@ class NeoTreeView( TreeView ):
         
         self.SEND_TO_PLAYLIST.emit( df )
         
-    def conn_changed_event( self, conn ):
-        self.conn = conn
+    def set_connection( self, conn ):
+        self._conn = conn
         
 #---------------------------------------------------------------------------+++
 # end 2023.05.11

@@ -15,7 +15,11 @@ from neo4j.exceptions import ConfigurationError
 import pandas as pd
 # same project
 from sparkling.neo4j.Columns import (
-    NODE, LABEL_SEPARATOR, Columns as c, DEFAULT_DB, MULTIVALUE_SEPARATOR
+    Columns,
+    # other packages may use items that are imported and unused
+    # in this module
+    # that's why i don't delete them
+    NODE, LABEL_SEPARATOR, DB_DEFAULT, MULTIVALUE_SEPARATOR
     )
 
 def _response2df( response, columns=None, identity=False, node_variable_name=None ):
@@ -63,13 +67,19 @@ def _convert_parameters( param_dict ):
     # help:
     # https://stackoverflow.com/questions/4202538/escape-special-characters-in-a-python-string
     
+    # short name for convenience
+    c = Columns
+    
     if type(param_dict) is not dict: raise ValueError
     if len(param_dict)==0: return ''
     
     items = []
     for k,v in param_dict.items():
         
-        if k==c._NEO4J_LABELS:
+        if k==c.neo4j_labels:
+            # skip reserved
+            continue
+        elif k==c.id:
             # skip reserved
             continue
         
@@ -98,12 +108,13 @@ def _convert_node( variable_name, label, param_dict=None ):
 
 def _df2nodes( df, label=None ):
     
+    c = Columns
     nodes = []
     
     for _,row in df.iterrows():
         param_dict = {}
         for col in df.columns:
-            if col==c._NEO4J_LABELS:
+            if col==c.neo4j_labels:
                 label = row[col]
             else:
                 #col = col.replace( ' ', '_' )
@@ -113,6 +124,16 @@ def _df2nodes( df, label=None ):
         
     return nodes
 
+class InvalidConnectionError( Exception ):
+    
+    # help:
+    # https://stackoverflow.com/questions/1319615/proper-way-to-declare-custom-exceptions-in-modern-python
+    
+    def __init__( self, message, errors ):
+        super( InvalidConnectionError, self ).__init__( message )
+            
+        self.errors = errors
+        
 class Connection:
     
     # This class allows to connect to a single
@@ -120,6 +141,9 @@ class Connection:
     
     # help:
     # https://towardsdatascience.com/neo4j-cypher-python-7a919a372be7
+    
+    # for ease of use in subclasses
+    Columns = Columns
     
     response2df = staticmethod( _response2df )
     convert_node = staticmethod( _convert_node )
@@ -151,9 +175,14 @@ class Connection:
             self.__driver.close()
             
     def is_valid( self ):
+        
+        # For external use only.
+        
         return not self.__driver is None
     
     def fill_reserved_columns( self, df, db_name=None ):
+        
+        c = Columns
         
         # reserved columns
         
@@ -173,11 +202,14 @@ class Connection:
             raise ConnectionError( msg )
             
         texts = [ MULTIVALUE_SEPARATOR.join( r['labels_list'] ) for r in response ]
-        df[c._NEO4J_LABELS] = texts
+        df[c.neo4j_labels] = texts
         
     def query( self, query, db_name=None ):
         
         # Allows to send any query to server.
+        
+        if self.__driver is None:
+            raise InvalidConnectionError
         
         session = None
         response = None
@@ -202,5 +234,5 @@ class Connection:
         return response
     
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# init configuration error checker
+# end 2023.10.03
+# added InvalidConnectionError

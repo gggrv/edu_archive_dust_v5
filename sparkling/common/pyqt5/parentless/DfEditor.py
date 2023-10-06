@@ -17,12 +17,43 @@ from PyQt5.QtWidgets import ( QVBoxLayout, QListWidget, QWidget,
     QHBoxLayout, QPushButton, QSplitter, QTableWidget, QTableWidgetItem,
     QComboBox, QMessageBox, QLineEdit, QCompleter, QStyledItemDelegate )
 # same project
-from sparkling.common.pyqt5 import set_actions
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 from sparkling.common import unique_loc
 
 _MULTIPLE_VALUES_INDICATOR = '<MULTIPLE VALUES>'
 _MULTIPLE_VALUES_SEPARATOR = '; '
 _MAXIMUM_MULTIPLE_VALUES = 10 # items
+
+class ColumnsDfEditorConstructor:
+    
+    completions_dictionary = 'completions_dictionary'
+    
+    # which `pandas.DataFrame` to edit
+    df = 'df'
+    db_name = 'db_name'
+    
+    # layout columns style: vertical/horizontal
+    display_vertical = 'display_vertical'
+    
+    master_column = 'master_column'
+    
+    @staticmethod
+    def validate_constructor_parameters( ps ):
+        
+        # In order to reduce number of human errors,
+        # this function provides an option to
+        # manually check `constructor parameters` 
+        # and enforce corrections before
+        # sending them to the `constructor`.
+        
+        # short name for convenience
+        c = ColumnsDfEditorConstructor
+        
+        # make sure `df` field is either valid
+        # or absent
+        if c.df in ps:
+            if ps[c.df] is None:
+               ps.pop( c.df )
 
 def df2series( df ):
 
@@ -94,6 +125,8 @@ class DfEditor( QWidget ):
     
     # Has two columns, allows to edit one pd.Dataframe.
     
+    ColumnsConstructor = ColumnsDfEditorConstructor
+    
     # TODO
     # dedicated tableview and model
     # for more control over the data
@@ -103,7 +136,7 @@ class DfEditor( QWidget ):
     # allow to switch between horizontal and vertical from gui
     
     OK_TO_CLOSE = pyqtSignal( str )
-    EDITING_FINISHED = pyqtSignal( tuple )
+    EDITING_FINISHED = pyqtSignal( tuple, str )
     
     _RIGHT_COLUMN_WIDTH = 530
     
@@ -138,6 +171,7 @@ class DfEditor( QWidget ):
     # i want to access them directly
     # from gui
     # in the parsable command input section
+    db_name = None
     df = None
     _old_df = None # copy for comparison and output
     
@@ -149,17 +183,25 @@ class DfEditor( QWidget ):
     __display_vertical = False
 
     def __init__( self,
-                  df=None,
-                  completions_dictionary=None,
+                  constructor_parameters,
                   parent=None,
-                  display_vertical=True,
                   *args, **kwargs ):
         super( DfEditor, self ).__init__( parent=parent, *args, **kwargs )
         
-        # list above table / side by side
-        self.__display_vertical = display_vertical
+        # short name for convenience
+        c = ColumnsDfEditorConstructor
+        ps = constructor_parameters
         
-        self._completions_dictionary = completions_dictionary
+        if not c.db_name in ps:
+            raise NotImplementedError
+        self.db_name = ps[c.db_name]
+        
+        # list above table / side by side
+        if c.display_vertical in ps:
+            self.__display_vertical = ps[c.display_vertical]
+        
+        if c.completions_dictionary in ps:
+            self._completions_dictionary = ps[c.completions_dictionary]
         
         self.setWindowTitle( DfEditor.Strings.WINDOW_TITLE )
         self.resize( 1000, 880 )
@@ -167,8 +209,12 @@ class DfEditor( QWidget ):
         # set dataframes
         # i can have empty ones - i can create necessary columns
         # from scratch
-        self.df = pd.DataFrame() if df is None else df
-        self._old_df = pd.DataFrame() if df is None else df.copy()
+        if c.df in ps:
+            self.df = ps[c.df]
+            self._old_df = self.df.copy()
+        else:
+            self.df = pd.DataFrame()
+            self._old_df = pd.DataFrame()
 
         split_vmid = QSplitter(
             Qt.Vertical if self.__display_vertical else Qt.Horizontal,
@@ -308,22 +354,30 @@ class DfEditor( QWidget ):
         
         self.select_all()
         
+        if c.master_column in ps:
+            self.set_master_column( ps[c.master_column] )
+        
     def _init_context_menu( self ):
+        
+        # short name for convenience
+        c = ColumnsActionDefinitions
         
         actions = [
             {
-                'text': DfEditor.Strings.ADD_FIELD,
-                'shortcut': 'Ctrl+N',
-                'method': self._new_column,
+                c.identity: 'common/dfeditor/edit/add_field',
+                c.text: DfEditor.Strings.ADD_FIELD,
+                c.shortcut: 'Ctrl+N',
+                c.method: self._new_column,
                 },
             {
-                'text': DfEditor.Strings.DELETE_FIELD,
-                'shortcut': 'Del',
-                'method': self._delete_field,
+                c.identity: 'common/dfeditor/edit/delete_field',
+                c.text: DfEditor.Strings.DELETE_FIELD,
+                c.shortcut: 'Del',
+                c.method: self._delete_field,
                 },
             ]
         
-        set_actions( self.Gui.main_table, actions )
+        c.add_actions( self.Gui.main_table, actions )
         
     def set_master_column( self, new_master_column ):
         
@@ -607,7 +661,7 @@ class DfEditor( QWidget ):
         
     def __send_changes_to_db_event( self, ev ):
         self.EDITING_FINISHED.emit(
-            ( self._old_df, self.df )
+            ( self._old_df, self.df ), self.db_name
             )
     
     def _press_ok_event( self, ev ):

@@ -14,20 +14,26 @@ import pandas as pd
 from PyQt5.QtCore import ( Qt, pyqtSignal )
 from PyQt5.QtWidgets import ( QMessageBox )
 # same project
-from sparkling.neo4j.Columns import NODE, Columns as Neo4jColumns
-from sparkling.common.pyqt5.PandasTableView import PandasTableView
-from sparkling.grimoire.Playlist import Playlist
-from sparkling.common.pyqt5.parentless.DfEditor import DfEditor
+# headless
+from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist
+from sparkling.grimoire.GrimoireNeo4jColumns import Columns as ColumnsNeo4j, NODE
+# gui
+from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions
 from sparkling.common.pyqt5.parentless.FileRenamer import FileRenamer
-from sparkling.common.pyqt5 import ( set_actions, mime2file,
-    get_QItemSelection_rowilocs )
+from sparkling.common.pyqt5 import ( mime2file, get_QItemSelection_rowilocs )
+# common
 from sparkling.common import ( unique_loc, delrem )
+
+PLAYLIST_COLUMNS_TO_HIDE = [
+    ColumnsPlaylist.id,
+    ColumnsPlaylist.db_name,
+    ]
 
 def _open_path( df, dirname=False ):
     
     # Starts a file/folder with standard os methods.
     
-    c = Neo4jColumns
+    c = ColumnsNeo4j
     if not c.path in df.columns: return
     
     for src in df[c.path]:
@@ -46,7 +52,7 @@ def _delrem_df( df ):
     # TODO
     # better and safer
     
-    c = Neo4jColumns
+    c = ColumnsNeo4j
     if not c.path in df.columns:
         return []
     
@@ -62,34 +68,27 @@ def _delrem_df( df ):
                 
     return exs
 
-class PlaylistViewer( PandasTableView ):
-    
-    CURRENT_ACTIVE_PLAYLIST_CHANGED = pyqtSignal( Playlist )
-    can_host_current_active_playlist = True
-
-    # invisible spawned parentless windows will be saved here
-    __parentless_windows = None # future list
+class PlaylistViewer( NodeViewer ):
     
     class Presets:
         
         FileRenamer = None # will be populated from outside
     
-    _playlist = None
-    _conn = None
-    
     def __init__( self,
                   file_renamer_presets=None,
+                  selection_changed_event=True,
+                  can_host_current_active_playlist=True,
                   parent=None,
                   *args, **kwargs ):
         super( PlaylistViewer, self ).__init__(
             parent=parent, *args, **kwargs )
+        
+        # remember
+        self.can_host_current_active_playlist = can_host_current_active_playlist
 
         # presets
         if not file_renamer_presets is None:
             self.Presets.FileRenamer = file_renamer_presets
-
-        # dynamic
-        self.__parentless_windows = []
         
         # appearance
         self.setWordWrap( False )
@@ -101,74 +100,100 @@ class PlaylistViewer( PandasTableView ):
         
         # signals
         
-        # help:
-        # https://stackoverflow.com/questions/14803315/connecting-qtableview-selectionchanged-signal-produces-segfault-with-pyqt
-        selectionModel = self.selectionModel()
-        selectionModel.selectionChanged.connect( self.__selection_changed_event )
+        if selection_changed_event:
+            # help:
+            # https://stackoverflow.com/questions/14803315/connecting-qtableview-selectionchanged-signal-produces-segfault-with-pyqt
+            selectionModel = self.selectionModel()
+            selectionModel.selectionChanged.connect( self.__selection_changed_event )
         
     def __init_context_menu( self ):
         
         # Called once during init.
         
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
         actions = [
              {
-                 'text': 'Open',
-                 'method': self._cm_open_file,
-                 'shortcut': 'Alt+R',
+                 c.identity: 'grimoire/playlist_viewer/row/open_file',
+                 c.text: 'Open',
+                 c.method: self._cm_open_file,
+                 c.shortcut: 'Alt+R',
                  },
              {
-                 'text': 'Open file location',
-                 'method': self._cm_open_folder,
-                 'shortcut': 'Alt+S',
+                 c.identity: 'grimoire/playlist_viewer/row/open_folder',
+                 c.text: 'Open file location',
+                 c.method: self._cm_open_folder,
+                 c.shortcut: 'Alt+S',
                  },
              {
-                 'text': 'Edit',
-                 'method': self.edit_selection,
-                 'shortcut': 'Alt+Return',
+                 c.identity: 'grimoire/playlist_viewer/row/edit',
+                 c.text: 'Edit',
+                 c.method: self.launch_selection_editor,
+                 c.shortcut: 'Alt+Return',
                  },
              {
-                 'text': 'Rename',
-                 'method': self.rename_selection,
-                 'shortcut': 'Alt+Left',
+                 c.identity: 'grimoire/playlist_viewer/row/rename',
+                 c.text: 'Rename',
+                 c.method: self.rename_selection,
+                 c.shortcut: 'Alt+Left',
                  },
             {
-                'text': 'Delete from playlist',
-                'method': self.del_from_view,
-                'shortcut': 'Del',
+                c.identity: 'grimoire/playlist_viewer/row/del_from_playlist',
+                c.text: 'Delete from playlist',
+                c.method: self.del_from_view,
+                c.shortcut: 'Del',
                 },
             {
-                'text': 'Delete from database',
-                'method': self.del_from_view_db,
-                'shortcut': 'Alt+Shift+Down',
+                c.identity: 'grimoire/playlist_viewer/row/del_from_db',
+                c.text: 'Delete from database',
+                c.method: self.del_from_view_db,
+                c.shortcut: 'Alt+Shift+Down',
                 },
             {
-                'text': 'Delete from database and disk',
-                'method': self.del_from_view_db_disk,
-                'shortcut': 'Alt+Down',
+                c.identity: 'grimoire/playlist_viewer/row/del_from_disk',
+                c.text: 'Delete from database and disk',
+                c.method: self.del_from_view_db_disk,
+                c.shortcut: 'Alt+Down',
                 },
             ]
         
-        set_actions( self, actions )
+        c.remove_actions( self )
+        c.add_actions( self, actions )
         
-    def switch_playlist( self, p ):
+    def set_settings( self, settings ):
         
-        # Completely replaces internal data.
+        # I want to fully replace current contents.
         
-        self._playlist = p
+        super( PlaylistViewer, self ).set_settings( settings )
         
-        if p is None:
-            self.setEnabled( False )
-            self.switch_df( pd.DataFrame() )
+        # short name for convenience
+        c = ColumnsPlaylist
+        p = settings
+        
+        # i need to populate this viewer with
+        # downloaded nodes
+        
+        query = c.get_contents_query( p )
+        if query is None:
+            # this playlist is empty at this moment
+            self.switch_df( pd.DataFrame(), columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE )
             return
+            
+        response = self._conn.query( query, db_name=p[c.db_name] )
+                
+        df = pd.DataFrame([ r[NODE] for r in response ])
+        df.index = [ r[NODE].id for r in response ]
+        df.fillna( '', inplace=True )
+        self._conn.fill_reserved_columns( df, db_name=p[c.db_name] )
         
-        self.setEnabled( True )
-        
-        df = p.df( self._conn )
-        self.switch_df( df )
-        
+        self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE )
+            
     def add_identities( self, identities ):
         
         # Appends existing internal data with some identities.
+        
+        raise NotImplementedError
         
         # add to own playlist
         self._playlist.add_identities( identities, save=True )
@@ -178,9 +203,6 @@ class PlaylistViewer( PandasTableView ):
         temp_p = Playlist( 'temp', db_name=self._playlist.db_name(), playlist_data=query )
         df = temp_p.df(self._conn)
         super( PlaylistViewer, self ).add_df( df )
-                
-    def conn_changed_event( self, conn ):
-        self._conn = conn
         
     def mouseDoubleClickEvent( self, ev ):
     
@@ -189,21 +211,23 @@ class PlaylistViewer( PandasTableView ):
         
     def focusInEvent( self, ev ):
         
-        # Whenever use clicks this widget, it's internal playlist
-        # becomes global current active playlist.
+        # When this widget was clicked, it's internal `playlist`
+        # became global `current active playlist`.
+        # Now this functionality is deprecated.
+        # Will keep this for future ideas.
         
         # help:
         # https://stackoverflow.com/questions/28793440/pyqt5-focusin-out-events
         
         super( PlaylistViewer, self ).focusInEvent( ev )
         
-        if not self.can_host_current_active_playlist:
-            return
+    def launch_selection_editor( self ):
         
-        if self._playlist is None:
-            return
+        super( PlaylistViewer, self ).launch_selection_editor()
         
-        self.CURRENT_ACTIVE_PLAYLIST_CHANGED.emit( self._playlist )
+    def _accept_selection_edits_event( self, changes ):
+        
+        super( PlaylistViewer, self )._accept_selection_edits_event( changes )
         
     def __selection_changed_event( self, selected, deselected  ):
         
@@ -220,7 +244,7 @@ class PlaylistViewer( PandasTableView ):
             log.debug( 'how did i end up here?' )
             return
         
-        if len( self.__parentless_windows )==0:
+        if len( self._parentless_windows )==0:
             # no dependent widgets, nothing to do
             return
         
@@ -229,88 +253,15 @@ class PlaylistViewer( PandasTableView ):
         deselected_rowilocs = get_QItemSelection_rowilocs( deselected )
         
         # when i add selection, i need whole subdf
-        new_subdf = self.get_df().iloc[ selected_rowilocs ]
+        new_subdf = self._MODEL.df.iloc[ selected_rowilocs ]
         
         # when i remove selection, i need only indexes
-        rem_identities = list( self.get_df().iloc[ deselected_rowilocs ].index )
+        rem_identities = list( self._MODEL.df.iloc[ deselected_rowilocs ].index )
         
-        for w in self.__parentless_windows:
+        for w in self._parentless_windows:
             
             if type(w)==FileRenamer:
                 w.change_contents( new_subdf, rem_identities )
-        
-    def __playlist_data_edited_event( self, changes ):
-        
-        # Happens whenever I change node values.
-        # The playlist itself remains the same,
-        # but data in the database should update.
-        
-        # detect what am i working with
-        old_value, new_value = changes
-        old_df, new_df = None, None
-        old_s, new_s = None, None
-        if type(old_value) == pd.DataFrame: old_df=old_value
-        if type(new_value) == pd.DataFrame: new_df=new_value
-        if type(old_value) == pd.Series: old_s=old_value
-        if type(new_value) == pd.Series: new_s=new_value
-        
-        is_df_and_df = not old_df is None and not new_df is None
-        is_s_and_s = not old_s is None and not new_s is None
-        is_df_and_s = not old_df is None and not new_s is None
-        is_s_and_df = not old_s is None and not new_df is None
-        
-        if is_df_and_df: # i have two dataframes
-            # completely replace old with the new one
-        
-            # make sure i have rows to work with
-            have_same_length = len(old_df.index) == len(new_df.index)
-            have_some_rows = len(old_df.index)>0
-            if not ( have_same_length and have_some_rows ):
-                log.error( f'failed to apply changes after editing the df - content length mismatch: expected {len(old_df.index)}, got {len(new_df.index)}' )
-                return
-            if old_df.equals(new_df):
-                log.info( 'the df was not edited - no changes detected, not doing anything' )
-                return
-                
-            # change in database
-            self._conn.replace_nodes( new_df, self._playlist.db_name() )
-                
-            # change in view
-            self.replace_subdf( new_df )
-            
-            # no need to change in playlist because
-            # shown identities did not change
-            
-        elif is_s_and_s: # i have two series
-            # completely replace old with the new one, bit keep
-            # other node parameters
-            
-            # make sure i have rows to work with
-            have_same_length = len(old_s.index) == len(new_s.index)
-            have_some_rows = len(old_s.index)>0
-            have_same_name = old_s.name==new_s.name
-            have_same_index = ( old_s.index==new_s.index ).all()
-            if not ( have_same_length and have_some_rows ):
-                log.error( f'failed to apply changes after editing the df - content length mismatch: expected {len(old_s.index)}, got {len(new_s.index)}' )
-                return
-            if not have_same_name or not have_same_index:
-                log.info( 'old and new values Series must have same name and index - how else will i be sure that they hold values for the same column?' )
-                return
-            if old_s.equals(new_s):
-                log.info( 'the df was not edited - no changes detected, not doing anything' )
-                return
-            
-            # actualy replace node parameter in db
-            for identity, value in new_s.iteritems():
-                safe_value = self._conn.convert_to_safe_string( value )
-                query = f'MATCH (n) WHERE ID(n) = {identity} SET n.{new_s.name} = {safe_value}'
-                self._conn.query( query, self._playlist.db_name() )
-                
-            # update view
-            self.replace_values( new_s )
-        
-        else:
-            raise NotImplementedError
         
     def dragEnterEvent( self, ev ):
         
@@ -369,11 +320,8 @@ class PlaylistViewer( PandasTableView ):
                 db_name=self._playlist.db_name()
                 )
             
-            if response is None:
-                log.error( f'failed to connect to server to create node {node} in db {self._playlist.db_name()}' )
-            else:
-                for record in response:
-                    identities.append( record['identity'] )
+            for record in response:
+                identities.append( record['identity'] )
         
         elif type(metadata)==list:
             # list of dictionaries that are not in db
@@ -392,12 +340,8 @@ class PlaylistViewer( PandasTableView ):
                     f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
                     db_name=self._playlist.db_name()
                     )
-            
-                if response is None:
-                    log.error( f'failed to connect to server to create node {node} in db {self._playlist.db_name()}' )
-                else:
-                    for record in response:
-                        identities.append( record['identity'] )
+                for record in response:
+                    identities.append( record['identity'] )
         
         else:
             raise ValueError
@@ -411,7 +355,7 @@ class PlaylistViewer( PandasTableView ):
         # playlist to accept new paths and save them to db.
         # For internal use only.
         
-        c = Neo4jColumns
+        c = ColumnsNeo4j
         
         identities = []
         for src in paths:
@@ -483,41 +427,16 @@ class PlaylistViewer( PandasTableView ):
     def dragLeaveEvent( self, ev ):
         ev.accept()
                 
-    def edit_selection( self ):
-        
-        # Launches editor.
-        
-        c = Neo4jColumns
-        
-        subdf = self.selectedSubdf()
-        if len(subdf.index)==0: return
-        
-        w = DfEditor(
-            df=subdf,
-            parent=None,
-            display_vertical=False,
-            )
-        w.EDITING_FINISHED.connect( self.__playlist_data_edited_event )
-        
-        # attempt to set master column to path
-        # may fail
-        # TODO
-        # external file with preferences
-        # for each db and label
-        w.set_master_column( c.path )
-        
-        self.__register_parentless_window(w)
-        w.show()
     
     def rename_selection( self ):
         
-        c = Neo4jColumns
+        c = ColumnsNeo4j
         
-        if not c.path in self.get_df_columns():
+        if not c.path in self._MODEL.df.columns:
             return
         
         # obtain current selection
-        df = self.selectedSubdf()
+        df = self.selected_subdf()
     
         # launch renamer
         
@@ -531,16 +450,22 @@ class PlaylistViewer( PandasTableView ):
     
     def del_from_view( self ):
         
-        # I want to delete rows from current view.
+        # I want to delete rows from current `view`
+        # and update `playlist`.
         
-        # del from view
-        self.delete_selection()
+        super( PlaylistViewer, self ).del_from_view()
         
-        # del from playlist
-        remaining_identities = list( self.get_df_index().astype(str) )
-        new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
-        self._playlist.set_data( new_data, save=True )
-    
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        new_data = {
+            c.identities: list( self._MODEL.df.index.astype(str) ),
+            }
+        
+        query = f'MATCH ({NODE}) WHERE ID({NODE})={identity} SET {NODE}:{new_labels}'
+        
+        self._conn.query()
+        
     def del_from_view_db( self ):
         
         # I want to delete rows from db and current view.
@@ -550,7 +475,7 @@ class PlaylistViewer( PandasTableView ):
             log.critical( msg )
             return
         
-        rowilocs = self.selectedRowilocs()
+        rowilocs = self.selected_rowilocs()
         if len(rowilocs)==0: return
         
         # ask confirmation
@@ -567,7 +492,7 @@ class PlaylistViewer( PandasTableView ):
         retval = msg.exec_()
         if retval==QMessageBox.Cancel: return
         
-        subdf = self.get_df().iloc[rowilocs]
+        subdf = self._MODEL.df.iloc[rowilocs]
         
         # del from db
         identities = list( subdf.index )
@@ -582,7 +507,7 @@ class PlaylistViewer( PandasTableView ):
         self.select_next_row( rowilocs[0] )
         
         # del from playlist
-        remaining_identities = list( self.get_df_index().astype(str) )
+        remaining_identities = list( self._MODEL.df.index.astype(str) )
         new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
         self._playlist.set_data( new_data, save=True )
         
@@ -595,7 +520,7 @@ class PlaylistViewer( PandasTableView ):
             log.critical( msg )
             return
         
-        rowilocs = pd.Series( self.selectedRowilocs() )
+        rowilocs = pd.Series( self.selected_rowilocs() )
         if len(rowilocs)==0: return
         
         # ask confirmation
@@ -612,7 +537,7 @@ class PlaylistViewer( PandasTableView ):
         retval = msg.exec_()
         if retval==QMessageBox.Cancel: return
         
-        subdf = self.get_df().iloc[rowilocs]
+        subdf = self._MODEL.df.iloc[rowilocs]
         
         # del from disk
         exs = pd.Series( _delrem_df(subdf) )
@@ -633,45 +558,16 @@ class PlaylistViewer( PandasTableView ):
         self.select_next_row( rowilocs[0] )
         
         # del from playlist
-        remaining_identities = list( self.get_df_index().astype(str) )
+        remaining_identities = list( self._MODEL.df.index.astype(str) )
         new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
         self._playlist.set_data( new_data, save=True )
     
     def _cm_open_file( self ):
-        _open_path( self.selectedSubdf(), dirname=False )
+        _open_path( self.selected_subdf(), dirname=False )
                 
     def _cm_open_folder( self ):
-        _open_path( self.selectedSubdf(), dirname=True )
-        
-    def __register_parentless_window( self, w ):
-        
-        # I operate with many parentless windows.
-        # They would disappear if no one referenced them.
-        # Here I save those references.
-    
-        w.setObjectName(
-            '%s%s'%( w.objectName(), unique_loc() )
-            )
-        w.OK_TO_CLOSE.connect( self.__remove_parentless_window_event )
-        self.__parentless_windows.append(w)
-
-    def __remove_parentless_window_event( self, object_name ):
-        
-        # I no longer need this parentless dialog.
-        # I destroy the object and
-        # remove reference to it from self.dialogs.
-
-        for iloc, w in enumerate(self.__parentless_windows):
-            
-            if w.objectName()==object_name:
-
-                self.__parentless_windows.pop(iloc)
-                w.destroy()
-                w.deleteLater()
-                del w
-                # just die already
-                return
+        _open_path( self.selected_subdf(), dirname=True )
             
 #---------------------------------------------------------------------------+++
-# end 2023.05.26
-# suto update selected paths in FileRenamer
+# end 2023.10.06
+# simplified

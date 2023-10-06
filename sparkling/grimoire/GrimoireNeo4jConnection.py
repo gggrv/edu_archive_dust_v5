@@ -11,15 +11,23 @@ log = logging.getLogger(__name__)
 # pip install
 import pandas as pd
 # same project
-from sparkling.neo4j.Connection import (
-    Connection as BaseConnection, NODE, c, LABEL_SEPARATOR,
-    MULTIVALUE_SEPARATOR, DEFAULT_DB
+from sparkling.neo4j.Connection import Connection as BaseConnection
+from sparkling.grimoire.GrimoireNeo4jColumns import (
+    Columns,
+    NODE, DB_DEFAULT,
+    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR
     )
-            
+from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist, NEO4J_LABEL_PLAYLIST
+# common
+from sparkling.common import unique_loc
+
 class Connection( BaseConnection ):
     
     # Custom connection to Neo4j server
     # made specifically for Grimoire.
+    
+    # override from parent
+    Columns = Columns
     
     # static list
     _db_names = []
@@ -28,29 +36,12 @@ class Connection( BaseConnection ):
         
         super( Connection, self ).__init__( socket, username, password )
         
-    def standard_identities_query( self, identities ):
-        
-        query = f'MATCH ({NODE}) ' \
-            f'WHERE toString(ID({NODE})) IN {identities} ' \
-            f'RETURN {NODE}'
-        
-        return query
-        
     def dl_db_names( self ):
         
         # Always returns a list.
         
         # TODO
         # separate thread
-        
-        if not self.is_valid():
-            log.error( 'my connection is not valid, not doing anything' )
-            self._db_names = []
-            return self._db_names
-        
-        # everything ok, can proceed
-        
-        log.debug( 'obtaining db names' )
         
         response = self.query( 'show databases;', db_name='system' )
         if response is None:
@@ -122,11 +113,14 @@ class Connection( BaseConnection ):
         #--------------------+++
         # Definitions.
         
+        # short name for convenience
+        c = Columns
+        
         def replace_labels():
             
             # Update reserved column `labels`.
             
-            if not c._NEO4J_LABELS in df.columns:
+            if not c.neo4j_labels in df.columns:
                 # nothing to replace - labels were
                 # not chaged
                 return
@@ -141,7 +135,7 @@ class Connection( BaseConnection ):
             
             # get new ones
             new_labels = LABEL_SEPARATOR.join(
-                row[c._NEO4J_LABELS].split(MULTIVALUE_SEPARATOR) )
+                row[c.neo4j_labels].split(MULTIVALUE_SEPARATOR) )
             
             # replace
             
@@ -176,7 +170,7 @@ class Connection( BaseConnection ):
             # order is important, because i chain return
             # values in order to reduce the number of server requests
             replace_labels()
-                    
+            
 #---------------------------------------------------------------------------+++
-# end 2023.05.11
-# simplified
+# end 2023.10.03
+# allow to manage playlists from here

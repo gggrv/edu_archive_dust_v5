@@ -1,0 +1,101 @@
+---
+# In this project I use several names interchangingly.
+# Here is the catalog of these names.
+common:
+  Columns:
+    description: static class that contains constant coding-friendly (latin alphanumerics, no whitespaces, etc) field names in order to avoid hardcoding them when creating `dict` or `pd.Series` or `pd.DataFrame` objects. I never create instances of this class. May contain static methods that parse data or aid somehow (for example validate something). Have reserved variable `Columns.texts`, which is a dictionary with screen names for all necessary field names
+    formats: # how it may be coded
+      class ColumnsSomethins: python static class, may inherit from something
+      c: short name of Columns
+    all alternative names: # how it may be described
+      - Columns
+      - BaseColumns (when inheriting)
+      - ColunmsSomething (in code word `Columns` should be the first one, in filename.py word `Columns` should be the last one)
+  Presets:
+    description: python class that allows me to easily manage the contents of a single predefined `yaml` file. Has it's own `Columns`. Relies on `Columns` to parse data.
+    formats: # how it may be coded
+      class PresetSomething: python class, inherits from common.PresetsManager
+      p, preset: instance if PresetsSomething
+    all alternative names: # how it may be described
+      - Columns
+      - BaseColumns (when inheriting)
+      - ColunmsSomething (in code word `Columns` should be the first one, in filename.py word `Columns` should be the last one)
+neo4j:
+  conn:
+    description: python class that can communicate with server
+    formats: # how it may be coded
+      Connection: python class
+      conn: instance of Connection
+    all alternative names: # how it may be described
+      - Connection
+      - conn
+  db:
+    description: some `database` on some `neo4j` server. There may be many of them.
+    formats: # how it may be coded
+      raw: remote data on server
+      db_name: string with specific name
+      response: specific return type from conn.query
+    all alternative names: # how it may be described
+      - db
+      - database
+      - db_name
+  query:
+    description: a command that i send to neo4j server
+    formats: # how it may be coded
+      string: either hardcoded or formatted
+    all alternative names: # how it may be described
+      - query
+      - command
+      - rule
+  node:
+    description: an entry that exists in some `db`. I access it with queries to server. Can be converted into `row`.
+    formats: # how it may be coded
+      raw: remote data on server
+      string: formatting string like f'({NODE}:{Label})', to be used in `query`
+      part of `query` string: MATCH (n:...) ... RETURN ...
+      response: specific return type from conn.query() method
+    all alternative names: # how it may be described
+      - node
+      - record
+      - response
+  identity:
+    description: a unique ID of a node. I access it with queries to server. Can be requested as `ID(node)`.
+    formats: # how it may be coded
+      raw: remote data on server
+      integer: like on server
+      string: converted from integer
+      part of response: specific return type from conn.query() method
+    all alternative names: # how it may be described
+      - identity
+      - id
+      - identities
+      - id
+      - df.Index (pd.DataFrame index)
+      - field, column, key (part of `dict`, `pd.Series`, etc)
+  variable name:
+    description: whenever i send queries to db, i need to refer to nodes as `(variable_name:Label)...`. I can choose any, but the one in module `neo4j.Columns.NODE` is preferred.
+    formats: # how it may be coded
+      NODE: constant i defined earlier
+      string: custom chosen one
+    all alternative names: # how it may be described
+      - variable name
+      - node variable name
+      - NODE
+      - node
+      - n
+  row:
+    description: an entry that i downloaded from some `db` and remembered into local variable (pd.DataFrame, dict, list, pd.Series, etc). Can be converted into `node`.
+    formats: # how it may be coded
+      dict: node fields = dict keys, node field values = dict values, node ID = in dict keys
+      pd.Series: node fields = Series.index, node field values = Series values, node ID = in Series.index
+      list: list of `dict`/`pd.Series`
+      pd.DataFrame: node fields = DataFrame.columns, node field values = DataFrame values, node ID = DataFrame.index
+    all alternative names: # how it may be described
+      - row
+      - data (some data)
+      - entry
+      - dictionary
+      - definition (some data definition, for example `node definition`)
+      - some contents (for example playlist contents)
+      - settings (for the NodeViewer)
+...

@@ -78,10 +78,6 @@ class TreeFilter( QWidget ):
             self.rule, db_name=self.db_name
             )
         
-        if response is None:
-            log.error( 'failed to get data for the tree view' )
-            return
-        
         for r in response:
             root_node.add_subnode(
                 list( r.data().values() )

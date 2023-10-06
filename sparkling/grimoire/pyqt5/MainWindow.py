@@ -15,7 +15,7 @@ from PyQt5.QtCore import pyqtSignal
 # same project
 from sparkling.common.pyqt5.parentless.MainWindow import (
     MainWindow as ParentlessMainWindow )
-from sparkling.common.pyqt5 import set_actions
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 from sparkling.grimoire.pyqt5.CentralWidget import CentralWidget
         
 # each plugin should have the following file
@@ -69,8 +69,8 @@ class MainWindow( ParentlessMainWindow ):
         
         # signals
         
-        cw.Gui.plugin_pane.REQUEST_PLUGIN_ENABLE.connect( self.__request_plugin_enable_event )
-        cw.Gui.plugin_pane.REQUEST_PLUGIN_DISABLE.connect( self.__request_plugin_disable_event )
+        #cw.Gui.plugin_pane.REQUEST_PLUGIN_ENABLE.connect( self.__request_plugin_enable_event )
+        #cw.Gui.plugin_pane.REQUEST_PLUGIN_DISABLE.connect( self.__request_plugin_disable_event )
         
         self.__init_menu()
         
@@ -84,17 +84,21 @@ class MainWindow( ParentlessMainWindow ):
         
         # I do it once upon init.
         
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
         bar = self.menuBar()
         
         m_view = bar.addMenu( 'View' )        
         actions = [
             {
-                'text': 'Toggle sidebar',
-                'method': self.toggle_sidebar,
-                'shortcut': 'F4',
+                c.identity: 'grimoire/main_window/view/toggle_sidebar',
+                c.text: 'Toggle sidebar',
+                c.method: self.toggle_sidebar,
+                c.shortcut: 'F4',
                 },
             ]
-        set_actions( m_view, actions )
+        c.add_actions( m_view, actions )
         
     def toggle_sidebar( self ):
         

@@ -17,9 +17,12 @@ from sparkling.common.pyqt5.PandasTableModel import PandasTableModel
 # Basic table view that works efficiently with
 # pandas DataFrames. Has some default .css settings.
 class PandasTableView( QTableView ):
+    
+    # Universal widget for viewing a single `pd.DataFrame`
+    # full of strings.
 
-    __MODEL = None
-
+    _MODEL = None
+    
     def __init__( self,
                   parent,
                   *args, **kwargs ):
@@ -33,14 +36,14 @@ class PandasTableView( QTableView ):
         self.setSortingEnabled( True )
 
         # instantly populate
-        self.__MODEL = PandasTableModel( self )
-        self.setModel( self.__MODEL )
+        self._MODEL = PandasTableModel( self )
+        self.setModel( self._MODEL )
 
     def rowCount( self, parent=None ):
-        return self.__MODEL.rowCount()
+        return self._MODEL.rowCount()
 
     def columnCount( self, parent=None ):
-        return self.__MODEL.columnCount()
+        return self._MODEL.columnCount()
     
     def selectedItems( self ):
 
@@ -52,7 +55,10 @@ class PandasTableView( QTableView ):
         if not sel.hasSelection(): return []
         return sel.selectedRows()
       
-    def selectedRowilocs( self ):
+    def selected_rowilocs( self ):
+        
+        # Allows me to get the exact row numbers
+        # that are currently selected.
 
         rowilocs = []
         for item in self.selectedItems():
@@ -61,22 +67,27 @@ class PandasTableView( QTableView ):
             
         return list( set(rowilocs) )
             
-    def selectedSubdf( self ):
+    def selected_subdf( self ):
         
-        if self.__MODEL.rowCount()==0:
+        # Allows me to get a valid `pd.DataFrame`
+        # with currently selected items.
+        
+        if self._MODEL.rowCount()==0:
             return pd.DataFrame()
         
-        rowilocs = self.selectedRowilocs()
-        return self.__MODEL.df.iloc[rowilocs]
+        rowilocs = self.selected_rowilocs()
+        return self._MODEL.df.iloc[rowilocs]
     
     def select_next_row( self, rowiloc, after=True ):
         
-        last_row = self.__MODEL.rowCount()-1
+        # Allows me to safely select a single row.
+        
+        last_row = self._MODEL.rowCount()-1
         next_row = 0 if after else 1
         if last_row>next_row:
             # selecting next row is possible
             if rowiloc>last_row:
-                # current row is already last one
+                # current row is already the last one
                 self.selectRow( last_row if after else last_row-1 )
             else:
                 self.selectRow( rowiloc )
@@ -88,98 +99,75 @@ class PandasTableView( QTableView ):
 
         if len(rowilocs)==0: return
         
-        self.__MODEL.delete_rows( rowilocs )
+        self._MODEL.delete_rows( rowilocs )
         
     def delete_selection( self ):
         
-        rowilocs = self.selectedRowilocs()
+        rowilocs = self.selected_rowilocs()
         if len(rowilocs)==0: return
 
-        self.__MODEL.delete_rows( rowilocs )
+        self._MODEL.delete_rows( rowilocs )
 
         self.select_next_row( rowilocs[0] )
         
     def get_df( self ):
-        return self.__MODEL.df
-        
-    def get_df_index( self ):
-        return self.__MODEL.df.index
-        
-    def get_df_columns( self ):
-        return self.__MODEL.df.columns
+        # For external use only.
+        return self._MODEL.df
 
-    def switch_df( self, df, hidden_colilocs=None ):
+    def switch_df( self, df, columns_to_hide=None ):
         
         # Completely changes current data.
         
-        self.__MODEL.switch_df(df)
-        
-        # make sure rows have appropriate height
-        font_height = self.fontMetrics().height()
-        for rowiloc in range( self.__MODEL.rowCount() ):
-            self.setRowHeight( rowiloc, font_height )
+        self._MODEL.switch_df( df, columns_to_hide=columns_to_hide )
+        self._force_font_metrics()
 
         # set hidden columns
-        if hidden_colilocs is not None:
-            for coliloc in hidden_colilocs:
-                self.setColumnHidden(coliloc,True)
-                
-    def replace_values( self, new_s ):
         
-        # Replaces some df values.
+        if self._MODEL.columns_to_hide is None:
+            return
         
-        self.__MODEL.replace_values( new_s )
+        for coliloc, col in enumerate( self._MODEL.df.columns ):
+            hide = col in self._MODEL.columns_to_hide
+            hidden = self.isColumnHidden(coliloc)
+            if hide and not hidden:
+                self.setColumnHidden( coliloc, True )
+            elif not hide and hidden:
+                self.setColumnHidden( coliloc, False )
                 
-        # make sure rows have appropriate height
-        font_height = self.fontMetrics().height()
-        for rowiloc in range( self.__MODEL.rowCount() ):
-            self.setRowHeight( rowiloc, font_height )
+    def replace_row_series( self, new_s ):
+        
+        # Selectively replaces specific df row values.
+        
+        self._MODEL.replace_row_series( new_s )
+        self._force_font_metrics()
     
     def replace_subdf( self, df ):
-        
-        self.__MODEL.replace_subdf( df )
-                
-        # make sure rows have appropriate height
-        font_height = self.fontMetrics().height()
-        for rowiloc in range( self.__MODEL.rowCount() ):
-            self.setRowHeight( rowiloc, font_height )
+        self._MODEL.replace_subdf( df )
+        self._force_font_metrics()
             
     def add_rows( self, rows ):
         
         # Just adds new rows ignoring the index.
         
-        self.__MODEL.add_rows( rows )
-        
-        # make sure rows have appropriate height
-        font_height = self.fontMetrics().height()
-        for rowiloc in range( self.__MODEL.rowCount() ):
-            self.setRowHeight( rowiloc, font_height )
+        self._MODEL.add_rows( rows )
+        self._force_font_metrics()
             
     def add_column( self, column, values ):
-        
-        self.__MODEL.add_column( column, values )
-
-        # make sure rows have appropriate height
-        font_height = self.fontMetrics().height()
-        for rowiloc in range( self.__MODEL.rowCount() ):
-            self.setRowHeight( rowiloc, font_height )
+        self._MODEL.add_column( column, values )
+        self._force_font_metrics()
             
     def add_df( self, df ):
-        
-        self.__MODEL.add_df( df )
-        
+        self._MODEL.add_df( df )
+        self._force_font_metrics()
+            
+    def _force_font_metrics( self ):
+               
         # make sure rows have appropriate height
         font_height = self.fontMetrics().height()
-        for rowiloc in range( self.__MODEL.rowCount() ):
+        for rowiloc in range( self._MODEL.rowCount() ):
             self.setRowHeight( rowiloc, font_height )
-            
-    def _custom_add_begin( self ):
-        # For subclasses only.
-        self.__MODEL.layoutAboutToBeChanged.emit()
-    def _custom_add_end( self ):
-        # For subclasses only.
-        self.__MODEL.layoutChanged.emit()
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.12
-# removed unused and unstable functions
+# end 2023.10.03
+# allowed descendants to access `model`
+# hidden columns ok

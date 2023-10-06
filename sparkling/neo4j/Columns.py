@@ -5,45 +5,18 @@
 
 NODE = 'n'
 LABEL_SEPARATOR = ':'
-DEFAULT_DB = 'neo4j'
+DB_DEFAULT = 'neo4j'
 MULTIVALUE_SEPARATOR = '; '
 
 class Columns:
     
+    # Reserved node field names.
+    
     id = 'id' # ID(node)
+    db_name = 'db_name' # which database does this node belong to
     
-    # custom
-    
-    comment = 'comment' # own comment
-    
-    desc = 'desc' # general description
-    
-    path = 'path' # full path to disk/net location, etc
-    
-    timestamp = 'timestamp'
-    title = 'title' # user-friendly title
-    
-    # reserved and invalid
-    
-    _NEO4J_LABELS = 'neo4j Label'
-    _PROTECTED = 'protected'
-    
-    @staticmethod
-    def is_protected( dictionary ):
-        
-        # Standard way to detect whether
-        # this row is protected.
-        
-        c = Columns
-        
-        if not c._PROTECTED in dictionary:
-            return False
-        
-        if dictionary[c._PROTECTED] == '':
-            return False
-        
-        return True
+    neo4j_labels = 'neo4j Label' # can contain multiple ones
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.02
-# update
+# end 2023.10.06
+# added `db_name`

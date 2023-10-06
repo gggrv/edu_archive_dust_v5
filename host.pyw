@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import ( QWidget, QMainWindow, QApplication,
 from sparkling import MainPaths
 from sparkling.common import ( readf, unique_loc )
 from sparkling.common.SomeDoer import SomeDoer
-from sparkling.common.pyqt5 import ( set_actions )
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 
 class CentralWidget( QWidget ):
     
@@ -159,6 +159,9 @@ class HostApp( QApplication ):
         
         # Creates an icon in system tray of icons.
         # Called once upon init.
+        
+        # short name for convenience
+        c = ColumnsActionDefinitions
 
         self.Gui.tray_button = QSystemTrayIcon(
             QIcon( self.Files.ICON_TRAY ), # can be absent
@@ -169,24 +172,23 @@ class HostApp( QApplication ):
         
         actions = [
             {
-                'text': 'Open application folder',
-                'method': self.open_folder,
+                c.identity: 'dust/host/tray/open_app_folder',
+                c.text: 'Open application folder',
+                c.method: self.open_folder,
                 },
             {
-                'text': 'Reload .css',
-                'method': self.reload_css,
+                c.identity: 'dust/host/tray/reload_css',
+                c.text: 'Reload .css',
+                c.method: self.reload_css,
                 },
-            #{
-            #    'text': 'Generate missing data files',
-            #    'method': self.reload_css,
-            #    },
             {
-                'text': 'Exit',
-                'method': self.exit_mainloop,
+                c.identity: 'dust/host/tray/close_app',
+                c.text: 'Exit',
+                c.method: self.exit_mainloop,
                 },
             ]
         
-        set_actions( menu, actions )
+        c.add_actions( menu, actions )
 
         # assemble
         self.Gui.tray_button.setContextMenu( menu )

@@ -15,8 +15,10 @@ import pandas as pd
 from sparkling.common.SomeDoer import SomeDoer as BaseSomeDoer
 from sparkling.common import ( readf_yaml, readf, savef, unique_loc )
 from sparkling.common.pyqt5.parentless.FileRenamerPresets import FileRenamerPresets
-from sparkling.grimoire.Connection import Connection, NODE, c, DEFAULT_DB
-from sparkling.grimoire.PlaylistManager import PlaylistManager
+from sparkling.grimoire.GrimoireNeo4jConnection import (
+    Connection,
+    NODE, DB_DEFAULT
+    )
 
 def generate_neo4j_settings( src ):
         
@@ -84,10 +86,6 @@ class MainDoer( BaseSomeDoer ):
         
         FileRenamer = None
         
-    class Doers:
-        
-        PlaylistManager = None
-        
     conn = None # here will be a single connection
     
     def __init__( self,
@@ -107,8 +105,6 @@ class MainDoer( BaseSomeDoer ):
         self.Files.PLAYLIST_PLUGINS = self.set_file( self.Files.PLAYLIST_PLUGINS )
         # presets
         self.Presets.FileRenamer = FileRenamerPresets( self.Files.RENAMING_RULES )
-        # doers
-        self.Doers.PlaylistManager = PlaylistManager( self.Folders.PLAYLISTS )
     
     def __establish_connection( self ):
         
@@ -203,7 +199,7 @@ class MainDoer( BaseSomeDoer ):
             unique_loc(),
             'Label1:Label2',
             'Example Renaming Preset',
-            DEFAULT_DB,
+            DB_DEFAULT,
             "r'C:\custom_folder' + '\\' + os.path.splitext(row[c.path])[1]",
             description
             )

@@ -264,7 +264,7 @@ class MainDoer( SomeDoer ):
             log.error( 'plugin notetaking, no valid playlist_viewer found' )
             return
         
-        df = playlist_viewer.selectedSubdf()
+        df = playlist_viewer.selected_subdf()
         if not c.path in df.columns: return
         
         # obtain unique roots

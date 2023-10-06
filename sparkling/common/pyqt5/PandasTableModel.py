@@ -18,6 +18,7 @@ from PyQt5.QtCore import ( Qt, QAbstractTableModel )
 class PandasTableModel( QAbstractTableModel ):
     
     df = None
+    columns_to_hide = None
     
     def __init__( self,
                   parent=None,
@@ -26,6 +27,7 @@ class PandasTableModel( QAbstractTableModel ):
             parent, *args, **kwargs )
         
         self.df = pd.DataFrame()
+        self.columns_to_hide = None
 
     def rowCount( self, parent=None ):
         return len( self.df.index )
@@ -69,6 +71,8 @@ class PandasTableModel( QAbstractTableModel ):
     
     def add_column( self, column, values ):
         
+        self.layoutAboutToBeChanged.emit()
+        
         if type( values ) == list:
             
             if not len(values)==self.rowCount():
@@ -79,6 +83,8 @@ class PandasTableModel( QAbstractTableModel ):
         else:
             self.df[column] = str(values)
 
+        self.layoutChanged.emit()
+        
     def add_rows( self, rows ):
 
         self.layoutAboutToBeChanged.emit()
@@ -111,10 +117,11 @@ class PandasTableModel( QAbstractTableModel ):
         
         self.layoutChanged.emit()
         
-    def switch_df( self, df ):
+    def switch_df( self, df, columns_to_hide=None ):
 
         self.layoutAboutToBeChanged.emit()
         self.df = df
+        self.columns_to_hide = columns_to_hide
         self.layoutChanged.emit()
         
     def sort( self, coliloc, sort_order ):
@@ -142,7 +149,7 @@ class PandasTableModel( QAbstractTableModel ):
             
         self.layoutChanged.emit()
             
-    def replace_values( self, new_s ):
+    def replace_row_series( self, new_s ):
         
         self.layoutAboutToBeChanged.emit()
         

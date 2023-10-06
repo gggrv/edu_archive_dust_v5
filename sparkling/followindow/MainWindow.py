@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import ( QWidget, QVBoxLayout, QLabel )
 # same project
 from sparkling.common.pyqt5.parentless.MainWindow import (
     MainWindow as ParentlessMainWindow )
-from sparkling.common.pyqt5 import ( append_actions )
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
    
 FOLLOWINDOW_MANUAL = """What to do?
 1) Hold right mouse button.
@@ -299,15 +299,20 @@ class MainWindow( ParentlessMainWindow ):
     def autorun( self, host_app ):
         
         # add custom menus to tray
+        
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
         actions = [
             {
-                'text': 'Toggle followindow',
-                'method': self.tray_menu_toggle,
-                'icon': self._own_doer.Files.ICON,
+                c.identity: 'dust/host/tray/toggle_followindow',
+                c.text: 'Toggle followindow',
+                c.method: self.tray_menu_toggle,
+                c.icon: self._own_doer.Files.ICON,
                 },
             ]
         
-        append_actions( host_app.Gui.tray_button.contextMenu(), actions )
+        c.add_actions( host_app.Gui.tray_button.contextMenu(), actions )
         
         # allow to launch custom programs
         # via followindow

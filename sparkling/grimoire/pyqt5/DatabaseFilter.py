@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import ( QWidget, QVBoxLayout,
     )
 # same project
 from sparkling.neo4j import NODE
-from sparkling.common.pyqt5 import ( set_actions, remove_actions )
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer, Playlist
 from sparkling.grimoire.PlaylistManager import DEFAULT_PLAYLIST_SCREEN_NAME
 
@@ -79,11 +79,14 @@ class DatabaseFilter( QWidget ):
         
         # Call once upon init.
         
-        remove_actions( self.Gui.result_view )
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
         actions = [
             {
-                'text': 'Send to current playlist',
-                'method': self.__send_selection_to_current_active_playlist,
+                c.identity: 'grimoire/dbfilter/row/send_to_playlist',
+                c.text: 'Send to current playlist',
+                c.method: self.__send_selection_to_current_active_playlist,
                 },
             #{
             #    'text': 'Open file',
@@ -99,7 +102,12 @@ class DatabaseFilter( QWidget ):
             #    },
             ]
         
-        set_actions( self.Gui.result_view, actions )
+        # i want to completely replace all
+        # the actions
+        # TODO
+        # remove only specific ones
+        c.remove_actions( self.Gui.result_view )
+        c.add_actions( self.Gui.result_view, actions )
         
     def conn_changed_event( self, conn ):
         self.Gui.result_view.conn_changed_event( conn )
@@ -144,7 +152,7 @@ class DatabaseFilter( QWidget ):
         
     def __send_selection_to_current_active_playlist( self ):
         
-        df = self.Gui.result_view.selectedSubdf()
+        df = self.Gui.result_view.selected_subdf()
         self.SEND_TO_CURRENT_ACTIVE_PLAYLIST.emit( df )
         
 #---------------------------------------------------------------------------+++
