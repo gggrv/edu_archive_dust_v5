@@ -69,6 +69,8 @@ def _delrem_df( df ):
     return exs
 
 class PlaylistViewer( NodeViewer ):
+
+    SEND_CONTENTS = pyqtSignal( list, dict )
     
     class Presets:
         
@@ -137,6 +139,11 @@ class PlaylistViewer( NodeViewer ):
                  c.shortcut: 'Alt+Left',
                  },
             {
+                c.identity: 'grimoire/playlist_viewer/row/send_somewhere',
+                c.text: 'Send...',
+                c.method: self._cm_send_somewhere,
+                },
+            {
                 c.identity: 'grimoire/playlist_viewer/row/del_from_playlist',
                 c.text: 'Delete from playlist',
                 c.method: self.del_from_view,
@@ -189,21 +196,6 @@ class PlaylistViewer( NodeViewer ):
         self._conn.fill_reserved_columns( df, db_name=p[c.db_name] )
         
         self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE )
-            
-    def add_identities( self, identities ):
-        
-        # Appends existing internal data with some identities.
-        
-        raise NotImplementedError
-        
-        # add to own playlist
-        self._playlist.add_identities( identities, save=True )
-        
-        # add to view without redownloading existing data
-        query = self._conn.standard_identities_query( identities )
-        temp_p = Playlist( 'temp', db_name=self._playlist.db_name(), playlist_data=query )
-        df = temp_p.df(self._conn)
-        super( PlaylistViewer, self ).add_df( df )
         
     def mouseDoubleClickEvent( self, ev ):
     
@@ -594,7 +586,25 @@ class PlaylistViewer( NodeViewer ):
                 
     def _cm_open_folder( self ):
         _open_path( self.selected_subdf(), dirname=True )
+        
+    def _cm_send_somewhere( self ):
+        
+        # I want to send selected nodes somewhere.
+        # Don't know where yet.
+        
+        # Different widgets download different
+        # node fields from db, so I should not send
+        # the whole `df` - `identities` are enough to
+        # enable the recipient redownload
+        # all the necessary data.
+        
+        subdf = self.selected_subdf()
+        if len( subdf.index ) > 0:
+            identities = list( subdf.index.astype(str) )
+            self.SEND_CONTENTS.emit( identities, self._settings )
+        else:
+            log.debug( 'no selection, nothing to send' )
             
 #---------------------------------------------------------------------------+++
-# end 2023.10.06
-# simplified
+# end 2023.10.07
+# added `_cm_send_somewhere`

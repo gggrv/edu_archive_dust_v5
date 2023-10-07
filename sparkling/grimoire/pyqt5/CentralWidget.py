@@ -9,9 +9,11 @@ log = logging.getLogger(__name__)
 
 # embedded in python
 # pip install
+import pandas as pd
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import ( QWidget, QFileDialog,
-    QHBoxLayout, QSplitter, QTabWidget, QVBoxLayout )
+    QHBoxLayout, QSplitter, QTabWidget, QVBoxLayout,
+    QDialog, QComboBox, QPushButton, QDialogButtonBox )
 # same project
 from sparkling.grimoire.GrimoireNeo4jConnection import Connection
 # playlist selector
@@ -119,6 +121,8 @@ class CentralWidget( QWidget ):
         self.Gui.playlist_selector.PLAYLIST_EDITED.connect( self._playlist_edited_event )
         self.Gui.tab_widget.tabCloseRequested.connect( self._playlist_close_event )
         
+        self.Gui.database_filter.Gui.result_view.SEND_CONTENTS.connect( self._sent_contents_receive_event )
+        
         # autorun
         
         # set all connections
@@ -177,6 +181,7 @@ class CentralWidget( QWidget ):
             
             w.set_connection( self._own_doer.conn )
             w.set_settings( settings )
+            w.SEND_CONTENTS.connect( self._sent_contents_receive_event )
             
             c = ColumnsPlaylist
             self.Gui.tab_widget.addTab( w, row[c.title] )
@@ -225,6 +230,85 @@ class CentralWidget( QWidget ):
         del w
         
         self.Gui.tab_widget.removeTab( tabiloc )
+        
+    def _sent_contents_receive_event( self, identities, settings ):
+        
+        # I end up here whenever I want to
+        # send `df` somewhere.
+        
+        # most likely i want to add `identities` from `df.index`
+        # into some existing playlist
+        
+        # any other functionality at this moment is not supported
+        
+        # do i have any playlists that can accept
+        # `identities` with such `settings`?
+        
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        # make sure i have all the necessary parties
+        if self.Gui.playlist_selector is None:
+            log.error( 'missing playlist_selector, can\'t accept' )
+            return
+        if not c.db_name in settings:
+            log.error( 'missing `db_name`, can\'t accept' )
+            return
+        
+        # get all compatible playlists names
+        playlists = self.Gui.playlist_selector.get_df()
+        mask = playlists[c.db_name] == settings[c.db_name]
+        playlists = playlists[mask]
+        
+        # make sure i have suitable destination playlists
+        if len(playlists) == 0:
+            log.error( 'no suitable destination playlists found, not doing anything' )
+            return
+            
+        # ask confirmation
+        # help:
+        # https://www.pythonguis.com/tutorials/pyqt-dialogs/
+        # https://stackoverflow.com/questions/5760622/pyqt4-create-a-custom-dialog-that-returns-parameters
+        
+        dlg = QDialog()
+        dlg.setWindowTitle( 'Send where?' )
+        
+        dlg.cbx = QComboBox( parent=dlg )
+        dlg.cbx.addItems( playlists[c.title] )
+        
+        dlg.button_box = QDialogButtonBox( parent=dlg )
+        dlg.button_box.setStandardButtons(
+            QDialogButtonBox.Ok
+            |QDialogButtonBox.Cancel
+            )
+        dlg.button_box.accepted.connect( dlg.accept )
+        dlg.button_box.rejected.connect( dlg.reject )
+        
+        lyt = QVBoxLayout()
+        lyt.addWidget( dlg.cbx )
+        lyt.addWidget( dlg.button_box )
+        dlg.setLayout( lyt )
+        
+        if dlg.exec_():
+            
+            cbxiloc = dlg.cbx.currentIndex()
+            
+            # update the `settings`
+            
+            chosen_playlist = playlists.iloc[cbxiloc]
+            identity = chosen_playlist.name
+            settings = dict( chosen_playlist.dropna() )
+            
+            if c.identities in settings:
+                new = list( settings[ c.identities ] )
+                new.extend(identities)
+                settings[ c.identities ] = ' '.join( set(new) )
+            else:
+                settings[ c.identities ] = ' '.join( identities )
+                
+            # write it to db
+            df = pd.DataFrame( [settings], index=[identity] )
+            self.Gui.playlist_selector._accept_programmatic_edits( df )
         
     def _import_csv_to_playlist_event( self, p ):
         

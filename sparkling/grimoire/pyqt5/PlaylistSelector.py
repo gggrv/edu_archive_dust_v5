@@ -161,6 +161,30 @@ class PlaylistSelector( NodeViewer ):
         
         super( PlaylistSelector, self ).launch_selection_editor()
         
+    def _accept_programmatic_edits( self, df ):
+        
+        # For careful manual use only.
+        
+        # I somehow programatically edited existing playlists
+        # data.
+        # I want to accept these changes.
+        # It is important that I only edit existing -
+        # do not delete/create anything.
+        
+        # Most likely I edited `auto query` or `identities`.
+        
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        # i assume everything is clean and valid
+        
+        self._conn.replace_nodes( df, self._settings[c.db_name] )
+        self.replace_subdf( df )
+        self.reapply_columns_to_hide( columns_to_hide=PLAYLIST_COLUMNS_TO_SHOW, appropriate_reverse=True )
+        
+        # tell everyone to update
+        self.PLAYLIST_EDITED.emit( df )
+        
     def _accept_selection_edits_event( self, changes, db_name ):
     
         new_df = super( PlaylistSelector, self )._accept_selection_edits_event( changes, db_name )
