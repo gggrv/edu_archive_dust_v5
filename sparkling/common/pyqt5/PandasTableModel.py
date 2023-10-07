@@ -117,11 +117,10 @@ class PandasTableModel( QAbstractTableModel ):
         
         self.layoutChanged.emit()
         
-    def switch_df( self, df, columns_to_hide=None ):
+    def switch_df( self, df ):
 
         self.layoutAboutToBeChanged.emit()
         self.df = df
-        self.columns_to_hide = columns_to_hide
         self.layoutChanged.emit()
         
     def sort( self, coliloc, sort_order ):

@@ -113,16 +113,28 @@ class PandasTableView( QTableView ):
     def get_df( self ):
         # For external use only.
         return self._MODEL.df
-
-    def switch_df( self, df, columns_to_hide=None ):
+    
+    def reapply_columns_to_hide( self, columns_to_hide=None, appropriate_reverse=False ):
         
-        # Completely changes current data.
+        # make sure i have `cols to hide`, not `cols to show`.
+        if appropriate_reverse:
+            
+            # hide all
+            cols_to_hide = list( self._MODEL.df.columns )
+            
+            # unhide specific
+            for col in columns_to_hide: # actually show
+                if col in cols_to_hide:
+                    cols_to_hide.remove( col )
+                    
+            # assign correct variable value
+            columns_to_hide = cols_to_hide
+    
+        # remember
+        self._MODEL.columns_to_hide = columns_to_hide
         
-        self._MODEL.switch_df( df, columns_to_hide=columns_to_hide )
-        self._force_font_metrics()
-
-        # set hidden columns
-        
+        # proceed
+    
         if self._MODEL.columns_to_hide is None:
             return
         
@@ -133,6 +145,15 @@ class PandasTableView( QTableView ):
                 self.setColumnHidden( coliloc, True )
             elif not hide and hidden:
                 self.setColumnHidden( coliloc, False )
+
+    def switch_df( self, df, columns_to_hide=None, appropriate_reverse=False ):
+        
+        # Completely changes current data.
+        
+        self._MODEL.switch_df( df )
+        self._force_font_metrics()
+
+        self.reapply_columns_to_hide( columns_to_hide=columns_to_hide, appropriate_reverse=appropriate_reverse )
                 
     def replace_row_series( self, new_s ):
         
