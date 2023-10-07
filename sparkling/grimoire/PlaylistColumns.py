@@ -166,7 +166,7 @@ class ColumnsPlaylist( Columns ):
         
         query = f'MATCH ({NODE}:{NEO4J_LABEL_PLAYLIST}) RETURN {NODE}'
         response = conn.query( query, db_name=DB_DEFAULT )
-        df = conn.response2df( response, identity=False ) # i already have `identity` in `index`
+        df = conn.response2df( response, identity=True )
         
         return df
             
@@ -196,7 +196,7 @@ class ColumnsPlaylist( Columns ):
     
         # send this playlist definition specifically to default db
         response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
-        df = conn.response2df( response, identity=False ) # i already have `identity` in `index`
+        df = conn.response2df( response, identity=True ) # i already have `identity` in `index`, but having it in column as well proved to be useful
                 
         return df
             
