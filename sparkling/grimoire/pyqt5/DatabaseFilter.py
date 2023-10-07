@@ -12,33 +12,59 @@ import pandas as pd
 # pip install
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import ( QWidget, QVBoxLayout,
-    QLineEdit, QHBoxLayout, QLabel
+    QLineEdit, QHBoxLayout, QLabel, QComboBox
     )
 # same project
-from sparkling.neo4j import NODE
+from sparkling.grimoire.PlaylistColumns import (
+    ColumnsPlaylist,
+    NODE, DB_DEFAULT,
+    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
+    SEARCH_INDEX_DEFAULT
+    )
+from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
+# common
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
-from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer, Playlist
-from sparkling.grimoire.PlaylistManager import DEFAULT_PLAYLIST_SCREEN_NAME
 
-PLAYLIST_BASENAME = 'temp'
-PLACEHOLDER_QUERY = f'MATCH ({NODE}) RETURN {NODE} LIMIT 50'
+QUERY_PLACEHOLDER = f'MATCH ({NODE}) RETURN {NODE} LIMIT 50'
 
 class DatabaseFilter( QWidget ):
     
-    SEND_TO_CURRENT_ACTIVE_PLAYLIST = pyqtSignal( pd.DataFrame )
+    # I can send queries to any db by manually changing
+    # any playlist's `auto query` field in `PlaylistSelector`.
+    # This widget allows me have a convenient text input field,
+    # so that I don't need to navigate `Playlistselector`
+    # and edit `nodes` every single time I want to search for
+    # something.
+    
+    # I treat this widget like a complex container
+    # for a custom special `PlaylistViewer`.
+    
+    # That custom special `PlaylistViewer` thinks
+    # that is works with the `playlist` named `search`.
+    # That `playlist` is virtual - I don't save it to `db`.
+    # Every time I destroy this widget, this `playlist` is lost.
+    
+    _conn = None
+    _virtual_settings = None
     
     class Gui:
-        current_playlist_lab = None
         searchbar = None
         result_view = None
-    
-    __db_name = None
     
     def __init__( self,
                   parent=None,
                   *args, **kwargs ):
         super( DatabaseFilter, self ).__init__(
             parent, *args, **kwargs )
+        
+        # create my custom virtual `playlist` for searches
+        # i perform searches by changing the `auto_query`
+        # and `db_name`
+        self._virtual_settings = {
+            ColumnsPlaylist.title: 'search',
+            ColumnsPlaylist.db_name: DB_DEFAULT,
+            ColumnsPlaylist.auto_query: QUERY_PLACEHOLDER,
+            }
         
         # layout
         
@@ -48,24 +74,27 @@ class DatabaseFilter( QWidget ):
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
         
-        # controls
+        # search controls
         
-        self.Gui.current_playlist_lab = QLabel( DEFAULT_PLAYLIST_SCREEN_NAME, parent=self )
         self.Gui.searchbar = QLineEdit( parent=self )
-        self.Gui.result_view = PlaylistViewer( parent=self )
         
-        query = PLACEHOLDER_QUERY
+        query = self._virtual_settings[ColumnsPlaylist.auto_query]
         self.Gui.searchbar.setPlaceholderText( query )
         self.Gui.searchbar.setText( query )
         
-        self.Gui.result_view.setAcceptDrops(False)
-        self.Gui.result_view.can_host_current_active_playlist = False
+        hbox.addWidget( self.Gui.searchbar )
+        
+        # results view
+        
+        self.Gui.result_view = PlaylistViewer(
+            parent=self,
+            selection_changed_event=False,
+            accept_drops=False # don't want to add data in db through it
+            )
         
         # assemble
         
-        lyt.addWidget( self.Gui.current_playlist_lab )
         lyt.addLayout( hbox )
-        lyt.addWidget( self.Gui.searchbar )
         lyt.addWidget( self.Gui.result_view )
         self.setLayout( lyt )
         
@@ -73,7 +102,7 @@ class DatabaseFilter( QWidget ):
         
         # autorun
         
-        self.Gui.searchbar.editingFinished.connect( self.__submit_search_event )
+        self.Gui.searchbar.editingFinished.connect( self._submit_search_event )
         
     def __init_context_menu( self ):
         
@@ -82,79 +111,74 @@ class DatabaseFilter( QWidget ):
         # short name for convenience
         c = ColumnsActionDefinitions
         
-        actions = [
-            {
-                c.identity: 'grimoire/dbfilter/row/send_to_playlist',
-                c.text: 'Send to current playlist',
-                c.method: self.__send_selection_to_current_active_playlist,
-                },
-            #{
-            #    'text': 'Open file',
-            #    'method': self.Gui.result_view.open_file,
-            #    },
-            #{
-            #    'text': 'Open file location',
-            #    'method': self.Gui.result_view.open_folder,
-            #    },
-            #{
-            #    'text': 'Delete from view',
-            #    'method': self.Gui.result_view.delete_selection,
-            #    },
-            ]
+        # it would be nice if i could perform
+        # most of the playlist operations from this gui
+        # widget as well (editing, deleting, etc) (except for adding)
         
-        # i want to completely replace all
-        # the actions
-        # TODO
-        # remove only specific ones
-        c.remove_actions( self.Gui.result_view )
-        c.add_actions( self.Gui.result_view, actions )
+        modifications = [
+        {
+            c.identity: 'grimoire/playlist_viewer/row/rename',
+            c.enabled: False,
+            c.visible: False,
+            },
+        {
+            c.identity: 'grimoire/playlist_viewer/row/del_from_playlist',
+            c.enabled: False,
+            c.visible: False,
+            },
+        ]
         
-    def conn_changed_event( self, conn ):
-        self.Gui.result_view.conn_changed_event( conn )
+        c.modify_actions( self, modifications )
         
-    def set_current_active_playlist( self, p ):
+    def set_connection( self, conn ):
         
-        # change db name
-        self.Gui.current_playlist_lab.setText( p.screen_name() )
-        self.__db_name = p.db_name()
+        self._conn = conn
         
-        if not self.isVisible():
-            # no point to redownload data into hidden
-            # widget
-            return
+        self.Gui.result_view.set_connection( conn )
         
-        # redownload data
-        old_p = self.Gui.result_view._playlist
+        # populate widget with search results
+        self.Gui.result_view.set_settings( self._virtual_settings )
         
-        p = Playlist(
-            src=PLAYLIST_BASENAME,
-            db_name=self.__db_name,
-            playlist_data=PLACEHOLDER_QUERY
-            ) if old_p is None else \
-            Playlist(
-                src=old_p.src(),
-                db_name=self.__db_name,
-                playlist_data=old_p.autoquery()
-                )
+    def _submit_search_event( self ):
         
-        self.Gui.result_view.switch_playlist( p )
-        
-    def __submit_search_event( self ):
-        
-        self.Gui.result_view.switch_playlist( None )
-        
+        # make sure i have some query
         query = self.Gui.searchbar.text().strip()
-        if query=='':
-            return
+        query = query.strip()
         
-        p = Playlist( PLAYLIST_BASENAME, db_name=self.__db_name, playlist_data=query )
-        self.Gui.result_view.switch_playlist( p )
+        # short name for convenience
+        c = ColumnsPlaylist
         
-    def __send_selection_to_current_active_playlist( self ):
+        # detect my intention
+        if not c.query_is_code(query):
+            
+            # instead of sending a direct query, i want to
+            # parse plaintext fields without paying attention to
+            # case registry
+            
+            # convert paintext into a valid db search index query
+            query = self._conn.convert_index_search( SEARCH_INDEX_DEFAULT, query )
+            
+        # proceed as usual
         
-        df = self.Gui.result_view.selected_subdf()
-        self.SEND_TO_CURRENT_ACTIVE_PLAYLIST.emit( df )
+        # it may happen that the default search index does
+        # not exist yet on this db. in this case something will
+        # silently fail, i need to manually monitor
+        # such things and be aware of them
+        # TODO
+        # automatically manage search indexes
+        # on db using custom PresetsManager
+            
+        # at this moment i can safely
+        # send query to db
+            
+        # replace settings
+        # to trigger download
+        
+        settings = self.Gui.result_view.settings()
+        settings[ c.auto_query ] = query
+        
+        self.Gui.result_view.set_settings( settings )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
-# switched to autoquery
+# end 2023.10.07
+# simplified

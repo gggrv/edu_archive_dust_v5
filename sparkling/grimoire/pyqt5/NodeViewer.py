@@ -59,6 +59,7 @@ class NodeViewer( PandasTableView ):
     def __init__( self,
                   parent=None,
                   node_editor_class=DfEditor,
+                  accept_drops=True,
                   *args, **kwargs ):
         super( NodeViewer, self ).__init__(
             parent=parent, *args, **kwargs )
@@ -69,7 +70,7 @@ class NodeViewer( PandasTableView ):
         
         # appearance
         self.setWordWrap( False )
-        self.setAcceptDrops(True)
+        self.setAcceptDrops( accept_drops )
         self.setContextMenuPolicy( Qt.ActionsContextMenu )
         
         # interactions
@@ -245,14 +246,7 @@ class NodeViewer( PandasTableView ):
             },
         ]
         
-        # iterate context menu
-        for act in self.actions():
-            
-            identity = act.get_identity()
-            
-            for mod in modifications:
-                if identity in mod[c.identity]:
-                    act.accept_modification( mod )
+        c.modify_actions( self, modifications )
     
     def del_from_view( self ):
         

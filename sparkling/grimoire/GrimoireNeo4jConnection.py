@@ -15,12 +15,13 @@ from sparkling.neo4j.Connection import Connection as BaseConnection
 from sparkling.grimoire.GrimoireNeo4jColumns import (
     Columns,
     NODE, DB_DEFAULT,
-    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR
+    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
+    SEARCH_INDEX_DEFAULT
     )
 from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist, NEO4J_LABEL_PLAYLIST
 # common
 from sparkling.common import unique_loc
-
+    
 class Connection( BaseConnection ):
     
     # Custom connection to Neo4j server
@@ -170,7 +171,37 @@ class Connection( BaseConnection ):
             # order is important, because i chain return
             # values in order to reduce the number of server requests
             replace_labels()
+
+    def _create_default_full_text_search_index( self, db_name ):
+        
+        # Creates default `full-text search index` on all `nodes`
+        # in chosen `db`.
+        
+        # in order to do parse my db, i need to separately
+        # set up `full-text search` on my `neo4j server`
+        # help:
+        # https://neo4j.com/docs/cypher-manual/current/indexes-for-full-text-search/
+        
+        c = ColumnsPlaylist
+        
+        # TODO
+        # search index presets?
+        
+        index_name = SEARCH_INDEX_DEFAULT
+        
+        fields = [
+            c.path,
+            c.title,
+            c.desc,
+            c.comment,
+            c.timestamp,
+            c.album,
+            ]
+        
+        command = self.convert_index_definition( index_name, fields )
+        
+        self.query( command, db_name=db_name )
             
 #---------------------------------------------------------------------------+++
-# end 2023.10.03
-# allow to manage playlists from here
+# end 2023.10.07
+# added `_create_default_full_text_search_index`

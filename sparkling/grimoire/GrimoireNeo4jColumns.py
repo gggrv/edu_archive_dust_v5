@@ -9,6 +9,11 @@ from sparkling.neo4j.Columns import (
     LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
     )
 
+# name of predefined search indexes
+# TODO
+# move them to dedicated PresetsManager
+SEARCH_INDEX_DEFAULT = 'defaultFields'
+
 class Columns( BaseColumns ):
     
     # I utilize `neo4j` nodes in a specific way.

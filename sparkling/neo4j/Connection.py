@@ -106,6 +106,37 @@ def _convert_node( variable_name, label, param_dict=None ):
         
     return command
 
+def _convert_index_definition( index_name, fields ):
+    
+    # Creates default `full-text search index` on all `nodes`
+    # in chosen `db`.
+    
+    # in order to do parse my db, i need to separately
+    # set up `full-text search` on my `neo4j server`
+    # help:
+    # https://neo4j.com/docs/cypher-manual/current/indexes-for-full-text-search/
+    
+    formatted_fields = ', '.join([ 'n.' + field for field in fields ])
+    
+    # it will fail because apparently i need to specify labels
+    # without labels = fail
+    # so for now i'm not using this function and managing
+    # db indexes manually
+    command = f'CREATE FULLTEXT INDEX {index_name} IF NOT EXISTS' \
+        f' FOR (n)' \
+        f' ON EACH [{formatted_fields}]'
+        
+    return command
+    
+def _convert_index_search( index_name, query ):
+    
+    # Allows to send any `plaintext` query to server.
+     
+    query = _convert_to_safe_string( query )
+        
+    command =  f'CALL db.index.fulltext.queryNodes("{index_name}", {query}) YIELD node RETURN node as {NODE}'
+    return command
+    
 def _df2nodes( df, label=None ):
     
     c = Columns
@@ -149,6 +180,8 @@ class Connection:
     convert_node = staticmethod( _convert_node )
     convert_parameters = staticmethod( _convert_parameters )
     convert_to_safe_string = staticmethod( _convert_to_safe_string )
+    convert_index_definition = staticmethod( _convert_index_definition )
+    convert_index_search = staticmethod( _convert_index_search )
     
     df2nodes = staticmethod( _df2nodes )
     
@@ -206,7 +239,7 @@ class Connection:
         
     def query( self, query, db_name=None ):
         
-        # Allows to send any query to server.
+        # Allows to send any `cipher` code query to server.
         
         if self.__driver is None:
             raise InvalidConnectionError

@@ -8,8 +8,10 @@
 from sparkling.grimoire.GrimoireNeo4jColumns import (
     Columns,
     NODE, DB_DEFAULT,
-    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR
+    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
+    SEARCH_INDEX_DEFAULT
     )
+from sparkling.neo4j.Columns import QUERY_KEYWORDS
 # common
 from sparkling.common import unique_loc
 # enums
@@ -17,7 +19,28 @@ from sparkling.common.enums.Consent import EConsent
 
 NEO4J_LABEL_PLAYLIST = 'DustGrimoirePlaylist'
 
+def _query_is_code( query ):
+    
+    # I may want to send
+    # 1) actual database queries
+    # 2) plaintext search.
+    # In order to detect, what to do,
+    # I look as uppercase/lowercase.
+    
+    # Uppercase = I want to send queries,
+    # any other combination  = I want to perform plaintext search.
+    
+    # Very primitive, good enough for current task.
+    
+    for word in QUERY_KEYWORDS:
+        if word in query:
+            return True
+        
+    return False
+    
 class ColumnsPlaylist( Columns ):
+    
+    query_is_code = staticmethod( _query_is_code )
     
     # nodes from which database does this playlist hold?
     # i expect a single playlist to contain
@@ -154,6 +177,8 @@ class ColumnsPlaylist( Columns ):
     @staticmethod    
     def new_playlist( conn ):
         
+        # For convenient use from GUI, code, anywhere.
+        
         # `Playlists` are `nodes` in `default db`.
         # `Playlist` contains `nodes` from any single
         # chosen `db`.
@@ -178,7 +203,22 @@ class ColumnsPlaylist( Columns ):
         df = conn.response2df( response, identity=False ) # i already have `identity` in `index`
                 
         return df
+            
+    @staticmethod    
+    def _new_custom_playlist( conn, settings ):
+        
+        # For manual use from code.
+        # I assume that I know what I am doing and don't
+        # need any additional verifications.
+    
+        node = conn.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=settings )
+    
+        # send this playlist definition specifically to default db
+        response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
+        df = conn.response2df( response, identity=False ) # i already have `identity` in `index`
+                
+        return df
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.06
-# added `get_query`, others
+# end 2023.10.07
+# added `_new_custom_playlist`

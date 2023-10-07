@@ -21,7 +21,7 @@ from sparkling.grimoire.pyqt5.PlaylistSelector import PlaylistSelector, ColumnsP
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
 from sparkling.grimoire.pyqt5.TabWidgetForPlaylistViewers import TabWidgetForPlaylistViewers
 # filters
-#from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
+from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
 #from sparkling.grimoire.pyqt5.TreeFilter import TreeFilter
 
 class CentralWidget( QWidget ):
@@ -64,7 +64,7 @@ class CentralWidget( QWidget ):
         
         self.Gui.playlist_selector = PlaylistSelector( parent=self )
         #self.Gui.tree_filter = TreeFilter( parent=self )
-        #self.Gui.database_filter = DatabaseFilter( parent=self )
+        self.Gui.database_filter = DatabaseFilter( parent=self )
         
         
         
@@ -77,7 +77,7 @@ class CentralWidget( QWidget ):
         
         side_widget2 = QWidget( parent=self )
         side_lyt2 = QVBoxLayout()
-        #side_lyt2.addWidget( self.Gui.database_filter )
+        side_lyt2.addWidget( self.Gui.database_filter )
         side_widget2.setLayout( side_lyt2 )
         
         #self.Gui.plugin_pane = PlaylistPluginsPresetsEditor(
@@ -119,9 +119,6 @@ class CentralWidget( QWidget ):
         self.Gui.playlist_selector.PLAYLIST_EDITED.connect( self._playlist_edited_event )
         self.Gui.tab_widget.tabCloseRequested.connect( self._playlist_close_event )
         
-        #self.Gui.database_filter.SEND_TO_CURRENT_ACTIVE_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
-        #self.Gui.tree_filter.Gui.tree_view.SEND_TO_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
-        
         # autorun
         
         # set all connections
@@ -142,6 +139,7 @@ class CentralWidget( QWidget ):
         
         # update all playlist selectors
         self.Gui.playlist_selector.set_connection( conn )
+        self.Gui.database_filter.set_connection( conn )
         
         # update all playlist viewers
         tab_widget = self.Gui.tab_widget
