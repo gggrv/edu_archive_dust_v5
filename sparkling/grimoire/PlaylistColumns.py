@@ -102,10 +102,6 @@ class ColumnsPlaylist( Columns ):
             if len( identities.strip() ) > 0:
                 # everything ok
                 return
-        elif type( identities )==list:
-            if len( identities ) > 0:
-                # everything ok
-                return
         
         # query is bad
         playlist.pop( c.identities )
@@ -153,7 +149,7 @@ class ColumnsPlaylist( Columns ):
             # i need to construct a standard identities
             # query with a predefined node variable name
             
-            identities = playlist[c.identities]
+            identities = playlist[c.identities].split(' ')
             query = f'MATCH ({NODE}) ' \
                 f'WHERE toString(ID({NODE})) IN {identities} ' \
                 f'RETURN {NODE}'
