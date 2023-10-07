@@ -22,58 +22,12 @@ from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinit
 from sparkling.common.pyqt5.parentless.FileRenamer import FileRenamer
 from sparkling.common.pyqt5 import ( mime2file, get_QItemSelection_rowilocs )
 # common
-from sparkling.common import ( unique_loc, delrem )
+from sparkling.common import ( unique_loc )
 
 PLAYLIST_COLUMNS_TO_HIDE = [
     ColumnsPlaylist.identity,
     ColumnsPlaylist.db_name
     ]
-
-def _open_path( df, dirname=False ):
-    
-    # Starts a file/folder with standard os methods.
-    
-    c = ColumnsNeo4j
-    if not c.path in df.columns: return
-    
-    for src in df[c.path]:
-        
-        if type(src)==str:
-            
-            if os.path.exists(src):
-                # this is a file on disk
-                if dirname:
-                    os.startfile( os.path.dirname(src) )
-                else:
-                    os.startfile( src )
-            else:
-                # maybe this is a link,
-                # attempt to open it with standard means
-                os.startfile( src )
-
-def _delrem_df( df ):
-    
-    # Deletes paths in given df, returns
-    # list of exceptions.
-    
-    # TODO
-    # better and safer
-    
-    c = ColumnsNeo4j
-    if not c.path in df.columns:
-        return []
-    
-    exs = []
-    
-    for path in df[c.path]:
-        if type(path)==str:
-            try:
-                delrem(path)
-                exs.append(None)
-            except Exception as ex:
-                exs.append(ex)
-                
-    return exs
 
 class PlaylistViewer( NodeViewer ):
 
@@ -153,7 +107,7 @@ class PlaylistViewer( NodeViewer ):
                 },
             {
                 c.identity: 'grimoire/playlist_viewer/row/del_from_playlist',
-                c.text: 'Delete from playlist',
+                c.text: 'Remove from playlist',
                 c.method: self.del_from_view,
                 c.shortcut: 'Del',
                 },
@@ -507,97 +461,33 @@ class PlaylistViewer( NodeViewer ):
         
         # I want to delete rows from db and current view.
         
-        if not self._conn.is_valid():
-            msg = 'no valid _conn, not doing anything'
-            log.critical( msg )
+        super( PlaylistViewer, self ).del_from_view_db()
+    
+        c = ColumnsPlaylist
+        if not c.identity in self._settings:
+            # i don't need to nofity playlist selector -
+            # this playlist is not tracked
             return
         
-        rowilocs = self.selected_rowilocs()
-        if len(rowilocs)==0: return
-        
-        # ask confirmation
-        msg = QMessageBox()
-        msg.setWindowTitle( 'Delete?' )
-        msg.setStandardButtons(
-            QMessageBox.Ok
-            |QMessageBox.Cancel
-            )
-        msg.setDefaultButton(
-            QMessageBox.Cancel
-            )
-        msg.setText( 'Selected rows will be \n- deleted from db\nAre you sure?' )
-        retval = msg.exec_()
-        if retval==QMessageBox.Cancel: return
-        
-        subdf = self._MODEL.df.iloc[rowilocs]
-        
-        # del from db
-        identities = list( subdf.index )
-        query = f'MATCH ({NODE}) WHERE ID({NODE}) IN {identities} DETACH DELETE {NODE}'
-        response = self._conn.query( query, db_name=self._playlist.db_name() )
-        if response is None:
-            log.error( 'failed to delete from server' )
-            return
-        
-        # del from view
-        self.delete_rows( rowilocs )
-        self.select_next_row( rowilocs[0] )
-        
-        # del from playlist
-        remaining_identities = list( self._MODEL.df.index.astype(str) )
-        new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
-        self._playlist.set_data( new_data, save=True )
+        # i need to notify playlist selector
+        self._settings[c.identities] = ' '.join(list( self._MODEL.df.index.astype(str) ))
+        self.OVERRIDE_SETTINGS.emit( self._settings )
         
     def del_from_view_db_disk( self ):
         
         # I want to delete rows from disk, db and current view.
         
-        if not self._conn.is_valid():
-            msg = 'no valid _conn, not doing anything'
-            log.critical( msg )
+        super( PlaylistViewer, self ).del_from_view_db_disk()
+    
+        c = ColumnsPlaylist
+        if not c.identity in self._settings:
+            # i don't need to nofity playlist selector -
+            # this playlist is not tracked
             return
         
-        rowilocs = pd.Series( self.selected_rowilocs() )
-        if len(rowilocs)==0: return
-        
-        # ask confirmation
-        msg = QMessageBox()
-        msg.setWindowTitle( 'Delete twice?' )
-        msg.setStandardButtons(
-            QMessageBox.Ok
-            |QMessageBox.Cancel
-            )
-        msg.setDefaultButton(
-            QMessageBox.Cancel
-            )
-        msg.setText( 'Selected rows will be \n- deleted from db\n- deleted from disk\nAre you sure?' )
-        retval = msg.exec_()
-        if retval==QMessageBox.Cancel: return
-        
-        subdf = self._MODEL.df.iloc[rowilocs]
-        
-        # del from disk
-        exs = pd.Series( _delrem_df(subdf) )
-        fail_rowilocs = exs[ exs.notna() ]
-        subdf = subdf.iloc[ ~subdf.index.isin( fail_rowilocs.index ) ]
-        rowilocs = rowilocs[ ~rowilocs.isin(fail_rowilocs.index) ]
-        
-        # del from db
-        identities = list( subdf.index )
-        query = f'MATCH ({NODE}) WHERE ID({NODE}) IN {identities} DETACH DELETE {NODE}'
-        response = self._conn.query( query, db_name=self._playlist.db_name() )
-        if response is None:
-            log.error( 'failed to delete from server' )
-            return
-        
-        # del from view
-        self.delete_rows( rowilocs )
-        self.select_next_row( rowilocs[0] )
-        
-        # del from playlist
-        remaining_identities = list( self._MODEL.df.index.astype(str) )
-        new_data = {Playlist.Columns.PLAYLIST_DATA:remaining_identities}
-        self._playlist.set_data( new_data, save=True )
+        # i need to notify playlist selector
+        self._settings[c.identities] = ' '.join(list( self._MODEL.df.index.astype(str) ))
+        self.OVERRIDE_SETTINGS.emit( self._settings )
     
     def _cm_open_file( self ):
         _open_path( self.selected_subdf(), dirname=False )

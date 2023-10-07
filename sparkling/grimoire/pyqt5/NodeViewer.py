@@ -8,6 +8,7 @@ import logging
 log = logging.getLogger(__name__)
 
 # embedded in python
+import os
 # pip install
 import pandas as pd
 from PyQt5.QtCore import ( Qt, pyqtSignal )
@@ -24,9 +25,55 @@ from sparkling.common.pyqt5.PandasTableView import PandasTableView
 from sparkling.common.pyqt5.parentless.DfEditor import DfEditor
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 # common
-from sparkling.common import ( unique_loc )
+from sparkling.common import ( unique_loc, delrem )
 # emuns
 from sparkling.common.enums.Consent import EConsent
+
+def _open_path( df, dirname=False ):
+    
+    # Starts a file/folder with standard os methods.
+    
+    c = ColumnsPlaylist
+    if not c.path in df.columns: return
+    
+    for src in df[c.path]:
+        
+        if type(src)==str:
+            
+            if os.path.exists(src):
+                # this is a file on disk
+                if dirname:
+                    os.startfile( os.path.dirname(src) )
+                else:
+                    os.startfile( src )
+            else:
+                # maybe this is a link,
+                # attempt to open it with standard means
+                os.startfile( src )
+
+def _delrem_df( df ):
+    
+    # Deletes paths in given df, returns
+    # list of exceptions.
+    
+    # TODO
+    # better and safer
+    
+    c = ColumnsPlaylist
+    if not c.path in df.columns:
+        return []
+    
+    exs = []
+    
+    for path in df[c.path]:
+        if type(path)==str:
+            try:
+                delrem(path)
+                exs.append(None)
+            except Exception as ex:
+                exs.append(ex)
+                
+    return exs
 
 class NodeViewer( PandasTableView ):
     
@@ -103,6 +150,12 @@ class NodeViewer( PandasTableView ):
                 c.shortcut: 'Alt+Shift+Down',
                 c.enabled: False,
                 c.visible: False,
+                },
+            {
+                c.identity: 'grimoire/node_viewer/row/del_from_disk',
+                c.text: 'Delete from database and disk',
+                c.method: self.del_from_view_db_disk,
+                c.shortcut: 'Alt+Down',
                 },
             ]
         
@@ -244,6 +297,11 @@ class NodeViewer( PandasTableView ):
             c.enabled: not forbid,
             c.visible: not forbid,
             },
+        {
+            c.identity: 'grimoire/node_viewer/row/del_from_disk',
+            c.enabled: not forbid,
+            c.visible: not forbid,
+            },
         ]
         
         c.modify_actions( self, modifications )
@@ -264,9 +322,16 @@ class NodeViewer( PandasTableView ):
         # `del_from_db`, `del_from_disk`, I implement each
         # functionality independently.
         
-        # mae sure i have something to work with
+        # make sure i have something to work with
         rowilocs = self.selected_rowilocs()
         if len(rowilocs)==0: return
+        
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        if not c.db_name in self._settings:
+            log.error( 'i need db_name in order to delete items in df, can\'t do anything' )
+            return
         
         # ask confirmation
         msg = QMessageBox()
@@ -280,24 +345,67 @@ class NodeViewer( PandasTableView ):
         retval = msg.exec_()
         if retval==QMessageBox.Cancel: return
         
+        # del from db
+        subdf = self._MODEL.df.iloc[rowilocs]
+        identities = list( subdf.index )
+        query = f'MATCH ({NODE}) WHERE ID({NODE}) IN {identities} DETACH DELETE {NODE}'
+        response = self._conn.query( query, db_name=self._settings[c.db_name] )
+        if response is None:
+            log.error( 'failed to delete from server' )
+            return
+        
+        # del from view
+        self.delete_rows( rowilocs )
+        self.select_next_row( rowilocs[0] )
+        
+    def del_from_view_db_disk( self ):
+        
+        # I want to delete rows from disk, db and current view.
+        
+        # make sure i have something to work with
+        rowilocs = pd.Series( self.selected_rowilocs() )
+        if len(rowilocs)==0: return
+        
         # short name for convenience
-        c = self._conn.Columns
-        df = self._MODEL.df.iloc[rowilocs]
+        c = ColumnsPlaylist
+        
+        if not c.db_name in self._settings:
+            log.error( 'i need db_name in order to delete items in df, can\'t do anything' )
+            return
+        
+        # ask confirmation
+        msg = QMessageBox()
+        msg.setWindowTitle( 'Delete twice?' )
+        msg.setStandardButtons(
+            QMessageBox.Ok
+            |QMessageBox.Cancel
+            )
+        msg.setDefaultButton(
+            QMessageBox.Cancel
+            )
+        msg.setText( 'Selected rows will be \n- deleted from db\n- deleted from disk\nAre you sure?' )
+        retval = msg.exec_()
+        if retval==QMessageBox.Cancel: return
+        
+        subdf = self._MODEL.df.iloc[rowilocs]
+        
+        # del from disk
+        exs = pd.Series( _delrem_df(subdf) )
+        fail_rowilocs = exs[ exs.notna() ]
+        subdf = subdf.iloc[ ~subdf.index.isin( fail_rowilocs.index ) ]
+        rowilocs = rowilocs[ ~rowilocs.isin(fail_rowilocs.index) ]
         
         # del from db
-        groups = df.groupby( c.db_name )
-        for db_name, subdf in groups:
-            
-            identities = list( subdf.index )
-            query = f'MATCH ({NODE}) WHERE ID({NODE}) IN {identities} DETACH DELETE {NODE}'
-            response = self._conn.query( query, db_name=db_name )
-            if response is None:
-                log.error( 'failed to delete from server' )
-                return
-            
-            # del from view
-            self.delete_rows( rowilocs )
-            self.select_next_row( rowilocs[0] )
+        identities = list( subdf.index )
+        query = f'MATCH ({NODE}) WHERE ID({NODE}) IN {identities} DETACH DELETE {NODE}'
+        response = self._conn.query( query, db_name=self._playlist.db_name() )
+        if response is None:
+            log.error( 'failed to delete from server' )
+            return
+        
+        # del from view
+        self.delete_rows( rowilocs )
+        self.select_next_row( rowilocs[0] )
         
     def _register_parentless_window( self, w ):
         
