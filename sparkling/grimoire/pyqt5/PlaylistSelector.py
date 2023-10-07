@@ -43,6 +43,7 @@ class PlaylistSelector( NodeViewer ):
                   *args, **kwargs ):
         super( PlaylistSelector, self ).__init__(
             parent=parent,
+            accept_drops=False,
             *args, **kwargs )
         
         self.__init_context_menu()

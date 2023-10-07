@@ -77,14 +77,11 @@ class PlaylistViewer( NodeViewer ):
     def __init__( self,
                   file_renamer_presets=None,
                   selection_changed_event=True,
-                  can_host_current_active_playlist=True,
+                  accept_drops=True,
                   parent=None,
                   *args, **kwargs ):
         super( PlaylistViewer, self ).__init__(
             parent=parent, *args, **kwargs )
-        
-        # remember
-        self.can_host_current_active_playlist = can_host_current_active_playlist
 
         # presets
         if not file_renamer_presets is None:
@@ -92,7 +89,7 @@ class PlaylistViewer( NodeViewer ):
         
         # appearance
         self.setWordWrap( False )
-        self.setAcceptDrops(True)
+        self.setAcceptDrops( accept_drops )
         self.setContextMenuPolicy( Qt.ActionsContextMenu )
         
         # interactions
@@ -101,6 +98,7 @@ class PlaylistViewer( NodeViewer ):
         # signals
         
         if selection_changed_event:
+            # i want to monitor how the user selects/deselects rows
             # help:
             # https://stackoverflow.com/questions/14803315/connecting-qtableview-selectionchanged-signal-produces-segfault-with-pyqt
             selectionModel = self.selectionModel()
@@ -178,6 +176,8 @@ class PlaylistViewer( NodeViewer ):
         query = c.get_contents_query( p )
         if query is None:
             # this playlist is empty at this moment
+            # and i can manually set auto query / add items
+            # from search
             self.switch_df( pd.DataFrame(), columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE )
             return
             
@@ -473,14 +473,7 @@ class PlaylistViewer( NodeViewer ):
             },
         ]
         
-        # iterate context menu
-        for act in self.actions():
-            
-            identity = act.get_identity()
-            
-            for mod in modifications:
-                if identity in mod[c.identity]:
-                    act.accept_modification( mod )
+        c.modify_actions( self, modifications )
     
     def del_from_view( self ):
         
