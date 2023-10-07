@@ -128,9 +128,20 @@ def _convert_index_definition( index_name, fields ):
         
     return command
     
-def _convert_index_search( index_name, query ):
+def _convert_index_search( index_name, query, approximate=True ):
     
     # Allows to send any `plaintext` query to server.
+    
+    if approximate:
+        
+        # i don't need exact word matches - approximate is ok
+        # help:
+        # https://stackoverflow.com/questions/35105725/how-to-do-better-text-search-in-neo4j
+        # https://neo4j.com/docs/cypher-manual/current/indexes-for-full-text-search/
+        # http://lucenetutorial.com/lucene-query-builder.html
+        
+        # add special symbol to the end
+        query += '~'
      
     query = _convert_to_safe_string( query )
         
