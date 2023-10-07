@@ -26,6 +26,8 @@ def _response2df( response, columns=None, identity=False, node_variable_name=Non
     
     # Converts conn response to dataframe.
     
+    c = Columns
+    
     if response is None:
         return
     if len( response )==0:
@@ -46,7 +48,7 @@ def _response2df( response, columns=None, identity=False, node_variable_name=Non
             index=identities
             )
         if identity:
-            df['identity'] = identities
+            df[c.identity] = identities
         return df
     
     return pd.DataFrame([ dict(record) for record in response ])
@@ -79,7 +81,7 @@ def _convert_parameters( param_dict ):
         if k==c.neo4j_labels:
             # skip reserved
             continue
-        elif k==c.id:
+        elif k==c.identity:
             # skip reserved
             continue
         

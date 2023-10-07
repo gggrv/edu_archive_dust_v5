@@ -22,7 +22,7 @@ class Columns:
     
     # Reserved node field names.
     
-    id = 'id' # ID(node)
+    identity = 'identity' # ID(node)
     db_name = 'db_name' # which database does this node belong to
     
     neo4j_labels = 'neo4j Label' # can contain multiple ones

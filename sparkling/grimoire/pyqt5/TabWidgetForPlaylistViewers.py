@@ -53,8 +53,8 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
         
         # make sure i have means to compare
         # `settings`
-        if not c.id in settings:
-            log.error( f'can\'t compare two NodeViewer `settings` because field `{c.id}` is missing' )
+        if not c.identity in settings:
+            log.error( f'can\'t compare two NodeViewer `settings` because field `{c.identity}` is missing' )
             raise KeyError
         
         # iterate all
@@ -67,8 +67,8 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
                 # this is correct class
                 
                 s = w.settings()
-                if c.id in s:
-                    if s[c.id] == settings[c.id]:
+                if c.identity in s:
+                    if s[c.identity] == settings[c.identity]:
                         # found it
             
                         # attept to update tab name
