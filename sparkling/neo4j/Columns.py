@@ -8,6 +8,16 @@ LABEL_SEPARATOR = ':'
 DB_DEFAULT = 'neo4j'
 MULTIVALUE_SEPARATOR = '; '
 
+QUERY_KEYWORDS = [
+    # help:
+    # https://neo4j.com/docs/cypher-cheat-sheet/5/auradb-enterprise/
+    'USE', 'CALL', 'YIELD'
+    'MATCH', 'WHERE', 'OPTIONAL MATCH',
+    'WITH',
+    'RETURN',
+    'ORDER BY', 'SKIP', 'LIMIT'
+    ]
+    
 class Columns:
     
     # Reserved node field names.
@@ -18,5 +28,5 @@ class Columns:
     neo4j_labels = 'neo4j Label' # can contain multiple ones
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.06
-# added `db_name`
+# end 2023.10.07
+# added `QUERY_KEYWORDS`
