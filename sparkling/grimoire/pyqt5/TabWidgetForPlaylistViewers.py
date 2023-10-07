@@ -70,6 +70,13 @@ class TabWidgetForPlaylistViewers( QTabWidget ):
                 if c.id in s:
                     if s[c.id] == settings[c.id]:
                         # found it
+            
+                        # attept to update tab name
+                        # if needed
+                        if c.title in settings:
+                            if not self.tabText( iloc ) == settings[c.title]:
+                                self.setTabText( iloc, settings[c.title] )
+                        
                         return w
                 
             # wrong view, advance to the next one
