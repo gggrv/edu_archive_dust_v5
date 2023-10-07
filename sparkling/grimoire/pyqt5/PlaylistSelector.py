@@ -34,6 +34,7 @@ class PlaylistSelector( NodeViewer ):
     # dedicated `PlaylistViewer`.
 
     PLAYLIST_OPEN = pyqtSignal( pd.DataFrame )
+    PLAYLIST_EDITED = pyqtSignal( pd.DataFrame )
     
     _conn = None
 
@@ -124,12 +125,7 @@ class PlaylistSelector( NodeViewer ):
         
         df = c.get_playlists( self._conn )
         
-        cols_to_hide = list( df.columns )
-        for col in PLAYLIST_COLUMNS_TO_SHOW:
-            if col in cols_to_hide:
-                cols_to_hide.remove( col )
-        
-        self.switch_df( df, columns_to_hide=cols_to_hide )
+        self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_SHOW, appropriate_reverse=True )
         
     def new_playlist( self ):#, conn ):
         
@@ -162,8 +158,19 @@ class PlaylistSelector( NodeViewer ):
         # custom editor
         # with convenient comboboxes, etc
         
-        super( PlaylistViewer, self ).launch_selection_editor()
+        super( PlaylistSelector, self ).launch_selection_editor()
+        
+    def _accept_selection_edits_event( self, changes, db_name ):
+    
+        new_df = super( PlaylistSelector, self )._accept_selection_edits_event( changes, db_name )
+        
+        self.reapply_columns_to_hide( columns_to_hide=PLAYLIST_COLUMNS_TO_SHOW, appropriate_reverse=True )
+        
+        # tell everyone that some playlists
+        # changed somehow
+        
+        self.PLAYLIST_EDITED.emit( new_df )
         
 #---------------------------------------------------------------------------+++
-# end 2023.10.06
+# end 2023.10.07
 # simplified

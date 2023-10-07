@@ -89,9 +89,9 @@ class CentralWidget( QWidget ):
         
         self.Gui.side_tab_widget = QTabWidget( parent=self )
         self.Gui.side_tab_widget.setContentsMargins(0,0,0,0)
-        self.Gui.side_tab_widget.addTab( side_widget1, 'navi' )
+        self.Gui.side_tab_widget.addTab( side_widget1, '☰' )
         #self.Gui.side_tab_widget.addTab( self.Gui.plugin_pane, '⚙️' )
-        self.Gui.side_tab_widget.addTab( side_widget2, 'filter' )
+        self.Gui.side_tab_widget.addTab( side_widget2, '🔍' )
 
         # layouts
         
@@ -116,6 +116,7 @@ class CentralWidget( QWidget ):
         self.CONNECTION_CHANGED.connect( self.connection_changed_event )
         
         self.Gui.playlist_selector.PLAYLIST_OPEN.connect( self._playlist_open_event )
+        self.Gui.playlist_selector.PLAYLIST_EDITED.connect( self._playlist_edited_event )
         self.Gui.tab_widget.tabCloseRequested.connect( self._playlist_close_event )
         
         #self.Gui.database_filter.SEND_TO_CURRENT_ACTIVE_PLAYLIST.connect( self.__send_to_current_active_playlist_event )
@@ -168,7 +169,7 @@ class CentralWidget( QWidget ):
                 # this playlist is already opened,
                 # a viewer exists
                 # no need to create another one
-                return
+                continue
             
             # need to create dedicated viewer
             
@@ -181,6 +182,35 @@ class CentralWidget( QWidget ):
             
             c = ColumnsPlaylist
             self.Gui.tab_widget.addTab( w, row[c.title] )
+            
+    def _playlist_edited_event( self, df ):
+        
+        # I edited some playlists through `PlaylistSelector`.
+        # I want to update all relevant widgets.
+        
+        for loc, row in df.iterrows():
+            
+            settings = dict(row)
+            settings[ColumnsPlaylist.id] = loc
+            
+            # attempt to get existing dedicated viewer
+            w = self.Gui.tab_widget.get_playlist_viewer( settings )
+            if w is None:
+                # this playlist is closed,
+                # a viewer does not exist
+                # no need to do anything
+                continue
+            
+            # need to update dedicated viewer
+            
+            # TODO
+            # at this moment i fully replace the contents
+            # of the viewer. perhaps it would be better
+            # to detect changes and act accordingly -
+            # not every edit requires full widget
+            # reinitialization
+            
+            w.set_settings( settings )
             
     def _playlist_close_event( self, tabiloc ):
         

@@ -14,13 +14,19 @@ from PyQt5.QtCore import ( Qt, pyqtSignal )
 from PyQt5.QtWidgets import ( QMessageBox )
 # same project
 # headless
-from sparkling.grimoire.GrimoireNeo4jColumns import Columns as ColumnsNeo4j, NODE
+from sparkling.grimoire.PlaylistColumns import (
+    ColumnsPlaylist,
+    NODE, DB_DEFAULT,
+    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR
+    )
 # gui
 from sparkling.common.pyqt5.PandasTableView import PandasTableView
 from sparkling.common.pyqt5.parentless.DfEditor import DfEditor
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 # common
 from sparkling.common import ( unique_loc )
+# emuns
+from sparkling.common.enums.Consent import EConsent
 
 class NodeViewer( PandasTableView ):
     
@@ -102,9 +108,21 @@ class NodeViewer( PandasTableView ):
         c.add_actions( self, actions )
         
     def set_settings( self, settings ):
+        
         # It's the same as setting `playlist` in the
         # upgraded subclasses.
+        
         self._settings = settings
+        
+        c = ColumnsPlaylist
+        
+        if c.forbid_deep_deletions in settings:
+            # TODO
+            # custom editing widget
+            c.validate_deep_deletions( settings )
+            forbid = True if settings[c.forbid_deep_deletions]==EConsent.CONSENT else False
+            self.forbid_deep_deletions( forbid )
+        
     def settings( self ):
         # For external use only.
         return self._settings
@@ -131,7 +149,7 @@ class NodeViewer( PandasTableView ):
         if len(subdf.index)==0: return
         
         # short name for convenience
-        c = ColumnsNeo4j
+        c = ColumnsPlaylist
         ce = self._node_editor_class.ColumnsConstructor
         
         # define custom parameters
@@ -162,16 +180,16 @@ class NodeViewer( PandasTableView ):
         # detect what am i working with
         old_value, new_value = changes
         old_df, new_df = None, None
-        old_s, new_s = None, None
+        #old_s, new_s = None, None
         if type(old_value) == pd.DataFrame: old_df=old_value
         if type(new_value) == pd.DataFrame: new_df=new_value
-        if type(old_value) == pd.Series: old_s=old_value
-        if type(new_value) == pd.Series: new_s=new_value
+        #if type(old_value) == pd.Series: old_s=old_value
+        #if type(new_value) == pd.Series: new_s=new_value
         
         is_df_and_df = not old_df is None and not new_df is None
-        is_s_and_s = not old_s is None and not new_s is None
-        is_df_and_s = not old_df is None and not new_s is None
-        is_s_and_df = not old_s is None and not new_df is None
+        #is_s_and_s = not old_s is None and not new_s is None
+        #is_df_and_s = not old_df is None and not new_s is None
+        #is_s_and_df = not old_s is None and not new_df is None
         
         if is_df_and_df: # i have two dataframes
             # completely replace old with the new one
@@ -193,10 +211,17 @@ class NodeViewer( PandasTableView ):
             # change in view
             self.replace_subdf( new_df )
             
-            # no need to change in playlist because
+            # no need to change in `playlist contents` because
             # shown identities did not change
             
-    def enable_deep_deletions( self, enable ):
+            # i may need this in a child class
+            return new_df
+        
+        else:
+            
+            raise NotImplementedError
+            
+    def forbid_deep_deletions( self, forbid ):
         
         # Most of the time I do not want
         # to delete items from db/disk.
@@ -209,14 +234,14 @@ class NodeViewer( PandasTableView ):
         
         modifications = [
         {
-            c.identity: 'grimoire/playlist_viewer/row/del_from_db',
-            c.enabled: enable,
-            c.visible: enable,
+            c.identity: 'grimoire/node_viewer/row/del_from_db',
+            c.enabled: not forbid,
+            c.visible: not forbid,
             },
         {
-            c.identity: 'grimoire/playlist_viewer/row/del_from_disk',
-            c.enabled: enable,
-            c.visible: enable,
+            c.identity: 'grimoire/node_viewer/row/del_from_disk',
+            c.enabled: not forbid,
+            c.visible: not forbid,
             },
         ]
         
@@ -224,8 +249,10 @@ class NodeViewer( PandasTableView ):
         for act in self.actions():
             
             identity = act.get_identity()
-            if identity in modifications:
-                act.accept_modification( modifications[identity] )
+            
+            for mod in modifications:
+                if identity in mod[c.identity]:
+                    act.accept_modification( mod )
     
     def del_from_view( self ):
         

@@ -165,14 +165,15 @@ class PlaylistViewer( NodeViewer ):
         
         # I want to fully replace current contents.
         
+        # do what needs to be done
         super( PlaylistViewer, self ).set_settings( settings )
+        
+        # additinally i need to populate this viewer with
+        # downloaded nodes
         
         # short name for convenience
         c = ColumnsPlaylist
         p = settings
-        
-        # i need to populate this viewer with
-        # downloaded nodes
         
         query = c.get_contents_query( p )
         if query is None:
@@ -447,6 +448,39 @@ class PlaylistViewer( NodeViewer ):
         
         self.__register_parentless_window(w)
         w.show()
+        
+    def forbid_deep_deletions( self, forbid ):
+        
+        # Most of the time I do not want
+        # to delete items from db/disk.
+        # In order to reduce the risk
+        # of human error, allow toggling
+        # respective context menus on/off.
+        
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
+        modifications = [
+        {
+            c.identity: 'grimoire/playlist_viewer/row/del_from_db',
+            c.enabled: not forbid,
+            c.visible: not forbid,
+            },
+        {
+            c.identity: 'grimoire/playlist_viewer/row/del_from_disk',
+            c.enabled: not forbid,
+            c.visible: not forbid,
+            },
+        ]
+        
+        # iterate context menu
+        for act in self.actions():
+            
+            identity = act.get_identity()
+            
+            for mod in modifications:
+                if identity in mod[c.identity]:
+                    act.accept_modification( mod )
     
     def del_from_view( self ):
         
