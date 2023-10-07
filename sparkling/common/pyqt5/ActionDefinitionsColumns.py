@@ -134,7 +134,22 @@ class ColumnsActionDefinitions:
         
         act_objects = c.convert_action_definitions( widget, action_definitions )
         widget.addActions( act_objects )
+              
+    @staticmethod
+    def modify_actions( widget, modifications ):   
+        
+        # short name for convenience
+        c = ColumnsActionDefinitions
+        
+        # iterate context menu
+        for act in widget.actions():
+            
+            identity = act.get_identity()
+            
+            for mod in modifications:
+                if identity in mod[c.identity]:
+                    act.accept_modification( mod )
                     
 #---------------------------------------------------------------------------+++
-# end 2023.10.03
-# simplified another file
+# end 2023.10.07
+# moved `modify_actions` here
