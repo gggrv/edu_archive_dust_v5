@@ -260,6 +260,16 @@ class CentralWidget( QWidget ):
         mask = playlists[c.db_name] == settings[c.db_name]
         playlists = playlists[mask]
         
+        # it is possible to send nodes back to self
+        # it works, no problem
+        # TODO
+        # add code to prevent sending from self to self
+        # this means that i need to include column `identity`
+        # in playlist settings
+        # because it makes no sense to detect
+        # whether destination playlist = sender playlist
+        # using any fields other then `identity`
+        
         # make sure i have suitable destination playlists
         if len(playlists) == 0:
             log.error( 'no suitable destination playlists found, not doing anything' )
