@@ -172,7 +172,7 @@ class PandasTableModel( QAbstractTableModel ):
         for col in df.columns:
             self.df.loc[ df.index, col ] = df[col]
         
-        # remove empty
+        # remove only fully empty rows
         self.df.dropna( how='all', inplace=True )
         
         self.layoutChanged.emit()
