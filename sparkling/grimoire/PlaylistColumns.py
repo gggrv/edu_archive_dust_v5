@@ -3,12 +3,17 @@
 #---------------------------------------------------------------------------+++
 # Reserved column names that have pre-existing functionality constraints.
 
+# same project
+# code
 from sparkling.grimoire.GrimoireNeo4jColumns import (
     Columns,
     NODE, DB_DEFAULT,
     LABEL_SEPARATOR, MULTIVALUE_SEPARATOR
     )
+# common
 from sparkling.common import unique_loc
+# enums
+from sparkling.common.enums.Consent import EConsent
 
 NEO4J_LABEL_PLAYLIST = 'DustGrimoirePlaylist'
 
@@ -29,6 +34,8 @@ class ColumnsPlaylist( Columns ):
     # which plugins were activated?
     plugins = 'plugins'
     
+    forbid_deep_deletions = 'forbid_deep_deletions'
+    
     # reserved optional `Columns` class keyword for
     # screen names
     texts = {
@@ -37,6 +44,7 @@ class ColumnsPlaylist( Columns ):
         auto_query: 'Auto Query',
         plugins: 'Plugins',
         Columns.title: 'Playlist name',
+        forbid_deep_deletions: 'Forbid deep deletions',
         }
     
     @staticmethod
@@ -78,6 +86,24 @@ class ColumnsPlaylist( Columns ):
         
         # query is bad
         playlist.pop( c.identities )
+    
+    @staticmethod
+    def validate_deep_deletions( playlist ):
+    
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        # make sure i have value
+        if not c.forbid_deep_deletions in playlist:
+            # forbid by default
+            playlist[c.forbid_deep_deletions] = EConsent.CONSENT
+            return
+        
+        value = playlist[c.forbid_deep_deletions]
+        if not ( value == EConsent.DECLINE ):
+            # no idea which value it is, replace it
+            # with consent
+            playlist[c.forbid_deep_deletions] = EConsent.CONSENT
             
     @staticmethod
     def get_contents_query( playlist ):
@@ -143,6 +169,7 @@ class ColumnsPlaylist( Columns ):
         param_dict = {
             c.title: unique_loc(),
             c.db_name: DB_DEFAULT, # `nodes` from which `db` this playlist holds
+            c.forbid_deep_deletions: '+',
             }
         node = conn.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=param_dict )
     
