@@ -25,8 +25,8 @@ from sparkling.common.pyqt5 import ( mime2file, get_QItemSelection_rowilocs )
 from sparkling.common import ( unique_loc, delrem )
 
 PLAYLIST_COLUMNS_TO_HIDE = [
-    ColumnsPlaylist.id,
-    ColumnsPlaylist.db_name,
+    ColumnsPlaylist.identity,
+    ColumnsPlaylist.db_name
     ]
 
 def _open_path( df, dirname=False ):
@@ -37,12 +37,19 @@ def _open_path( df, dirname=False ):
     if not c.path in df.columns: return
     
     for src in df[c.path]:
+        
         if type(src)==str:
+            
             if os.path.exists(src):
+                # this is a file on disk
                 if dirname:
                     os.startfile( os.path.dirname(src) )
                 else:
                     os.startfile( src )
+            else:
+                # maybe this is a link,
+                # attempt to open it with standard means
+                os.startfile( src )
 
 def _delrem_df( df ):
     
@@ -71,6 +78,7 @@ def _delrem_df( df ):
 class PlaylistViewer( NodeViewer ):
 
     SEND_CONTENTS = pyqtSignal( list, dict )
+    OVERRIDE_SETTINGS = pyqtSignal( dict )
     
     class Presets:
         
@@ -469,21 +477,31 @@ class PlaylistViewer( NodeViewer ):
     
     def del_from_view( self ):
         
-        # I want to delete rows from current `view`
+        # I want to remove rows from current `view`
         # and update `playlist`.
+        
+        # TODO
+        # allow this only if i have no `auto query` -
+        # for example 
+        # remove this option from context menu altogether
+        # or manually switch playlit type in playlist selector
+        # upon receiving signal
         
         super( PlaylistViewer, self ).del_from_view()
         
         # short name for convenience
         c = ColumnsPlaylist
         
-        new_data = {
-            c.identities: list( self._MODEL.df.index.astype(str) ),
-            }
+        if not c.identity in self._settings:
+            # i don't need to nofity playlist selector -
+            # this playlist is not tracked
+            return
         
-        query = f'MATCH ({NODE}) WHERE ID({NODE})={identity} SET {NODE}:{new_labels}'
+        # i need to notify playlist selector
         
-        self._conn.query()
+        self._settings[c.identities] = ' '.join(list( self._MODEL.df.index.astype(str) ))
+        
+        self.OVERRIDE_SETTINGS.emit( self._settings )
         
     def del_from_view_db( self ):
         

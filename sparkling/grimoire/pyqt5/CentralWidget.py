@@ -163,7 +163,7 @@ class CentralWidget( QWidget ):
         for loc, row in df.iterrows():
             
             settings = dict(row)
-            settings[ColumnsPlaylist.id] = loc
+            settings[ColumnsPlaylist.identity] = loc
             
             # attempt to get existing dedicated viewer
             w = self.Gui.tab_widget.get_playlist_viewer( settings )
@@ -182,6 +182,7 @@ class CentralWidget( QWidget ):
             w.set_connection( self._own_doer.conn )
             w.set_settings( settings )
             w.SEND_CONTENTS.connect( self._sent_contents_receive_event )
+            w.OVERRIDE_SETTINGS.connect( self._request_playlist_settings_override_event )
             
             c = ColumnsPlaylist
             self.Gui.tab_widget.addTab( w, row[c.title] )
@@ -194,7 +195,7 @@ class CentralWidget( QWidget ):
         for loc, row in df.iterrows():
             
             settings = dict(row)
-            settings[ColumnsPlaylist.id] = loc
+            settings[ColumnsPlaylist.identity] = loc
             
             # attempt to get existing dedicated viewer
             w = self.Gui.tab_widget.get_playlist_viewer( settings )
@@ -319,6 +320,34 @@ class CentralWidget( QWidget ):
             # write it to db
             df = pd.DataFrame( [settings], index=[identity] )
             self.Gui.playlist_selector._accept_programmatic_edits( df )
+            
+    def _request_playlist_settings_override_event( self, settings ):
+        
+        # I end up here whenever
+        # some `PlaylistViewer` has decided to change it's
+        # own settings
+        # and now wants `PlaylistSelector` to accept them.
+        
+        # make sure i have all the necessary parties
+        if self.Gui.playlist_selector is None:
+            log.error( 'missing playlist_selector, can\'t override' )
+            return
+            
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        if not c.identity in settings:
+            log.debug( 'this playlist has no identity, no need to notify playlist selector' )
+            return
+        
+        playlists = self.Gui.playlist_selector.get_df()
+        if not settings[c.identity] in playlists.index:
+            log.error( 'this playlist is not managed by current playlist selector, not doing anything' )
+            return
+        
+        # write it to db
+        df = pd.DataFrame( [settings], index=[ settings[c.identity] ] )
+        self.Gui.playlist_selector._accept_programmatic_edits( df, tell_everyone=False )
         
     def _import_csv_to_playlist_event( self, p ):
         
