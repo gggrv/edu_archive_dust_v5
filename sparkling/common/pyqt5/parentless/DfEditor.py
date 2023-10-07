@@ -417,7 +417,8 @@ class DfEditor( QWidget ):
         
     def _new_column( self ):
         
-        col = '%s' % unique_loc()
+        # column name must start not with a number
+        col = 'a%s' % unique_loc()
         self.df[ col ] = pd.NA
         
         self.refresh_selector_section()
@@ -705,5 +706,5 @@ class DfEditor( QWidget ):
             self.Gui.parse_preview.addItems( str(ex).split('\n') )
 
 #---------------------------------------------------------------------------+++
-# end 2022.05.13
-# restructured, fixed row heights
+# end 2022.10.07
+# fix numeric column name error
