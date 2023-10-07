@@ -161,7 +161,7 @@ class PlaylistSelector( NodeViewer ):
         
         super( PlaylistSelector, self ).launch_selection_editor()
         
-    def _accept_programmatic_edits( self, df ):
+    def _accept_programmatic_edits( self, df, tell_everyone=True ):
         
         # For careful manual use only.
         
@@ -183,7 +183,8 @@ class PlaylistSelector( NodeViewer ):
         self.reapply_columns_to_hide( columns_to_hide=PLAYLIST_COLUMNS_TO_SHOW, appropriate_reverse=True )
         
         # tell everyone to update
-        self.PLAYLIST_EDITED.emit( df )
+        if tell_everyone:
+            self.PLAYLIST_EDITED.emit( df )
         
     def _accept_selection_edits_event( self, changes, db_name ):
     
