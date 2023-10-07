@@ -128,7 +128,7 @@ class DatabaseFilter( QWidget ):
             },
         ]
         
-        c.modify_actions( self, modifications )
+        c.modify_actions( self.Gui.result_view, modifications )
         
     def set_connection( self, conn ):
         
