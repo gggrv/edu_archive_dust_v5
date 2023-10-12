@@ -49,10 +49,10 @@ class Columns( BaseColumns ):
         
         c = Columns
         
-        if not c._PROTECTED in row:
+        if not c.move_protected in row:
             return False
         
-        if row[c._PROTECTED] == '':
+        if row[c.move_protected] == '':
             return False
         
         return True
