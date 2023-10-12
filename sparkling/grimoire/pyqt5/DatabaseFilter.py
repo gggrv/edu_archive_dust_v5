@@ -12,7 +12,7 @@ import pandas as pd
 # pip install
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import ( QWidget, QVBoxLayout,
-    QLineEdit, QHBoxLayout, QLabel, QComboBox
+    QLineEdit, QGridLayout, QLabel, QComboBox
     )
 # same project
 from sparkling.grimoire.PlaylistColumns import (
@@ -48,6 +48,7 @@ class DatabaseFilter( QWidget ):
     _virtual_settings = None
     
     class Gui:
+        db_names = None
         searchbar = None
         result_view = None
     
@@ -71,10 +72,14 @@ class DatabaseFilter( QWidget ):
         lyt = QVBoxLayout()
         lyt.setContentsMargins(0,0,0,0)
         
-        hbox = QHBoxLayout()
+        hbox = QGridLayout()
         hbox.setContentsMargins(0,0,0,0)
         
         # search controls
+        
+        self.Gui.db_names = QComboBox( parent=self )
+        self.Gui.db_names.addItem( DB_DEFAULT )
+        self.Gui.db_names.currentTextChanged.connect( self._db_changed_event )
         
         self.Gui.searchbar = QLineEdit( parent=self )
         
@@ -82,7 +87,9 @@ class DatabaseFilter( QWidget ):
         self.Gui.searchbar.setPlaceholderText( query )
         self.Gui.searchbar.setText( query )
         
-        hbox.addWidget( self.Gui.searchbar )
+        hbox.addWidget( self.Gui.searchbar, 0, 0 )
+        hbox.addWidget( self.Gui.db_names, 0, 3 )
+        hbox.setColumnStretch( 0, 2 )
         
         # results view
         
@@ -136,14 +143,33 @@ class DatabaseFilter( QWidget ):
         
         self.Gui.result_view.set_connection( conn )
         
+        db_names = []
+        for db_name in self._conn._db_names:
+            if not db_name == DB_DEFAULT:
+                db_names.append( db_name )
+        self.Gui.db_names.addItems( db_names )
+        
         # populate widget with search results
         self.Gui.result_view.set_settings( self._virtual_settings )
+        
+    def _db_changed_event( self, db_name ):
+        
+        c = ColumnsPlaylist
+        
+        settings = self.Gui.result_view.settings()
+        settings[ c.db_name ] = db_name
+        
+        # completely refresh the view
+        self.Gui.result_view.set_settings( settings )
         
     def _submit_search_event( self ):
         
         # make sure i have some query
         query = self.Gui.searchbar.text().strip()
         query = query.strip()
+        
+        if query == '':
+            query = QUERY_PLACEHOLDER
         
         # short name for convenience
         c = ColumnsPlaylist
