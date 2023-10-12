@@ -102,11 +102,6 @@ class NodeViewer( PandasTableView ):
     _conn = None
     
     # which tool to use to edit nodes
-    # TODO
-    # allow customizations
-    # make sure `editor tool `constructor
-    # accepts user-defined `dictionary` rather then
-    # individual `parameters`
     _node_editor_class = None
     
     # future dictionary
@@ -249,12 +244,12 @@ class NodeViewer( PandasTableView ):
         old_df, new_df = None, None
         #old_s, new_s = None, None
         if type(old_value) == pd.DataFrame: old_df=old_value
+        elif type(old_value) == pd.Series: old_s=old_value
         if type(new_value) == pd.DataFrame: new_df=new_value
-        #if type(old_value) == pd.Series: old_s=old_value
-        #if type(new_value) == pd.Series: new_s=new_value
+        elif type(new_value) == pd.Series: new_s=new_value
         
         is_df_and_df = not old_df is None and not new_df is None
-        #is_s_and_s = not old_s is None and not new_s is None
+        is_s_and_s = not old_s is None and not new_s is None
         #is_df_and_s = not old_df is None and not new_s is None
         #is_s_and_df = not old_s is None and not new_df is None
         
@@ -283,6 +278,26 @@ class NodeViewer( PandasTableView ):
             
             # i may need this in a child class
             return new_df
+        
+        elif is_s_and_s: # i have two series
+            # completely replace old with the new one
+            # make sure i have rows to work with
+            have_same_length = len(old_s.index) == len(new_s.index)
+            have_some_rows = len(old_s.index)>0
+            if not ( have_same_length and have_some_rows ):
+                log.error( f'failed to apply changes after editing the df - content length mismatch: expected {len(old_s.index)}, got {len(new_s.index)}' )
+                return
+            if old_s.equals(new_s):
+                log.info( 'the df was not edited - no changes detected, not doing anything' )
+                return
+            if not type( new_s.index ) == pd.core.indexes.numeric.Int64Index:
+                log.info( 'this kind of series is not supported yet' )
+                raise NotImplementedError
+            
+            new_df = self._MODEL.df.loc[ new_s.index ]
+            new_df[ new_s.name ] = new_s
+            self._conn.replace_nodes( new_df, db_name )
+            self.replace_subdf( new_df )
         
         else:
             

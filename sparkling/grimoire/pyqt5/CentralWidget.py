@@ -22,6 +22,8 @@ from sparkling.grimoire.pyqt5.PlaylistSelector import PlaylistSelector, ColumnsP
 # playlist viewer
 from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
 from sparkling.grimoire.pyqt5.TabWidgetForPlaylistViewers import TabWidgetForPlaylistViewers
+# other
+from sparkling.grimoire.pyqt5.FileRenamer import FileRenamer
 # filters
 from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
 #from sparkling.grimoire.pyqt5.TreeFilter import TreeFilter
@@ -175,9 +177,7 @@ class CentralWidget( QWidget ):
             
             # need to create dedicated viewer
             
-            w = PlaylistViewer( parent=self,
-                file_renamer_presets=self._own_doer.Presets.FileRenamer
-                )
+            w = PlaylistViewer( parent=self, file_renamer_class=FileRenamer )
             
             w.set_connection( self._own_doer.conn )
             w.set_settings( settings )
@@ -396,6 +396,43 @@ class CentralWidget( QWidget ):
     def _export_playlist_to_csv_event( self, p ):
         self._own_doer.export_playlist_to_csv( p )
         
+    def launch_selection_renamer( self ):
+        
+        # find currently active widget
+        w = self.focusWidget()
+        if w is None:
+            return
+        
+        # make sure i have items to rename
+        if not type(w) == PlaylistViewer:
+            return
+        df = w.selected_subdf()
+            
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        # make sure necessary field exists
+        if not c.path in df.columns:
+            return
+        
+        # launch renamer
+        
+        # TODO
+        # hide renamer when this playlist viewer
+        # is not visible / has unique window title
+        
+        ce = w._file_renamer_class.ColumnsConstructor
+        ps = {
+            ce.presets_manager: self._own_doer.Presets.FileRenamer,
+            }
+        
+        renamer = w._file_renamer_class( ps, parent=None )
+        renamer.change_items( df, None, w._settings[c.db_name] ) # populate with initial data    
+        renamer.EDITING_FINISHED.connect( w._accept_selection_edits_event )
+        
+        w._register_parentless_window( renamer )
+        renamer.show()
+        
 #---------------------------------------------------------------------------+++
-# end 2023.05.25
+# end 2023.10.12
 # simplified

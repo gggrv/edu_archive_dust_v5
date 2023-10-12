@@ -14,11 +14,11 @@ import pandas as pd
 # same project
 from sparkling.common.SomeDoer import SomeDoer as BaseSomeDoer
 from sparkling.common import ( readf_yaml, readf, savef, unique_loc )
-from sparkling.common.pyqt5.parentless.FileRenamerPresets import FileRenamerPresets
 from sparkling.grimoire.GrimoireNeo4jConnection import (
     Connection,
     NODE, DB_DEFAULT
     )
+from sparkling.grimoire.pyqt5.FileRenamer import PresetFileRenamer
 
 def generate_neo4j_settings( src ):
         
@@ -39,8 +39,8 @@ def generate_renaming_rules( src ):
 # r'D:\custom_dir' + '\\' + row['custom_column5'] + '\\' + os.path.basename(row[c.path])
 # r'E:\custom_dir' + '\\' + pd.to_datetime(row['timestamp']).strftime( r'%Y\%m\%Y%m%d_%H%M%S' ) + os.path.splitext(row[c.path])[1]
 123:
-  screen_name: basic neo4j
-  labels: 
+  screen_name: test renaming rule
+  neo4j_labels: 
   db_name: neo4j
   rule: r'C:\custom_folder' + '\\' + os.path.splitext(row[c.path])[1]
   description: some basic rule
@@ -104,7 +104,9 @@ class MainDoer( BaseSomeDoer ):
         self.Files.RENAMING_RULES = self.set_file( self.Files.RENAMING_RULES )
         self.Files.PLAYLIST_PLUGINS = self.set_file( self.Files.PLAYLIST_PLUGINS )
         # presets
-        self.Presets.FileRenamer = FileRenamerPresets( self.Files.RENAMING_RULES )
+        if not os.path.isfile( self.Files.RENAMING_RULES ):
+            generate_renaming_rules( self.Files.RENAMING_RULES )
+        self.Presets.FileRenamer = PresetFileRenamer( self.Files.RENAMING_RULES )
     
     def __establish_connection( self ):
         

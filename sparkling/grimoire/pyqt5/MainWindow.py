@@ -89,6 +89,17 @@ class MainWindow( ParentlessMainWindow ):
         
         bar = self.menuBar()
         
+        m_edit = bar.addMenu( 'Edit' )        
+        actions = [
+            {
+                c.identity: 'grimoire/main_window/edit/rename_selection',
+                c.text: 'Rename selected files',
+                c.method: self.launch_selection_renamer,
+                c.shortcut: 'Alt+Left',
+                },
+            ]
+        c.add_actions( m_edit, actions )
+        
         m_view = bar.addMenu( 'View' )        
         actions = [
             {
@@ -160,6 +171,11 @@ class MainWindow( ParentlessMainWindow ):
         # enable
         p.autoenable( self )
         
+    def launch_selection_renamer( self ):
+        cw = self.centralWidget()
+        if not cw is None:
+            cw.launch_selection_renamer()
+        
 #---------------------------------------------------------------------------+++
-# end 2023.05.20
-# moved plugin functionality here
+# end 2023.10.12
+# added `launch_selection_renamer`

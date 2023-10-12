@@ -16,10 +16,12 @@ from PyQt5.QtWidgets import ( QMessageBox )
 # same project
 # headless
 from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist
-from sparkling.grimoire.GrimoireNeo4jColumns import Columns as ColumnsNeo4j, NODE
+from sparkling.grimoire.GrimoireNeo4jColumns import (
+    Columns as ColumnsNeo4j,
+    NODE, DB_DEFAULT
+    )
 # gui
-from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions, _open_path
-from sparkling.common.pyqt5.parentless.FileRenamer import FileRenamer
+from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions, _open_path, DfEditor
 from sparkling.common.pyqt5 import ( get_QItemSelection_rowilocs )
 # common
 from sparkling.common import ( unique_loc )
@@ -34,22 +36,23 @@ class PlaylistViewer( NodeViewer ):
     SEND_CONTENTS = pyqtSignal( list, dict )
     OVERRIDE_SETTINGS = pyqtSignal( dict )
     
-    class Presets:
-        
-        FileRenamer = None # will be populated from outside
+    # which tool to use to rename nodes
+    _file_renamer_class = None
     
     def __init__( self,
-                  file_renamer_presets=None,
                   selection_changed_event=True,
                   accept_drops=True,
+                  node_editor_class=DfEditor,
+                  file_renamer_class=None,
                   parent=None,
                   *args, **kwargs ):
         super( PlaylistViewer, self ).__init__(
+            node_editor_class=node_editor_class,
+            accept_drops=accept_drops,
             parent=parent, *args, **kwargs )
-
-        # presets
-        if not file_renamer_presets is None:
-            self.Presets.FileRenamer = file_renamer_presets
+        
+        # remember
+        self._file_renamer_class = file_renamer_class
         
         # appearance
         self.setWordWrap( False )
@@ -93,12 +96,6 @@ class PlaylistViewer( NodeViewer ):
                  c.text: 'Edit',
                  c.method: self.launch_selection_editor,
                  c.shortcut: 'Alt+Return',
-                 },
-             {
-                 c.identity: 'grimoire/playlist_viewer/row/rename',
-                 c.text: 'Rename',
-                 c.method: self.rename_selection,
-                 c.shortcut: 'Alt+Left',
                  },
             {
                 c.identity: 'grimoire/playlist_viewer/row/send_somewhere',
@@ -221,28 +218,10 @@ class PlaylistViewer( NodeViewer ):
         
         for w in self._parentless_windows:
             
-            if type(w)==FileRenamer:
-                w.change_contents( new_subdf, rem_identities )            
-    
-    def rename_selection( self ):
-        
-        c = ColumnsNeo4j
-        
-        if not c.path in self._MODEL.df.columns:
-            return
-        
-        # obtain current selection
-        df = self.selected_subdf()
-    
-        # launch renamer
-        
-        w = FileRenamer( presets_mgr=self.Presets.FileRenamer, parent=None )
-        w.change_contents( df, None ) # populate with initial data
-            
-        w.EDITING_FINISHED.connect( self.__playlist_data_edited_event )
-        
-        self.__register_parentless_window(w)
-        w.show()
+            if type(w)==self._file_renamer_class:
+                c = ColumnsPlaylist
+                db_name = self._settings[c.db_name] if c.db_name in self._settings else DB_DEFAULT
+                w.change_items( new_subdf, rem_identities, db_name )
         
     def forbid_deep_deletions( self, forbid ):
         
