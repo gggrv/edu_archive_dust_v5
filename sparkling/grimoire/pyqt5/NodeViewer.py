@@ -26,6 +26,7 @@ from sparkling.common.pyqt5.parentless.DfEditor import DfEditor
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 # common
 from sparkling.common import ( unique_loc, delrem )
+from sparkling.common.pyqt5 import ( mime2file )
 # emuns
 from sparkling.common.enums.Consent import EConsent
 
@@ -75,6 +76,17 @@ def _delrem_df( df ):
                 
     return exs
 
+def _parse_path( path ):
+    
+    c = ColumnsPlaylist
+        
+    param_dict = {
+        c.path: path,
+        c.title: os.path.basename(path),
+        }
+        
+    return param_dict
+
 class NodeViewer( PandasTableView ):
     
     # I expect that this widget is used to display
@@ -101,6 +113,7 @@ class NodeViewer( PandasTableView ):
     # i can write anything i want, but for the sake
     # of compatibility and flexibility i will be using
     # `ColumnsPlaylist` format
+    # i expect `settings` to be fully validated beforehand
     _settings = None
     
     def __init__( self,
@@ -435,6 +448,110 @@ class NodeViewer( PandasTableView ):
                 del w
                 # just die already
                 return
+        
+    def dragEnterEvent( self, ev ):
+        
+        # Node viewer should be able to accept
+        # various drag and drops.
+        
+        c = ColumnsPlaylist
+        
+        # make sure this playlist supports adding items
+        if c.auto_query in self._settings:
+            # this playlist is rule-based,
+            # i don't want to edit it manually
+            log.error( 'this playlist is automatic, i don\'t want to add items to it manually' )
+            ev.ignore()
+            return
+        
+        ev.accept()
+    
+    def dragMoveEvent( self, ev ):
+        
+        ev.accept()
+
+    def dropEvent( self, ev ):
+        
+        if ev.mimeData().hasUrls():
+            # got some links
+            
+            is_some_url = r'://' in ev.mimeData().text()
+            is_local_path = ev.mimeData().text().startswith( r'file://' )
+            if is_local_path or is_some_url:
+                # these links are ok
+                
+                paths = mime2file( ev.mimeData() ) \
+                    if is_local_path \
+                    else ev.mimeData().text().split('\n')
+                    
+                self._add_to_view_db( paths, False, parsing_function=_parse_path )
+                ev.accept()
+                return
+            
+            else:
+                # no idea what could be here
+                # TODO
+                ev.ignore()
+                return
+            
+        # i got not links but something else
+        log.error( 'unknown drops, not doing anything' )
+        ev.ignore()
+        
+    def dragLeaveEvent( self, ev ):
+        ev.accept()
+        
+    def _add_to_view_db( self, items, already_parsed,
+        parsing_function=None ):
+        
+        # I can call this method whenever I want my
+        # playlist to accept new somethings and save them to db.
+        # For careful programmatic use only.
+        
+        c = ColumnsPlaylist
+        
+        # foolcheck
+        if not c.db_name in self._settings:
+            log.error( 'can\'t accept because no db name specified' )
+            return
+        if not type(items) in [ list, set ]:
+            log.error( 'can\'t accept because i need an iterable' )
+            return
+        
+        db_name = self._settings[c.db_name]
+        identities = []
+        for item in items:
+            
+            # auto parse according to user preferences
+            if already_parsed:
+                param_dict = item
+            else:
+                if parsing_function is None:
+                    param_dict = { c.title:item }
+                else:
+                    param_dict = parsing_function( item )
+            
+            # send to db
+            node = self._conn.convert_node( NODE, '', param_dict=param_dict )
+            response = self._conn.query(
+                f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
+                db_name=db_name
+                )
+            
+            if response is None:
+                log.error( f'failed to connect to server to create node {node} in db {db_name}' )
+            else:
+                for record in response:
+                    identities.append( record['identity'] )
+                    
+        # update settings
+        c.add_identities( self._settings, identities )
+        
+        # TODO
+        # there is no need to redownload the whole contents
+        # in order to display added items -
+        # partially download only necessary data
+        self.set_settings( self._settings )
             
     def add_rows( self, rows ):
         

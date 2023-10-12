@@ -18,13 +18,13 @@ from PyQt5.QtWidgets import ( QMessageBox )
 from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist
 from sparkling.grimoire.GrimoireNeo4jColumns import Columns as ColumnsNeo4j, NODE
 # gui
-from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions
+from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions, _open_path
 from sparkling.common.pyqt5.parentless.FileRenamer import FileRenamer
-from sparkling.common.pyqt5 import ( mime2file, get_QItemSelection_rowilocs )
+from sparkling.common.pyqt5 import ( get_QItemSelection_rowilocs )
 # common
 from sparkling.common import ( unique_loc )
 
-PLAYLIST_COLUMNS_TO_HIDE = [
+PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR = [
     ColumnsPlaylist.identity,
     ColumnsPlaylist.db_name
     ]
@@ -147,17 +147,23 @@ class PlaylistViewer( NodeViewer ):
             # this playlist is empty at this moment
             # and i can manually set auto query / add items
             # from search
-            self.switch_df( pd.DataFrame(), columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE )
+            self.switch_df( pd.DataFrame(), columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
             return
             
         response = self._conn.query( query, db_name=p[c.db_name] )
+        
+        if response is None:
+            # TODO
+            # pop-up with log messages
+            log.error( 'query most likely failed, please review db settings manually' )
+            return
                 
         df = pd.DataFrame([ r[NODE] for r in response ])
         df.index = [ r[NODE].id for r in response ]
         df.fillna( '', inplace=True )
         self._conn.fill_reserved_columns( df, db_name=p[c.db_name] )
         
-        self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE )
+        self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
         
     def mouseDoubleClickEvent( self, ev ):
     
@@ -180,9 +186,9 @@ class PlaylistViewer( NodeViewer ):
         
         super( PlaylistViewer, self ).launch_selection_editor()
         
-    def _accept_selection_edits_event( self, changes ):
+    def _accept_selection_edits_event( self, changes, db_name ):
         
-        super( PlaylistViewer, self )._accept_selection_edits_event( changes )
+        super( PlaylistViewer, self )._accept_selection_edits_event( changes, db_name )
         
     def __selection_changed_event( self, selected, deselected  ):
         
@@ -216,172 +222,7 @@ class PlaylistViewer( NodeViewer ):
         for w in self._parentless_windows:
             
             if type(w)==FileRenamer:
-                w.change_contents( new_subdf, rem_identities )
-        
-    def dragEnterEvent( self, ev ):
-        
-        if self._playlist.autoquery():
-            # this playlist is rule-based,
-            # i don't want to edit it manually
-            ev.ignore()
-            return
-        
-        # this playlist is identities-based
-        # i want to edit it manually
-        ev.accept()
-        
-    def dragMoveEvent( self, ev ):
-        
-        if self._playlist.autoquery():
-            # this playlist is rule-based,
-            # i don't want to edit it manually
-            ev.ignore()
-            return
-        
-        # this playlist is identities-based
-        # i want to edit it manually
-        ev.accept()
-        
-    def _accept_custom_metadata( self, metadata ):
-        
-        # Accepts custom metadata that is not in db.
-        # For external use only (plugins for example).
-        
-        if self._playlist.autoquery():
-            msg = 'this playlist is rule-based, don\'t edit it manually!'
-            log.error( msg )
-            return
-        
-        identities = []
-        
-        if type(metadata)==pd.DataFrame:
-            # df with some rows that are not in db
-            raise NotImplementedError
-        
-        elif type(metadata)==dict:
-            # one single row that is not in db
-            # this is param_dict
-            
-            # parse reserved columns
-            labels = ''
-            if Neo4jColumns._NEO4J_LABELS in metadata:
-                labels = metadata[Neo4jColumns._NEO4J_LABELS]
-                del metadata[ Neo4jColumns._NEO4J_LABELS ]
-            
-            # send to db
-            node = self._conn.convert_node( NODE, labels, param_dict=metadata )
-            response = self._conn.query(
-                f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
-                db_name=self._playlist.db_name()
-                )
-            
-            for record in response:
-                identities.append( record['identity'] )
-        
-        elif type(metadata)==list:
-            # list of dictionaries that are not in db
-            
-            for row in metadata:
-                    
-                # parse reserved columns
-                labels = ''
-                if Neo4jColumns._NEO4J_LABELS in row:
-                    labels = row[Neo4jColumns._NEO4J_LABELS]
-                    del row[ Neo4jColumns._NEO4J_LABELS ]
-                    
-                # send to db
-                node = self._conn.convert_node( NODE, labels, param_dict=row )
-                response = self._conn.query(
-                    f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
-                    db_name=self._playlist.db_name()
-                    )
-                for record in response:
-                    identities.append( record['identity'] )
-        
-        else:
-            raise ValueError
-            
-        # send to internal data
-        self.add_identities( identities )
-        
-    def __accept_dropped_paths( self, paths ):
-        
-        # I can call this method whenever I want my
-        # playlist to accept new paths and save them to db.
-        # For internal use only.
-        
-        c = ColumnsNeo4j
-        
-        identities = []
-        for src in paths:
-            
-            # auto parse according to user preferences
-            # TODO
-            # plugin with custom parsing/renaming functions for different
-            # paths, db_name and label
-            # also make it available in path_eater
-            param_dict = {
-                c.path: src,
-                c.TITLE: os.path.basename(src)
-                }
-            
-            # send to db
-            node = self._conn.convert_node( NODE, '', param_dict=param_dict )
-            response = self._conn.query(
-                f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
-                db_name=self._playlist.db_name()
-                )
-            
-            if response is None:
-                log.error( f'failed to connect to server to create node {node} in db {self._playlist.db_name()}' )
-            else:
-                for record in response:
-                    identities.append( record['identity'] )
-        
-        # send to internal data
-        self.add_identities( identities )
-
-    def dropEvent( self, ev ):
-    
-        if self._playlist.autoquery():
-            # this playlist is rule-based,
-            # i don't want to edit it manually
-            ev.ignore()
-            return
-        
-        # this playlist is identities-based
-        # i want to edit it manually
-        
-        if ev.mimeData().hasUrls():
-            # got some links
-            
-            is_some_url = r'://' in ev.mimeData().text()
-            is_local_path = ev.mimeData().text().startswith( r'file://' )
-
-            if is_local_path or is_some_url:
-                # these links are ok
-                
-                paths = mime2file( ev.mimeData() ) \
-                    if is_local_path \
-                    else ev.mimeData().text().split('\n')
-                    
-                self.__accept_dropped_paths( paths )
-                ev.accept()
-                return
-            
-            else:
-                # no idea what could be here
-                # TODO
-                ev.ignore()
-                return
-            
-        # i got not links but something else
-        log.error( 'unknown drops, not doing anything' )
-        ev.ignore()
-
-    def dragLeaveEvent( self, ev ):
-        ev.accept()
-                
+                w.change_contents( new_subdf, rem_identities )            
     
     def rename_selection( self ):
         
@@ -466,7 +307,8 @@ class PlaylistViewer( NodeViewer ):
         c = ColumnsPlaylist
         if not c.identity in self._settings:
             # i don't need to nofity playlist selector -
-            # this playlist is not tracked
+            # this playlist is not tracked (is not a `node` in `db` -
+            # just a random `dict`)
             return
         
         # i need to notify playlist selector
@@ -489,6 +331,13 @@ class PlaylistViewer( NodeViewer ):
         self._settings[c.identities] = ' '.join(list( self._MODEL.df.index.astype(str) ))
         self.OVERRIDE_SETTINGS.emit( self._settings )
     
+    def _add_to_view_db( self, items, already_parsed,
+        parsing_function=None ):
+        
+        super( PlaylistViewer, self )._add_to_view_db( items, already_parsed, parsing_function=parsing_function )
+        
+        self.OVERRIDE_SETTINGS.emit( self._settings )
+        
     def _cm_open_file( self ):
         _open_path( self.selected_subdf(), dirname=False )
                 
@@ -503,7 +352,7 @@ class PlaylistViewer( NodeViewer ):
         # Different widgets download different
         # node fields from db, so I should not send
         # the whole `df` - `identities` are enough to
-        # enable the recipient redownload
+        # enable the recipient to redownload
         # all the necessary data.
         
         subdf = self.selected_subdf()
@@ -514,5 +363,5 @@ class PlaylistViewer( NodeViewer ):
             log.debug( 'no selection, nothing to send' )
             
 #---------------------------------------------------------------------------+++
-# end 2023.10.07
-# added `_cm_send_somewhere`
+# end 2023.10.12
+# update drag/drop
