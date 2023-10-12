@@ -430,6 +430,8 @@ class CentralWidget( QWidget ):
         renamer.change_items( df, None, w._settings[c.db_name] ) # populate with initial data    
         renamer.EDITING_FINISHED.connect( w._accept_selection_edits_event )
         
+        renamer.select_first_preset()
+        
         w._register_parentless_window( renamer )
         renamer.show()
         

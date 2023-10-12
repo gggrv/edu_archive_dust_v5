@@ -143,7 +143,7 @@ class FileRenamer( QDialog ):
         self.destroy( True, True )
         ev.ignore() # !!!
         
-    def _preset_changed_event( self, preset_screen_name ):
+    def _preset_changed_event( self, value ):
         
         # Whenever I select some preset via `preset selector`,
         # I want to load a renaming rule.
@@ -280,6 +280,12 @@ class FileRenamer( QDialog ):
         self.old_paths.name = c.path
         self.EDITING_FINISHED.emit( (self.old_paths,new_paths_s), self.db_name )
         self.close()
+        
+    def select_first_preset( self ):
+        
+        if self.Gui.preset_selector.count() > 0:
+            self.Gui.preset_selector.setCurrentIndex( 0 )
+            self._preset_changed_event( None )
     
 #---------------------------------------------------------------------------+++
 # end 2023.10.12
