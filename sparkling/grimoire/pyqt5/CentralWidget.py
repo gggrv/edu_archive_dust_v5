@@ -309,13 +309,7 @@ class CentralWidget( QWidget ):
             chosen_playlist = playlists.iloc[cbxiloc]
             identity = chosen_playlist.name
             settings = dict( chosen_playlist.dropna() )
-            
-            if c.identities in settings:
-                new = list( settings[ c.identities ] )
-                new.extend(identities)
-                settings[ c.identities ] = ' '.join( set(new) )
-            else:
-                settings[ c.identities ] = ' '.join( identities )
+            c.add_identities( settings, identities )
                 
             # write it to db
             df = pd.DataFrame( [settings], index=[identity] )

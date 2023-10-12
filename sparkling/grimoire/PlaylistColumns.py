@@ -159,6 +159,21 @@ class ColumnsPlaylist( Columns ):
         # no necessary fields = no query
     
     @staticmethod
+    def add_identities( settings, identities ):
+        
+        # Standard way to add some identities
+        # to current settings.
+        
+        c = ColumnsPlaylist
+        
+        if c.identities in settings:
+            new = settings[ c.identities ].split(' ')
+            new.extend(identities)
+            settings[ c.identities ] = ' '.join( set(new) )
+        else:
+            settings[ c.identities ] = ' '.join( identities )
+                
+    @staticmethod
     def get_playlists( conn ):
         
         # Download all info regarding playlists
