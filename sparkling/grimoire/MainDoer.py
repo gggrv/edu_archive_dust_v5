@@ -108,7 +108,7 @@ class MainDoer( BaseSomeDoer ):
             generate_renaming_rules( self.Files.RENAMING_RULES )
         self.Presets.FileRenamer = PresetFileRenamer( self.Files.RENAMING_RULES )
     
-    def __establish_connection( self ):
+    def _establish_connection( self ):
         
         # Connect to predefined neo4j server.
         # Return True/False depending on success.
@@ -181,35 +181,11 @@ class MainDoer( BaseSomeDoer ):
             )
         
         df.to_csv( src, index=True ) # keep identities just in case
-    
-    def __generate_file_renaming_rules( self, src ):
-        
-        # Generates default preset for FileRenamer.
-        
-        if self.Presets.FileRenamer is None:
-            return
-        
-        p = self.Presets.FileRenamer
-        
-        description = """some basic rule description
-# example rules:
-# r'C:\custom_dir' + '\\' + row['custom_column1'] + '\\' + row['custom_column2'] + '\\' + os.path.basename(row[c.path])
-# r'D:\custom_dir' + '\\' + row['custom_column5'] + '\\' + os.path.basename(row[c.path])
-# r'E:\custom_dir' + '\\' + pd.to_datetime(row['timestamp']).strftime( r'%Y\%m\%Y%m%d_%H%M%S' ) + os.path.splitext(row[c.path])[1]"""
-        
-        p.new_preset(
-            unique_loc(),
-            'Label1:Label2',
-            'Example Renaming Preset',
-            DB_DEFAULT,
-            "r'C:\custom_folder' + '\\' + os.path.splitext(row[c.path])[1]",
-            description
-            )
             
     def autorun( self ):
         
         # attempt to connect to server
-        success = self.__establish_connection()
+        success = self._establish_connection()
         
         if not success:
             msg = 'grimoire can\'t launch without connection to server, not doing anything'
@@ -227,5 +203,5 @@ class MainDoer( BaseSomeDoer ):
         return True, 'ok'
     
 #---------------------------------------------------------------------------+++
-# end 2023.07.25
+# end 2023.10.13
 # simplified
