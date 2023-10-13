@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 from datetime import datetime
 # pip install
 # same project
-from sparkling.common.pyqt5.main import append_actions
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 
 g_grimoire_main_window = None
 PLUGIN_NAME = 'create_new_row'
@@ -26,15 +26,16 @@ def new_row( *args ):
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, can\'t create new row' )
         return
     
+    # write some metadata
+    
     now = datetime.now()
     date_human = now.strftime('%Y.%m.%d %X')
     
-    # send to db, view
-    metadata = {
-        'timestamp': date_human
+    param_dict = {
+        'timestamp': date_human,
         }
     
-    playlist_viewer._accept_custom_metadata( metadata )
+    playlist_viewer._add_to_view_db( [param_dict], True )
     
 def autoenable( grimoire_main_window ):
     
@@ -48,16 +49,16 @@ def autoenable( grimoire_main_window ):
         return
         
     # mod context menu
+    c = ColumnsActionDefinitions
     actions = [
-        { # replaces new row
-            'text': 'Add new row',
-            'method': new_row,
-            'shortcut': 'Ctrl+N',
-            'owner': PLUGIN_NAME
-            }
+        {
+            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/add_new_row',
+            c.text: 'Add new row',
+            c.method: new_row,
+            c.shortcut: 'Ctrl+N',
+            },
         ]
-    
-    append_actions( playlist_viewer, actions )
+    c.add_actions( playlist_viewer, actions )
     
 def autodisable( grimoire_main_window ):
     
@@ -69,25 +70,16 @@ def autodisable( grimoire_main_window ):
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, nothing to disable' )
         return
     
-    # iterate through available actions
-    for act in playlist_viewer.actions():
-        
-        try:
-        
-            # check custom owner parameter to see if
-            # the action is created by a plugin
-            # TODO
-            # subclass QAction??
-            if act._owner == PLUGIN_NAME:
-                playlist_viewer.removeAction( act )
-                
-        except AttributeError:
-            
-            # this action does not have custom owner parameter
-            # this miens that it was not
-            # created by any sort of plugin
-            pass
+    # remove modded context menu
+    c = ColumnsActionDefinitions
+    modifications = [
+        {
+            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/add_new_row',
+            c.remove: True,
+            },
+        ]
+    c.modify_actions( playlist_viewer, modifications )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.22
-# created
+# end 2023.10.13
+# updated for version 5.0

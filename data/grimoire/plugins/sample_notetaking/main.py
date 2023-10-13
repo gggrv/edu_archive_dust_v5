@@ -18,8 +18,10 @@ from sparkling.contech.main import (
     get_references_definitions_for_product, render_product )
 from sparkling.common.SomeDoer import SomeDoer
 from sparkling.common import savef, select_files, readf
-from sparkling.common.pyqt5.main import append_actions
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 from sparkling.neo4j.Columns import Columns as Neo4jColumns
+
+PLUGIN_NAME = 'sample_notetaking'
 
 own_doer = None
 
@@ -193,11 +195,6 @@ class MainDoer( SomeDoer ):
         
         # this file will contain the path to the project
         CONTEXT_PROJECT_ROOT = 'project_root'
-    
-    class Strings:
-        
-        NEW_NOTE = 'New note'
-        RENDER = 'Render autoproducts for selected'
         
     class Doers:
         
@@ -342,26 +339,27 @@ def autoenable( grimoire_main_window ):
         return
         
     # mod context menu
+    c = ColumnsActionDefinitions
     actions = [
         { # replaces new row
-            'text': MainDoer.Strings.NEW_NOTE,
-            'method': MainDoer.new_note,
-            'shortcut': 'Ctrl+N',
-            'owner': MainDoer.PREFERRED_SAVE_DIR_NAME
+            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/add_new_note',
+            c.text: 'New note',
+            c.method: MainDoer.new_note,
+            c.shortcut: 'Ctrl+N',
             },
-        {
-            'text': MainDoer.Strings.RENDER,
-            'method': MainDoer.render_autoproduct,
-            'shortcut': 'Ctrl+P',
-            'owner': MainDoer.PREFERRED_SAVE_DIR_NAME
+        { # replaces print
+            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/render_autoproduct',
+            c.text: 'Render autoproducts for selected',
+            c.method: MainDoer.render_autoproduct,
+            c.shortcut: 'Ctrl+P',
             },
         # TODO
-        # add `render selected as a new product`
+        # add `render selected as a new product
+        # in a temp folder (if possible)`
         # rather then `render unique autoproducts for all selected`
         ]
-    
-    append_actions( playlist_viewer, actions )
-    
+    c.add_actions( playlist_viewer, actions )
+        
 def autodisable( grimoire_main_window ):
     
     if own_doer is None:
@@ -379,25 +377,18 @@ def autodisable( grimoire_main_window ):
         log.error( 'plugin notetaking, no valid playlist_viewer found, enable' )
         return
     
-    # iterate through available actions
-    for act in playlist_viewer.actions():
-        
-        try:
-        
-            # check custom owner parameter to see if
-            # the action is created by a plugin
-            # TODO
-            # subclass QAction??
-            if act._owner == MainDoer.PREFERRED_SAVE_DIR_NAME:
-                playlist_viewer.removeAction( act )
-                
-        except AttributeError:
-            
-            # this action does not have custom owner parameter
-            # this miens that it was not
-            # created by any sort of plugin
-            pass
+    # remove modded context menu
+    c = ColumnsActionDefinitions
+    modifications = [
+        {
+            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/add_new_note',
+            c.remove:True },
+        {
+            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/render_autoproduct',
+            c.remove:True },
+        ]
+    c.modify_actions( playlist_viewer, modifications )
         
 #---------------------------------------------------------------------------+++
-# end 2023.05.22
-# ok basic clean version
+# end 2023.10.13
+# update for version 5.0
