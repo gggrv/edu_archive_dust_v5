@@ -120,6 +120,7 @@ class NodeViewer( PandasTableView ):
             parent=parent, *args, **kwargs )
         
         # remember
+        self._settings = {}
         self._parentless_windows = []
         self._node_editor_class = node_editor_class
         
@@ -174,7 +175,7 @@ class NodeViewer( PandasTableView ):
         # It's the same as setting `playlist` in the
         # upgraded subclasses.
         
-        self._settings = settings
+        self._settings = {} if settings is None else settings
         
         c = ColumnsPlaylist
         
@@ -192,7 +193,7 @@ class NodeViewer( PandasTableView ):
     def set_connection( self, conn ):
         self._conn = conn
                 
-    def launch_selection_editor( self ):
+    def launch_selection_editor( self, constructor_parameters=None ):
         
         # Launches editor.
         
@@ -220,12 +221,12 @@ class NodeViewer( PandasTableView ):
         # TODO
         # external file with preferences
         # for each db and label
-        ps = {
-            ce.master_column: c.path,
+        ps = {} if constructor_parameters is None else constructor_parameters
+        ps.update({
             ce.df: subdf,
             ce.display_vertical: False,
             ce.db_name: self._settings[c.db_name]
-            }
+            })
         
         w = self._node_editor_class( ps, parent=None )
         w.EDITING_FINISHED.connect( self._accept_selection_edits_event )
@@ -242,7 +243,7 @@ class NodeViewer( PandasTableView ):
         # detect what am i working with
         old_value, new_value = changes
         old_df, new_df = None, None
-        #old_s, new_s = None, None
+        old_s, new_s = None, None
         if type(old_value) == pd.DataFrame: old_df=old_value
         elif type(old_value) == pd.Series: old_s=old_value
         if type(new_value) == pd.DataFrame: new_df=new_value
@@ -298,6 +299,9 @@ class NodeViewer( PandasTableView ):
             new_df[ new_s.name ] = new_s
             self._conn.replace_nodes( new_df, db_name )
             self.replace_subdf( new_df )
+            
+            # i may need this in a child class
+            return new_df
         
         else:
             
