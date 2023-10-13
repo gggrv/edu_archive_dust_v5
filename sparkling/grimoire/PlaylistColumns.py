@@ -107,6 +107,24 @@ class ColumnsPlaylist( Columns ):
         playlist.pop( c.identities )
     
     @staticmethod
+    def validate_plugins( settings ):
+    
+        # short name for convenience
+        c = ColumnsPlaylist
+        
+        if not c.plugins in settings:
+            return
+        
+        values = settings[c.plugins]
+        if type(values)==str:
+            if len( values.strip() ) > 0:
+                # everything ok
+                return
+        
+        # bad
+        settings.pop( c.plugins )
+    
+    @staticmethod
     def validate_deep_deletions( playlist ):
     
         # short name for convenience
@@ -173,6 +191,35 @@ class ColumnsPlaylist( Columns ):
         else:
             settings[ c.identities ] = ' '.join( identities )
                 
+    @staticmethod
+    def get_plugin_changes( old_settings, new_settings ):
+        
+        c = ColumnsPlaylist
+        
+        c.validate_plugins( old_settings )
+        c.validate_plugins( new_settings )
+        
+        # make sure i have old plugins
+        if not c.plugins in old_settings:
+            if c.plugins in new_settings:
+                return '', new_settings[c.plugins]
+            return '', ''
+            
+        # make sure i don't have new plugins
+        if c.plugins in new_settings:
+            
+            to_remove = []
+            to_add = new_settings[c.plugins].split( MULTIVALUE_SEPARATOR )
+            for plugin_name in old_settings[c.plugins].split( MULTIVALUE_SEPARATOR ):
+                if plugin_name in to_add:
+                    to_add.remove( plugin_name )
+                elif not plugin_name in to_remove:
+                    to_remove.append( plugin_name )
+            return MULTIVALUE_SEPARATOR.join(to_remove), MULTIVALUE_SEPARATOR.join(to_add)
+        
+        # i want to remove all old and don't add any new
+        return old_settings[c.plugins], ''
+        
     @staticmethod
     def get_playlists( conn ):
         
