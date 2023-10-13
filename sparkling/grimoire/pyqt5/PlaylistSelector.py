@@ -159,7 +159,11 @@ class PlaylistSelector( NodeViewer ):
         # custom editor
         # with convenient comboboxes, etc
         
-        super( PlaylistSelector, self ).launch_selection_editor()
+        constructor_parameters = {
+            'master_column': ColumnsPlaylist.title,
+            }
+        
+        super( PlaylistSelector, self ).launch_selection_editor( constructor_parameters=constructor_parameters )
         
     def _accept_programmatic_edits( self, df, tell_everyone=True ):
         
@@ -189,6 +193,9 @@ class PlaylistSelector( NodeViewer ):
     def _accept_selection_edits_event( self, changes, db_name ):
     
         new_df = super( PlaylistSelector, self )._accept_selection_edits_event( changes, db_name )
+        if new_df is None:
+            # no change happened
+            return
         
         self.reapply_columns_to_hide( columns_to_hide=PLAYLIST_COLUMNS_TO_SHOW, appropriate_reverse=True )
         
