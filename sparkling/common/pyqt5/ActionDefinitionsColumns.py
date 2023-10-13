@@ -96,11 +96,19 @@ class ColumnsActionDefinitions:
     enabled = 'enabled'
     visible = 'visible'
     icon = 'icon'
+    remove = 'remove'
     
     @staticmethod
     def convert_action_definitions( widget, action_definitions ):
         
         # Creates `QAction` objects from definitions.
+        
+        # Currently `action_definitions` is a `list of dict`.
+        # I keep this architecture rather
+        # then a `dict of dict`, because I want to preserve order -
+        # `dict` is unordered. I may switch to
+        # an `ordered dict of unordered dict` architecture
+        # in the future.
         
         acts = []
         for row in action_definitions:
@@ -136,7 +144,14 @@ class ColumnsActionDefinitions:
         widget.addActions( act_objects )
               
     @staticmethod
-    def modify_actions( widget, modifications ):   
+    def modify_actions( widget, modifications ):
+        
+        # Whenever I want to modify existing actions,
+        # I don't care about their order.
+        # This means that having `modifications` as `list of dict`
+        # is unnecessary. For ease of use and consistency I want
+        # `modifications` to be in the same format as
+        # `action definitions`. Currently it is `list of dict`.
         
         # short name for convenience
         c = ColumnsActionDefinitions
@@ -146,10 +161,18 @@ class ColumnsActionDefinitions:
             
             identity = act.get_identity()
             
+            # iterate modifications
+            # TODO
+            # switch to `ordered dict of unordered dict`
+            # to avoid multiple loops
             for mod in modifications:
                 if identity in mod[c.identity]:
-                    act.accept_modification( mod )
+                    # this is the action i'm looking for
+                    if c.remove in mod:
+                        widget.removeAction( act )
+                    else:
+                        act.accept_modification( mod )
                     
 #---------------------------------------------------------------------------+++
-# end 2023.10.07
-# moved `modify_actions` here
+# end 2023.10.13
+# added `remove` command
