@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 # embedded in python
 import os
 import sys
+import traceback
 # pip install
 from PyQt5.QtCore import ( QCoreApplication )
 from PyQt5.QtGui import ( QIcon )
@@ -152,7 +153,7 @@ class HostApp( QApplication ):
         # TODO
         # write log to file
         # read last n rows of that file
-        # create/destroy exception_dialog widget on depamd
+        # create/destroy exception_dialog widget on demand
         # rather then keep it in memory
         self.Gui._exception_dialog.show()
         
@@ -364,6 +365,9 @@ def _custom_excepthook( ex_type, ex_value, ex_traceback ):
         return
     
     # attempt to show a special dialog
+    #if logging.getLogger().level in [ logging.ERROR, logging.CRITICAL ]:
+    text = '\n'.join( traceback.format_exception(ex_type,ex_value,ex_traceback) )
+    log.error( text )
     HOST_APPLICATION.launch_exception_dialog()
     
 def autorun():
@@ -375,7 +379,7 @@ def autorun():
     custom_handler = GuiLogHandler()
     
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.ERROR,
         #format=,
         handlers=[
             logging.StreamHandler(),
