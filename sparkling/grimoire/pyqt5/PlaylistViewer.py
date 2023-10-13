@@ -138,7 +138,7 @@ class PlaylistViewer( NodeViewer ):
         # compile a list of plugin changes
         to_remove, to_add = c.get_plugin_changes( self._settings, settings )
         if not to_remove=='':
-            self.REQUEST_PLUGINS_DISABLE( to_remove, self )
+            self.REQUEST_PLUGINS_DISABLE.emit( to_remove, self )
         
         # do what needs to be done
         super( PlaylistViewer, self ).set_settings( settings )
