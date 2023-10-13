@@ -37,14 +37,14 @@ def new_row( *args ):
     
     playlist_viewer._add_to_view_db( [param_dict], True )
     
-def autoenable( grimoire_main_window ):
+def autoenable( grimoire_main_window, requester ):
     
     global g_grimoire_main_window
     g_grimoire_main_window = grimoire_main_window
     
     # get latest playlist viewer
-    playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if playlist_viewer is None:
+    #playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
+    if requester is None:
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, failed to enable' )
         return
         
@@ -58,15 +58,15 @@ def autoenable( grimoire_main_window ):
             c.shortcut: 'Ctrl+N',
             },
         ]
-    c.add_actions( playlist_viewer, actions )
+    c.add_actions( requester, actions )
     
-def autodisable( grimoire_main_window ):
+def autodisable( grimoire_main_window, requester ):
     
     # remove modded actions
     
     # get latest playlist viewer
-    playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if playlist_viewer is None:
+    #playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
+    if requester is None:
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, nothing to disable' )
         return
     
@@ -78,8 +78,8 @@ def autodisable( grimoire_main_window ):
             c.remove: True,
             },
         ]
-    c.modify_actions( playlist_viewer, modifications )
+    c.modify_actions( requester, modifications )
         
 #---------------------------------------------------------------------------+++
 # end 2023.10.13
-# updated for version 5.0
+# update

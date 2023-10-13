@@ -13,14 +13,17 @@ import pandas as pd
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import ( QWidget, QFileDialog,
     QHBoxLayout, QSplitter, QTabWidget, QVBoxLayout,
-    QDialog, QComboBox, QPushButton, QDialogButtonBox )
+    QDialog, QComboBox, QDialogButtonBox )
 # same project
 from sparkling.grimoire.GrimoireNeo4jConnection import Connection
 # playlist selector
-from sparkling.grimoire.pyqt5.PlaylistSelector import PlaylistSelector, ColumnsPlaylist
-#from sparkling.grimoire.pyqt5.PlaylistPluginsPresetsEditor import PlaylistPluginsPresetsEditor
+from sparkling.grimoire.pyqt5.PlaylistSelector import (
+    ColumnsPlaylist, PlaylistSelector,
+    NODE,
+    MULTIVALUE_SEPARATOR
+    )
 # playlist viewer
-from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
+from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer, NodeViewer
 from sparkling.grimoire.pyqt5.TabWidgetForPlaylistViewers import TabWidgetForPlaylistViewers
 # other
 from sparkling.grimoire.pyqt5.FileRenamer import FileRenamer
@@ -31,6 +34,8 @@ from sparkling.grimoire.pyqt5.DatabaseFilter import DatabaseFilter
 class CentralWidget( QWidget ):
     
     CONNECTION_CHANGED = pyqtSignal( Connection )
+    REQUEST_PLUGINS_ENABLE = pyqtSignal( str, NodeViewer )
+    REQUEST_PLUGINS_DISABLE = pyqtSignal( str, NodeViewer )
     
     class Gui:
         
@@ -84,17 +89,11 @@ class CentralWidget( QWidget ):
         side_lyt2.addWidget( self.Gui.database_filter )
         side_widget2.setLayout( side_lyt2 )
         
-        #self.Gui.plugin_pane = PlaylistPluginsPresetsEditor(
-        #    self._own_doer.Folders.PLUGINS,
-        #    self._own_doer.Files.PLAYLIST_PLUGINS,
-        #    parent=self )
-        
         self.Gui.tab_widget = TabWidgetForPlaylistViewers( parent=self )
         
         self.Gui.side_tab_widget = QTabWidget( parent=self )
         self.Gui.side_tab_widget.setContentsMargins(0,0,0,0)
         self.Gui.side_tab_widget.addTab( side_widget1, '☰' )
-        #self.Gui.side_tab_widget.addTab( self.Gui.plugin_pane, '⚙️' )
         self.Gui.side_tab_widget.addTab( side_widget2, '🔍' )
 
         # layouts
@@ -179,10 +178,14 @@ class CentralWidget( QWidget ):
             
             w = PlaylistViewer( parent=self, file_renamer_class=FileRenamer )
             
-            w.set_connection( self._own_doer.conn )
-            w.set_settings( settings )
             w.SEND_CONTENTS.connect( self._sent_contents_receive_event )
             w.OVERRIDE_SETTINGS.connect( self._request_playlist_settings_override_event )
+            w.REQUEST_PLUGINS_DISABLE.connect( self._request_plugins_disable_event )
+            w.REQUEST_PLUGINS_ENABLE.connect( self._request_plugins_enable_event )
+            
+            # autorun
+            w.set_connection( self._own_doer.conn )
+            w.set_settings( settings )
             
             c = ColumnsPlaylist
             self.Gui.tab_widget.addTab( w, row[c.title] )
@@ -342,6 +345,12 @@ class CentralWidget( QWidget ):
         # write it to db
         df = pd.DataFrame( [settings], index=[ settings[c.identity] ] )
         self.Gui.playlist_selector._accept_programmatic_edits( df, tell_everyone=False )
+        
+    def _request_plugins_disable_event( self, plugin_names, requester ):
+        self.REQUEST_PLUGINS_DISABLE.emit( plugin_names, requester )
+        
+    def _request_plugins_enable_event( self, plugin_names, requester ):
+        self.REQUEST_PLUGINS_ENABLE.emit( plugin_names, requester )
         
     def _import_csv_to_playlist_event( self, p ):
         

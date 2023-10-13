@@ -316,7 +316,7 @@ class MainDoer( SomeDoer ):
         # launch external editor
         self.Doers.ProjectNotetaking.open_note( src )
     
-def autoenable( grimoire_main_window ):
+def autoenable( grimoire_main_window, requester ):
     
     # make sure i have doer
     global own_doer
@@ -333,8 +333,8 @@ def autoenable( grimoire_main_window ):
             return
     
     # get latest playlist viewer
-    playlist_viewer = own_doer.grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if playlist_viewer is None:
+    #playlist_viewer = own_doer.grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
+    if requester is None:
         log.error( 'plugin notetaking, no valid playlist_viewer found, enable' )
         return
         
@@ -358,9 +358,9 @@ def autoenable( grimoire_main_window ):
         # in a temp folder (if possible)`
         # rather then `render unique autoproducts for all selected`
         ]
-    c.add_actions( playlist_viewer, actions )
+    c.add_actions( requester, actions )
         
-def autodisable( grimoire_main_window ):
+def autodisable( grimoire_main_window, requester ):
     
     if own_doer is None:
         # plugin was not loaded at all
@@ -372,8 +372,8 @@ def autodisable( grimoire_main_window ):
     # remove modded actions
     
     # get latest playlist viewer
-    playlist_viewer = own_doer.grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if playlist_viewer is None:
+    #playlist_viewer = own_doer.grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
+    if requester is None:
         log.error( 'plugin notetaking, no valid playlist_viewer found, enable' )
         return
     
@@ -387,8 +387,8 @@ def autodisable( grimoire_main_window ):
             c.identity: f'grimoire/plugin/{PLUGIN_NAME}/render_autoproduct',
             c.remove:True },
         ]
-    c.modify_actions( playlist_viewer, modifications )
+    c.modify_actions( requester, modifications )
         
 #---------------------------------------------------------------------------+++
 # end 2023.10.13
-# update for version 5.0
+# update

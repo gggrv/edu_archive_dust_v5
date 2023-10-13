@@ -16,7 +16,7 @@ from PyQt5.QtCore import pyqtSignal
 from sparkling.common.pyqt5.parentless.MainWindow import (
     MainWindow as ParentlessMainWindow )
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
-from sparkling.grimoire.pyqt5.CentralWidget import CentralWidget
+from sparkling.grimoire.pyqt5.CentralWidget import CentralWidget, MULTIVALUE_SEPARATOR
         
 # each plugin should have the following file
 # with at least two methods: autoenable( parent_main_window ),
@@ -69,8 +69,8 @@ class MainWindow( ParentlessMainWindow ):
         
         # signals
         
-        #cw.Gui.plugin_pane.REQUEST_PLUGIN_ENABLE.connect( self.__request_plugin_enable_event )
-        #cw.Gui.plugin_pane.REQUEST_PLUGIN_DISABLE.connect( self.__request_plugin_disable_event )
+        cw.REQUEST_PLUGINS_DISABLE.connect( self.__request_plugins_disable_event )
+        cw.REQUEST_PLUGINS_ENABLE.connect( self.__request_plugins_enable_event )
         
         self.__init_menu()
         
@@ -122,7 +122,7 @@ class MainWindow( ParentlessMainWindow ):
         self.OK_TO_CLOSE.emit( self.objectName() )
         ev.ignore() # !!!
         
-    def __request_plugin_disable_event( self, plugin_name ):
+    def __request_plugins_disable_event( self, plugin_names, requester ):
         
         # Removes this pugin's additional functionality
         # from playlist context menu, etc.
@@ -130,24 +130,20 @@ class MainWindow( ParentlessMainWindow ):
         # Right now I keep loaded plugins until grimoire's main
         # window is closed.
         
-        if not plugin_name in self._plugins:
-            log.error( f'attempt to remove unloaded plugin functionality: {plugin_name}' )
-            return
+        for plugin_name in plugin_names.split( MULTIVALUE_SEPARATOR ):
         
-        self._plugins[plugin_name].autodisable( self )
+            if not plugin_name in self._plugins:
+                log.error( f'attempt to remove unloaded plugin functionality: {plugin_name}' )
+                return
         
-    def __request_plugin_enable_event( self, plugin_name ):
+            self._plugins[plugin_name].autodisable( self, requester )
         
-        # Adds this pugin's additional functionality
-        # into playlist context menu, etc.
+    def __enable_plugin( self, plugin_name, requester ):
         
-        # help:
-        # https://www.geeksforgeeks.org/how-to-import-a-python-module-given-the-full-path/
-        
-        if plugin_name is self._plugins:
+        if plugin_name in self._plugins:
             # this plugin is already loaded
             # enable it again
-            p = self._plugins[plugin_name].autoenable( self )
+            p = self._plugins[plugin_name].autoenable( self, requester )
             return
         
         # i need to load this plugin
@@ -156,9 +152,14 @@ class MainWindow( ParentlessMainWindow ):
         plugin_src = os.path.join(
             self._own_doer.Folders.PLUGINS,
             plugin_name,
-            PLUGIN_ENTRY_FILE )
+            PLUGIN_ENTRY_FILE
+            )
+        if not os.path.isfile( plugin_src ):
+            log.error( f'plugin {plugin_name} not found at location {plugin_src}' )
+            return
         spec = importlib.util.spec_from_file_location(
-            plugin_name, plugin_src )
+            plugin_name, plugin_src
+            )
         if spec is None:
             log.error( f'failed to load invalid plugin {plugin_name}' )
             return
@@ -169,7 +170,18 @@ class MainWindow( ParentlessMainWindow ):
         self._plugins[plugin_name] = p
         
         # enable
-        p.autoenable( self )
+        p.autoenable( self, requester )
+        
+    def __request_plugins_enable_event( self, plugin_names, requester ):
+        
+        # Adds this pugin's additional functionality
+        # into playlist context menu, etc.
+        
+        # help:
+        # https://www.geeksforgeeks.org/how-to-import-a-python-module-given-the-full-path/
+        
+        for plugin_name in plugin_names.split( MULTIVALUE_SEPARATOR ):
+            self.__enable_plugin( plugin_name, requester )
         
     def launch_selection_renamer( self ):
         cw = self.centralWidget()

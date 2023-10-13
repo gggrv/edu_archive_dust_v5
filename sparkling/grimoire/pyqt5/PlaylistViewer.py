@@ -24,7 +24,6 @@ from sparkling.grimoire.GrimoireNeo4jColumns import (
 from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions, _open_path, DfEditor
 from sparkling.common.pyqt5 import ( get_QItemSelection_rowilocs )
 # common
-from sparkling.common import ( unique_loc )
 
 PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR = [
     ColumnsPlaylist.identity,
@@ -35,6 +34,8 @@ class PlaylistViewer( NodeViewer ):
 
     SEND_CONTENTS = pyqtSignal( list, dict )
     OVERRIDE_SETTINGS = pyqtSignal( dict )
+    REQUEST_PLUGINS_ENABLE = pyqtSignal( str, NodeViewer )
+    REQUEST_PLUGINS_DISABLE = pyqtSignal( str, NodeViewer )
     
     # which tool to use to rename nodes
     _file_renamer_class = None
@@ -128,6 +129,16 @@ class PlaylistViewer( NodeViewer ):
     def set_settings( self, settings ):
         
         # I want to fully replace current contents.
+        # I end up here when I decide to somehow change
+        # contents of a currently open playlist.
+        # `Currently open` means `unique object instance exists`.
+        
+        c = ColumnsPlaylist
+        
+        # compile a list of plugin changes
+        to_remove, to_add = c.get_plugin_changes( self._settings, settings )
+        if not to_remove=='':
+            self.REQUEST_PLUGINS_DISABLE( to_remove, self )
         
         # do what needs to be done
         super( PlaylistViewer, self ).set_settings( settings )
@@ -135,11 +146,9 @@ class PlaylistViewer( NodeViewer ):
         # additinally i need to populate this viewer with
         # downloaded nodes
         
-        # short name for convenience
-        c = ColumnsPlaylist
-        p = settings
+        # download contents from db and add them to view
         
-        query = c.get_contents_query( p )
+        query = c.get_contents_query( self._settings )
         if query is None:
             # this playlist is empty at this moment
             # and i can manually set auto query / add items
@@ -147,7 +156,7 @@ class PlaylistViewer( NodeViewer ):
             self.switch_df( pd.DataFrame(), columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
             return
             
-        response = self._conn.query( query, db_name=p[c.db_name] )
+        response = self._conn.query( query, db_name=self._settings[c.db_name] )
         
         if response is None:
             # TODO
@@ -158,9 +167,13 @@ class PlaylistViewer( NodeViewer ):
         df = pd.DataFrame([ r[NODE] for r in response ])
         df.index = [ r[NODE].id for r in response ]
         df.fillna( '', inplace=True )
-        self._conn.fill_reserved_columns( df, db_name=p[c.db_name] )
+        self._conn.fill_reserved_columns( df, db_name=self._settings[c.db_name] )
         
         self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
+        
+        # request plugins
+        if not to_add=='':
+            self.REQUEST_PLUGINS_ENABLE.emit( to_add, self )
         
     def mouseDoubleClickEvent( self, ev ):
     
@@ -180,8 +193,12 @@ class PlaylistViewer( NodeViewer ):
         super( PlaylistViewer, self ).focusInEvent( ev )
         
     def launch_selection_editor( self ):
+    
+        constructor_parameters = {
+            'master_column': ColumnsPlaylist.path,
+            }
         
-        super( PlaylistViewer, self ).launch_selection_editor()
+        super( PlaylistViewer, self ).launch_selection_editor( constructor_parameters=constructor_parameters )
         
     def _accept_selection_edits_event( self, changes, db_name ):
         
