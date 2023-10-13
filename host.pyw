@@ -4,12 +4,11 @@
 # Host application.
 # Provides access to predefined PyQt5 programs from tray menu.
 # Can set global css style.
+# Can handle unhandled exceptions.
 
 # logging
 import logging
 log = logging.getLogger(__name__)
-
-log.setLevel( logging.DEBUG )
 
 # embedded in python
 import os
@@ -20,11 +19,37 @@ from PyQt5.QtGui import ( QIcon )
 from PyQt5.QtWidgets import ( QWidget, QMainWindow, QApplication,
     QMenu, QSystemTrayIcon )
 # same project
+# main
 from sparkling import MainPaths
+from sparkling.ExceptionViewer import ExceptionViewer
+# other
 from sparkling.common import ( readf, unique_loc )
 from sparkling.common.SomeDoer import SomeDoer
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 
+# this variable will store the app
+HOST_APPLICATION = None
+    
+class GuiLogHandler( logging.Handler ):
+    
+    # i will set it externally
+    label_widget = None
+    
+    def __init__( self,
+                  *args, **kwargs ):
+        super( GuiLogHandler, self ).__init__(
+            *args, **kwargs )
+        
+        #self.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        
+    def emit( self, record ):
+        
+        msg = self.format( record )
+        
+        if not self.label_widget is None:
+            #self.label_widget.setText( '\n'.join([ self.label_widget.text(),msg ]) )
+            self.label_widget.appendPlainText( msg )
+        
 class CentralWidget( QWidget ):
     
     # Empty central widget.
@@ -84,15 +109,26 @@ class HostApp( QApplication ):
         
         main_window = None
         tray_button = None
+        _exception_dialog = None
     
     def __init__( self,
                   sys_argv,
+                  root_log_handler=None,
                   *args, **kwargs ):
         super( HostApp, self ).__init__( sys_argv, *args, **kwargs )
         
         # initialize dynamic things
         self.__parentless_windows = []
         self.__SomeDoers = {}
+        
+        # create invisible main window for the application
+        # otherwise it won't work
+        self.Gui.main_window = MainWindow()
+        
+        # create hidden exception dialog
+        self.Gui._exception_dialog = ExceptionViewer( parent=None )
+        root_log_handler.label_widget = self.Gui._exception_dialog.label_widget
+        #self.Gui._exception_dialog.hide()
         
         # own doer
         self.Folders.PERSONAL_DATA = MainPaths.set_folder( self.Folders.PERSONAL_DATA )
@@ -102,10 +138,7 @@ class HostApp( QApplication ):
         self.Files.CSS = self.__OwnDoer.set_file( self.Files.CSS )
         self.Files.ICON_TRAY = self.__OwnDoer.set_file( self.Files.ICON_TRAY )
 
-        # create invisible main window for the application
-        # otherwise it won't work
-        self.Gui.main_window = MainWindow()
-
+        # set global app style (applies to any and all extensions)
         self.reload_css()
         
         # create button with menu in system tray
@@ -115,10 +148,25 @@ class HostApp( QApplication ):
         
         self._request_custom_program_event( 'followindow' )
         
-        # gui mainloop
+    def launch_exception_dialog( self ):
+        # TODO
+        # write log to file
+        # read last n rows of that file
+        # create/destroy exception_dialog widget on depamd
+        # rather then keep it in memory
+        self.Gui._exception_dialog.show()
+        
+    def mainloop_start( self ):
+        
+        # Without running this method, the app won't launch.
+        
         self.exec_()
-        self.exit_mainloop()
+        self.mainloop_exit()
 
+    def mainloop_exit( self ):
+        log.debug( 'exited mainloop, now exiting app' )
+        QCoreApplication.exit()
+        
     def reload_css( self ):
 
         src = self.Files.CSS
@@ -132,10 +180,6 @@ class HostApp( QApplication ):
         css = readf(src)
         
         self.setStyleSheet( css )
-
-    def exit_mainloop( self ):
-        log.debug( 'exited mainloop, now exiting app' )
-        QCoreApplication.exit()
 
     def open_folder( self ):
         os.startfile( MainPaths.get_application_root() )
@@ -182,9 +226,14 @@ class HostApp( QApplication ):
                 c.method: self.reload_css,
                 },
             {
+                c.identity: 'dust/host/tray/show_log',
+                c.text: 'Show log',
+                c.method: self.launch_exception_dialog,
+                },
+            {
                 c.identity: 'dust/host/tray/close_app',
                 c.text: 'Exit',
-                c.method: self.exit_mainloop,
+                c.method: self.mainloop_exit,
                 },
             ]
         
@@ -300,12 +349,51 @@ class HostApp( QApplication ):
         self.__register_parentless_window( w )
         self.__register_doer( custom_doer, unique_name )
 
+def _custom_excepthook( ex_type, ex_value, ex_traceback ):
+    
+    # This function may serve as a `sys.excepthook`.
+    
+    # help:
+    # https://stackoverflow.com/questions/6234405/logging-uncaught-exceptions-in-python
+    # https://stackoverflow.com/questions/55819330/catching-exceptions-raised-in-qapplication
+
+    # make sure keyboard interrupt is accessible to
+    # user
+    if issubclass( ex_type, KeyboardInterrupt ):
+        sys.__excepthook__( ex_type, ex_value, ex_traceback )
+        return
+    
+    # attempt to show a special dialog
+    HOST_APPLICATION.launch_exception_dialog()
+    
 def autorun():
-    ob = HostApp( sys.argv )
+    
+    # configure root logger
+    # help:
+    # https://stackoverflow.com/questions/59971542/add-custom-handler-to-log-root-level-with-logging-basicconfig
+    
+    custom_handler = GuiLogHandler()
+    
+    logging.basicConfig(
+        level=logging.DEBUG,
+        #format=,
+        handlers=[
+            logging.StreamHandler(),
+            custom_handler,
+            ]
+        )
+
+    global HOST_APPLICATION
+    
+    sys.excepthook = _custom_excepthook
+    
+    # create and run the app
+    HOST_APPLICATION = HostApp( sys.argv, root_log_handler=custom_handler )
+    HOST_APPLICATION.mainloop_start()
 
 if __name__ == '__main__':
     autorun()
 
 #---------------------------------------------------------------------------+++
-# end 2023.07.14
-# simplified
+# end 2023.10.13
+# added custom exception handling
