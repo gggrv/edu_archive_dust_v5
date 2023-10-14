@@ -16,6 +16,18 @@ import zipfile
 import yaml
 # same project
     
+class ColumnsFoundTexts:
+    
+    file_src = 'src'
+    iloc = 'iloc'
+    text = 'text'
+    
+    texts = {
+        file_src: 'Source file',
+        iloc: 'Occurence number',
+        text: 'Text',
+        }
+    
 def generate_timestamp():
     return dt.datetime.now().strftime( '%Y.%m.%d %H:%M:%S' )
 
@@ -116,6 +128,50 @@ def chop( text, L, R ):
 
     return text[:B].strip()
 
+def find_text_in_file( src, texts ):
+
+    # Parses source file and returns dictionary with
+    # found things.
+
+    TEXT = readf(src)
+
+    c = ColumnsFoundTexts
+    found = []
+    for text in texts:
+
+        # how many times does this tag appear in text?
+        # iterate each found
+        iloc = 0
+        for _ in range( TEXT.count( text ) ):
+            iloc = TEXT.find( text, iloc )
+            PLACEHOLDER = {
+                c.file_src: src,
+                c.iloc: iloc,
+                c.text: text,
+                }
+            found.append( PLACEHOLDER )
+
+    return found
+
+def replace_text_in_file( src, replacements, inplace=True ):
+    
+    # I expect replacements to be = [ ('old_value','new_value'), ... ].
+
+    text = readf(src)
+    changed_text = False
+
+    for pair in replacements:
+
+        if pair[0] in text:
+            text = text.replace( pair[0],pair[1] )
+            changed_text = True
+
+    if changed_text:
+        if inplace:
+            savef( src, text )
+        else:
+            return text
+
 def unzip( src, dest ):
     
     # Context-unaware function that unzips contents of
@@ -191,7 +247,7 @@ def remove_empty_folders( path_abs ):
         if len( os.listdir(path) ) == 0:
             shutil.rmtree(path)
 
-def select_files( folder, prefix, dot_ext, check_subfolders ):
+def select_files( folder, prefix, dot_ext, check_subfolders, filter_function=None ):
 
     # Context-unaware file selection.
 
@@ -204,6 +260,10 @@ def select_files( folder, prefix, dot_ext, check_subfolders ):
             name,ext = os.path.splitext(f)
             if not name.startswith(prefix): continue
             if not ext==dot_ext: continue
+        
+            if not filter_function is None:
+                if not filter_function( root, name, ext ):
+                    continue
 
             src = os.path.join( root,f )
             selected.append(src)
@@ -211,5 +271,5 @@ def select_files( folder, prefix, dot_ext, check_subfolders ):
     return selected
 
 #---------------------------------------------------------------------------+++
-# end 2023.05.19
-# updated select_files()
+# end 2023.10.14
+# moved here some functions
