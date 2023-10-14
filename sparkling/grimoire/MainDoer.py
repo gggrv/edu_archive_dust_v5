@@ -10,10 +10,9 @@ log = logging.getLogger(__name__)
 # embedded in python
 import os
 # pip install
-import pandas as pd
 # same project
-from sparkling.common.SomeDoer import SomeDoer as BaseSomeDoer
-from sparkling.common import ( readf_yaml, readf, savef, unique_loc )
+from sparkling.common.AutorunDoer import DAutorunDoer
+from sparkling.common import ( readf_yaml, savef )
 from sparkling.grimoire.GrimoireNeo4jConnection import (
     Connection,
     NODE, DB_DEFAULT
@@ -48,61 +47,34 @@ def generate_renaming_rules( src ):
     
     savef( src, text )
         
-def generate_trees( src ):
-        
-    # subject to change
-    
-    text = """---
-#db:
-#  rule name:
-#    - command
-null:
-  labels:
-- MATCH (n) return DISTINCT labels(n)
-..."""
-    
-    savef( src, text )
-        
-class MainDoer( BaseSomeDoer ):
+class MainDoer( DAutorunDoer ):
     
     # for external use
     PREFERRED_SAVE_DIR_NAME = 'grimoire'
         
     class Folders:
-        
-        PLAYLIST_LAYOUTS = 'playlist_layouts'
-        PLAYLISTS = 'playlists'
         PLUGINS = 'plugins'
         EXPORTED_CSV = 'exported_csv'
         
     class Files:
-    
         NEO4J_SETTINGS = 'neo4j_settings.yaml'
-        TREES = 'trees.yaml'
         RENAMING_RULES = 'renaming_rules.yaml'
-        PLAYLIST_PLUGINS = 'playlist_plugins.yaml'
         
     class Presets:
-        
         FileRenamer = None
         
-    conn = None # here will be a single connection
+    # here will be a single connection
+    conn = None
     
-    def __init__( self,
-        save_folder
-        ):
+    def __init__( self, save_folder ):
         
         super( MainDoer, self ).__init__( save_folder )
         
         # paths
-        self.Folders.PLAYLISTS = self.set_folder( self.Folders.PLAYLISTS )
         self.Folders.PLUGINS = self.set_folder( self.Folders.PLUGINS )
         self.Folders.EXPORTED_CSV = self.set_folder( self.Folders.EXPORTED_CSV )
-        self.Folders.PLAYLIST_LAYOUTS = self.set_folder( self.Folders.PLAYLIST_LAYOUTS )
         self.Files.NEO4J_SETTINGS = self.set_file( self.Files.NEO4J_SETTINGS )
-        self.Files.TREES = self.set_file( self.Files.TREES )
         self.Files.RENAMING_RULES = self.set_file( self.Files.RENAMING_RULES )
-        self.Files.PLAYLIST_PLUGINS = self.set_file( self.Files.PLAYLIST_PLUGINS )
         # presets
         if not os.path.isfile( self.Files.RENAMING_RULES ):
             generate_renaming_rules( self.Files.RENAMING_RULES )
@@ -113,19 +85,14 @@ class MainDoer( BaseSomeDoer ):
         # Connect to predefined neo4j server.
         # Return True/False depending on success.
         
-        # TODO
-        # do it safely
-        
         if not self.conn is None:
-            # i already have conn, not doing anything
             log.info( 'i already have conn, not doing anything' )
             return True
         
         src = self.Files.NEO4J_SETTINGS
         if not os.path.isfile( src ):
-            # no connection settings exist yet,
-            # prompt user, abort
-            log.error( f'no connection settings exist yet, can\'t access server, please provide necessary data and restart the app: {src}' )
+            msg = f'no connection settings exist yet, can\'t access server, please provide necessary data and restart the app: {src}'
+            log.error( msg )
             generate_neo4j_settings( src )
             os.startfile( src )
             return False
@@ -203,5 +170,5 @@ class MainDoer( BaseSomeDoer ):
         return True, 'ok'
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.13
+# end 2023.10.14
 # simplified

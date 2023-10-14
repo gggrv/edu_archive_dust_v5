@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 # embedded in python
 # pip install
 # same project
-from sparkling.SomeDoer import SomeDoer
+from sparkling.common.SomeDoer import SomeDoer
         
 class MainDoer( SomeDoer ):
     
