@@ -7,6 +7,7 @@
 
 # logging
 import logging
+log = logging.getLogger(__name__)
 
 # embedded in python
 # pip install
@@ -24,6 +25,8 @@ class ExceptionViewer( QDialog ):
 
     OK_TO_CLOSE = pyqtSignal( str )
     
+    # this widget will be remembered and updated in
+    # the custom log handler
     label_widget = None
 
     def __init__( self,
@@ -42,14 +45,9 @@ class ExceptionViewer( QDialog ):
 
         self.label_widget = QPlainTextEdit( parent=self )
         self.label_widget.setReadOnly( True )
-        #self.label_widget.setWordWrap( True )
-        #self.label_widget.setTextInteractionFlags(
-        #    Qt.TextSelectableByMouse
-        #    |Qt.TextSelectableByKeyboard
-        #    )
         self.label_widget.setMinimumWidth( 1000 )
         self.label_widget.setMinimumHeight( 400 )
-        self.label_widget.setStyleSheet( 'font-family: consolas; text-size: 1.5pt; text-alignment: left; color: white;' )
+        self.label_widget.setStyleSheet( 'font-family: consolas; text-size: 2.5pt; text-alignment: left; color: white;' )
 
         # assemble
         
@@ -63,5 +61,5 @@ class ExceptionViewer( QDialog ):
         ev.ignore() # !!!
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.13
-# created
+# end 2023.10.14
+# moved here

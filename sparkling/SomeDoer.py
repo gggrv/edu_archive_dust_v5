@@ -11,22 +11,20 @@ log = logging.getLogger(__name__)
 import os
 # pip install
 # same project
-from sparkling.SomeDoer import SomeDoer as BaseSomeDoer
 
-class SomeDoer( BaseSomeDoer ):
+class SomeDoer:
     
-    # Custom doer that extends functionality a bit.
-    
-    # for external use, my be ignored
-    PREFERRED_SAVE_DIR_NAME = 'some_doer'
+    # This class can manage given `save folder`
+    # however it wants
+    # without bothering anything outside.
     
     __SAVE_FOLDER = None
     
-    def __init__( self,
-        save_folder
-        ):
-        
-        # these cannot be changed
+    # for external use only, may be ignored
+    PREFERRED_SAVE_DIR_NAME = 'some_doer'
+    
+    def __init__( self, save_folder ):
+        # set it once and never change
         self.__set_save_folder( save_folder )
         
     def get_save_folder( self ):
@@ -57,13 +55,7 @@ class SomeDoer( BaseSomeDoer ):
             os.makedirs( src )
             
         return src
-            
-    def autorun( self ):
-        
-        # Will be called externally.
-        
-        pass #raise NotImplementedError
 
 #---------------------------------------------------------------------------+++
-# end 2023.07.14
-# removed `generate_files` because useless
+# end 2023.10.14
+# simplified

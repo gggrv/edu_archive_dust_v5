@@ -122,15 +122,23 @@ class ColumnsActionDefinitions:
         return acts
     
     @staticmethod
-    def remove_actions( widget ):
+    def remove_actions( widget, identities=None ):
         
         # Removes existing actions from a widget.
+        # `identities` is either `None` or `list of str`.
         
-        # TODO
-        # parametrize to remove specific identities
+        if identities is None:
+            # remove all actions indiscriminately
+            for act in widget.actions():
+                widget.removeAction( act )
+            return
+        
+        # remove only specific actions
+        # this functionality overlaps with `modify actions`
         
         for act in widget.actions():
-            widget.removeAction( act )
+            if act.get_identity() in identities:
+                widget.removeAction( act )
     
     @staticmethod
     def add_actions( widget, action_definitions ):
@@ -174,5 +182,5 @@ class ColumnsActionDefinitions:
                         act.accept_modification( mod )
                     
 #---------------------------------------------------------------------------+++
-# end 2023.10.13
-# added `remove` command
+# end 2023.10.14
+# added another `remove` command
