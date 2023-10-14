@@ -1,8 +1,8 @@
-\startenvironment %environment_name%
-\project %project_name%
+\startenvironment %environment_name_prefixed%
+\project %project_name_prefixed%
 
 % where to look for images (relative to any product)
-\setupexternalfigures[directory={../../images,../images}]
+\setupexternalfigures[directory={../../%images%,../%images%}]
 
 %\definecolor[white][h=ffffff]
 %\definecolor[white_transparent][r=1,g=1,b=1,t=0.5,a=1]
