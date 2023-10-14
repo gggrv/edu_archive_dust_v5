@@ -70,104 +70,89 @@ class ColumnsPlaylist( Columns ):
         forbid_deep_deletions: 'Forbid deep deletions',
         }
     
-    @staticmethod
-    def validate_auto_query( playlist ):
-    
-        # short name for convenience
-        c = ColumnsPlaylist
+    @classmethod
+    def validate_auto_query( cls, playlist ):
         
-        if not c.auto_query in playlist:
+        if not cls.auto_query in playlist:
             return
         
-        query = playlist[c.auto_query]
+        query = playlist[cls.auto_query]
         if type(query)==str:
             if len( query.strip() ) > 0:
                 # everything ok
                 return
         
         # query is bad
-        playlist.pop( c.auto_query )
+        playlist.pop( cls.auto_query )
     
-    @staticmethod
-    def validate_identities( playlist ):
-    
-        # short name for convenience
-        c = ColumnsPlaylist
+    @classmethod
+    def validate_identities( cls, playlist ):
         
-        if not c.identities in playlist:
+        if not cls.identities in playlist:
             return
         
-        identities = playlist[c.identities]
+        identities = playlist[cls.identities]
         if type(identities)==str:
             if len( identities.strip() ) > 0:
                 # everything ok
                 return
         
         # query is bad
-        playlist.pop( c.identities )
+        playlist.pop( cls.identities )
     
-    @staticmethod
-    def validate_plugins( settings ):
-    
-        # short name for convenience
-        c = ColumnsPlaylist
+    @classmethod
+    def validate_plugins( cls, settings ):
         
-        if not c.plugins in settings:
+        if not cls.plugins in settings:
             return
         
-        values = settings[c.plugins]
+        values = settings[cls.plugins]
         if type(values)==str:
             if len( values.strip() ) > 0:
                 # everything ok
                 return
         
         # bad
-        settings.pop( c.plugins )
+        settings.pop( cls.plugins )
     
-    @staticmethod
-    def validate_deep_deletions( playlist ):
-    
-        # short name for convenience
-        c = ColumnsPlaylist
+    @classmethod
+    def validate_deep_deletions( cls, playlist ):
         
         # make sure i have value
-        if not c.forbid_deep_deletions in playlist:
+        if not cls.forbid_deep_deletions in playlist:
             # forbid by default
-            playlist[c.forbid_deep_deletions] = EConsent.CONSENT
+            playlist[cls.forbid_deep_deletions] = EConsent.CONSENT
             return
         
-        value = playlist[c.forbid_deep_deletions]
+        value = playlist[cls.forbid_deep_deletions]
         if not ( value == EConsent.DECLINE ):
             # no idea which value it is, replace it
             # with consent
-            playlist[c.forbid_deep_deletions] = EConsent.CONSENT
+            playlist[cls.forbid_deep_deletions] = EConsent.CONSENT
             
-    @staticmethod
-    def get_contents_query( playlist ):
+    @classmethod
+    def get_contents_query( cls, playlist ):
         
         # Creates appropriate `query` or `None`
         # for chosen `playlist definition` so that I can
         # download this playlist's contents easily
         # whenever suitable time comes.
         
-        # short name for convenience
-        c = ColumnsPlaylist
-        
         # it is technically possible that both
         # `identities` and `auto query` are present,
         # in such case i want to prioritize the `auto query`
         
-        c.validate_auto_query( playlist )
-        if c.auto_query in playlist:
+        cls.validate_auto_query( playlist )
+        if cls.auto_query in playlist:
             # i already have a database query
-            return playlist[c.auto_query]
+            return playlist[cls.auto_query]
         
-        c.validate_identities( playlist )
-        if c.identities in playlist:
+        cls.validate_identities( playlist )
+        if cls.identities in playlist:
             # i need to construct a standard identities
             # query with a predefined node variable name
             
-            identities = playlist[c.identities].split(' ')
+            identities = playlist[cls.identities].split(' ')
             query = f'MATCH ({NODE}) ' \
                 f'WHERE toString(ID({NODE})) IN {identities} ' \
                 f'RETURN {NODE}'
@@ -176,41 +161,37 @@ class ColumnsPlaylist( Columns ):
         
         # no necessary fields = no query
     
-    @staticmethod
-    def add_identities( settings, identities ):
+    @classmethod
+    def add_identities( cls, settings, identities ):
         
         # Standard way to add some identities
         # to current settings.
         
-        c = ColumnsPlaylist
-        
-        if c.identities in settings:
-            new = settings[ c.identities ].split(' ')
+        if cls.identities in settings:
+            new = settings[ cls.identities ].split(' ')
             new.extend(identities)
-            settings[ c.identities ] = ' '.join( set(new) )
+            settings[ cls.identities ] = ' '.join( set(new) )
         else:
-            settings[ c.identities ] = ' '.join( identities )
+            settings[ cls.identities ] = ' '.join( identities )
                 
-    @staticmethod
-    def get_plugin_changes( old_settings, new_settings ):
+    @classmethod
+    def get_plugin_changes( cls, old_settings, new_settings ):
         
-        c = ColumnsPlaylist
-        
-        c.validate_plugins( old_settings )
-        c.validate_plugins( new_settings )
+        cls.validate_plugins( old_settings )
+        cls.validate_plugins( new_settings )
         
         # make sure i have old plugins
-        if not c.plugins in old_settings:
-            if c.plugins in new_settings:
-                return '', new_settings[c.plugins]
+        if not cls.plugins in old_settings:
+            if cls.plugins in new_settings:
+                return '', new_settings[cls.plugins]
             return '', ''
             
         # make sure i don't have new plugins
-        if c.plugins in new_settings:
+        if cls.plugins in new_settings:
             
             to_remove = []
-            to_add = new_settings[c.plugins].split( MULTIVALUE_SEPARATOR )
-            for plugin_name in old_settings[c.plugins].split( MULTIVALUE_SEPARATOR ):
+            to_add = new_settings[cls.plugins].split( MULTIVALUE_SEPARATOR )
+            for plugin_name in old_settings[cls.plugins].split( MULTIVALUE_SEPARATOR ):
                 if plugin_name in to_add:
                     to_add.remove( plugin_name )
                 elif not plugin_name in to_remove:
@@ -218,7 +199,7 @@ class ColumnsPlaylist( Columns ):
             return MULTIVALUE_SEPARATOR.join(to_remove), MULTIVALUE_SEPARATOR.join(to_add)
         
         # i want to remove all old and don't add any new
-        return old_settings[c.plugins], ''
+        return old_settings[cls.plugins], ''
         
     @staticmethod
     def get_playlists( conn ):
@@ -232,8 +213,8 @@ class ColumnsPlaylist( Columns ):
         
         return df
             
-    @staticmethod    
-    def new_playlist( conn ):
+    @classmethod    
+    def new_playlist( cls, conn ):
         
         # For convenient use from GUI, code, anywhere.
         
@@ -246,13 +227,10 @@ class ColumnsPlaylist( Columns ):
         # because it allows me to store all necessaty
         # info in the perfect format.
         
-        # short name for convenience
-        c = ColumnsPlaylist
-        
         param_dict = {
-            c.title: unique_loc(),
-            c.db_name: DB_DEFAULT, # `nodes` from which `db` this playlist holds
-            c.forbid_deep_deletions: '+',
+            cls.title: unique_loc(),
+            cls.db_name: DB_DEFAULT, # `nodes` from which `db` this playlist holds
+            cls.forbid_deep_deletions: '+',
             }
         node = conn.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=param_dict )
     
@@ -278,5 +256,5 @@ class ColumnsPlaylist( Columns ):
         return df
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.07
-# added `_new_custom_playlist`
+# end 2023.10.14
+# classmethod

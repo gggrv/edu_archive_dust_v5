@@ -12,13 +12,12 @@ log = logging.getLogger(__name__)
 import pandas as pd
 # same project
 from sparkling.neo4j.Connection import Connection as BaseConnection
-from sparkling.grimoire.GrimoireNeo4jColumns import (
-    Columns,
+from sparkling.grimoire.PlaylistColumns import (
+    ColumnsPlaylist, NEO4J_LABEL_PLAYLIST,
     NODE, DB_DEFAULT,
     LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
     SEARCH_INDEX_DEFAULT
     )
-from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist, NEO4J_LABEL_PLAYLIST
 # common
 from sparkling.common import unique_loc
     
@@ -27,8 +26,8 @@ class Connection( BaseConnection ):
     # Custom connection to Neo4j server
     # made specifically for Grimoire.
     
-    # override from parent
-    Columns = Columns
+    # override parent
+    Columns = ColumnsPlaylist
     
     # static list
     _db_names = []
@@ -115,7 +114,7 @@ class Connection( BaseConnection ):
         # Definitions.
         
         # short name for convenience
-        c = Columns
+        c = self.Columns
         
         def replace_labels():
             
@@ -203,5 +202,5 @@ class Connection( BaseConnection ):
         self.query( command, db_name=db_name )
             
 #---------------------------------------------------------------------------+++
-# end 2023.10.07
-# added `_create_default_full_text_search_index`
+# end 2023.10.14
+# simplified

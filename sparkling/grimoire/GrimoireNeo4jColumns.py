@@ -3,8 +3,8 @@
 #---------------------------------------------------------------------------+++
 # Reserved column names that have pre-existing functionality constraints.
 
-from sparkling.neo4j.Columns import (
-    Columns as BaseColumns,
+from sparkling.neo4j.Neo4jColumns import (
+    ColumnsNeo4j,
     NODE, DB_DEFAULT,
     LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
     )
@@ -14,7 +14,7 @@ from sparkling.neo4j.Columns import (
 # move them to dedicated PresetsManager
 SEARCH_INDEX_DEFAULT = 'defaultFields'
 
-class Columns( BaseColumns ):
+class Columns( ColumnsNeo4j ):
     
     # I utilize `neo4j` nodes in a specific way.
     # I want to define some custom reserved columns (node field names)
@@ -36,8 +36,8 @@ class Columns( BaseColumns ):
     # don't rename/delete from disk
     move_protected = 'move_protected'
     
-    @staticmethod
-    def is_move_protected( row ):
+    @classmethod
+    def is_move_protected( cls, row ):
         
         # Standard way to detect whether
         # this row is protected.
@@ -47,16 +47,14 @@ class Columns( BaseColumns ):
         # For example value `False` is treated
         # as a `yes, protect me` string.
         
-        c = Columns
-        
-        if not c.move_protected in row:
+        if not cls.move_protected in row:
             return False
         
-        if row[c.move_protected] == '':
+        if row[cls.move_protected] == '':
             return False
         
         return True
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.03
-# created from another file
+# end 2023.10.14
+# classmethod
