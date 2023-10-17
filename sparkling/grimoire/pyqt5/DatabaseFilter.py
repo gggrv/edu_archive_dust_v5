@@ -182,7 +182,7 @@ class DatabaseFilter( QWidget ):
             # case registry
             
             # convert paintext into a valid db search index query
-            query = self._conn.convert_index_search( SEARCH_INDEX_DEFAULT, query, approximate=True )
+            query = ColumnsPlaylist.convert_index_search( SEARCH_INDEX_DEFAULT, query, approximate=True )
             
         # proceed as usual
         

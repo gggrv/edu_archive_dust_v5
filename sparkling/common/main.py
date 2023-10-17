@@ -15,8 +15,9 @@ import zipfile
 # pip install
 import yaml
 # same project
+from sparkling.common.BaseColumns import BaseColumns
     
-class ColumnsFoundTexts:
+class ColumnsFoundTexts( BaseColumns ):
     
     file_src = 'src'
     iloc = 'iloc'

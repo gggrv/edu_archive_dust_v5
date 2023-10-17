@@ -551,7 +551,7 @@ class NodeViewer( PandasTableView ):
                     param_dict = parsing_function( item )
             
             # send to db
-            node = self._conn.convert_node( NODE, '', param_dict=param_dict )
+            node = ColumnsPlaylist.convert_node( NODE, '', param_dict=param_dict )
             response = self._conn.query(
                 f'CREATE {node} RETURN toString(ID({NODE})) AS identity',
                 db_name=db_name

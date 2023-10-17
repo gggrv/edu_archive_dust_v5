@@ -11,7 +11,7 @@ from sparkling.grimoire.GrimoireNeo4jColumns import (
     LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
     SEARCH_INDEX_DEFAULT
     )
-from sparkling.neo4j.Columns import QUERY_KEYWORDS
+from sparkling.neo4j.Neo4jColumns import QUERY_KEYWORDS
 # common
 from sparkling.common import unique_loc
 # enums
@@ -201,15 +201,15 @@ class ColumnsPlaylist( Columns ):
         # i want to remove all old and don't add any new
         return old_settings[cls.plugins], ''
         
-    @staticmethod
-    def get_playlists( conn ):
+    @classmethod
+    def get_playlists( cls, conn ):
         
         # Download all info regarding playlists
         # from default db.
         
         query = f'MATCH ({NODE}:{NEO4J_LABEL_PLAYLIST}) RETURN {NODE}'
         response = conn.query( query, db_name=DB_DEFAULT )
-        df = conn.response2df( response, identity=True )
+        df = cls.response2df( response, identity=True )
         
         return df
             
@@ -232,26 +232,26 @@ class ColumnsPlaylist( Columns ):
             cls.db_name: DB_DEFAULT, # `nodes` from which `db` this playlist holds
             cls.forbid_deep_deletions: '+',
             }
-        node = conn.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=param_dict )
+        node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=param_dict )
     
         # send this playlist definition specifically to default db
         response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
-        df = conn.response2df( response, identity=True ) # i already have `identity` in `index`, but having it in column as well proved to be useful
+        df = cls.response2df( response, identity=True ) # i already have `identity` in `index`, but having it in column as well proved to be useful
                 
         return df
             
-    @staticmethod    
-    def _new_custom_playlist( conn, settings ):
+    @classmethod    
+    def _new_custom_playlist( cls, conn, settings ):
         
         # For manual use from code.
         # I assume that I know what I am doing and don't
         # need any additional verifications.
     
-        node = conn.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=settings )
+        node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=settings )
     
         # send this playlist definition specifically to default db
         response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
-        df = conn.response2df( response, identity=False ) # i already have `identity` in `index`
+        df = cls.response2df( response, identity=False ) # i already have `identity` in `index`
                 
         return df
     

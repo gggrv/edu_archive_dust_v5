@@ -12,7 +12,7 @@ import os
 # pip install
 # same project
 from sparkling.common import ( savef, readf_yaml )
-from sparkling.common.SomeDoer import SomeDoer
+from sparkling.common.AutorunDoer import DAutorunDoer
 
 def generate_custom_gestures( src ):
         
@@ -27,7 +27,7 @@ self._request_custom_program_event('grimoire'): ['D'] # swipe down to summon gri
         
     savef( src, text )
         
-class MainDoer( SomeDoer ):
+class MainDoer( DAutorunDoer ):
     
     PREFERRED_SAVE_DIR_NAME = 'followindow'
     
@@ -79,5 +79,5 @@ class MainDoer( SomeDoer ):
         return True, 'ok'
         
 #---------------------------------------------------------------------------+++
-# end 2023.07.25
-# removed _generate_file_functions
+# end 2023.10.17
+# switched correct doer

@@ -167,7 +167,7 @@ class PlaylistViewer( NodeViewer ):
         df = pd.DataFrame([ r[NODE] for r in response ])
         df.index = [ r[NODE].id for r in response ]
         df.fillna( '', inplace=True )
-        self._conn.fill_reserved_columns( df, db_name=self._settings[c.db_name] )
+        ColumnsPlaylist.fill_reserved_columns( self._conn, df, db_name=self._settings[c.db_name] )
         
         self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
         

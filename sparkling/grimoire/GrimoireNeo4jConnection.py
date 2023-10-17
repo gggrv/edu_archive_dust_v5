@@ -66,7 +66,7 @@ class Connection( BaseConnection ):
         df.reset_index( drop=True, inplace=True ) # remove old identities
         df.fillna( '', inplace=True ) # i want only str
         
-        nodes = self.df2nodes( df )
+        nodes = ColumnsPlaylist.df2nodes( df )
         
         identities = []
         for node in nodes:
@@ -102,9 +102,8 @@ class Connection( BaseConnection ):
         df.index = [ r[NODE].id for r in response ]
         df.fillna( '', inplace=True )
         
-        self.fill_reserved_columns(
-            df, db_name=db_name
-            )
+        ColumnsPlaylist.fill_reserved_columns(
+            self, df, db_name=db_name )
         
         return df
         
@@ -197,7 +196,7 @@ class Connection( BaseConnection ):
             c.album,
             ]
         
-        command = self.convert_index_definition( index_name, fields )
+        command = ColumnsPlaylist.convert_index_definition( index_name, fields )
         
         self.query( command, db_name=db_name )
             
