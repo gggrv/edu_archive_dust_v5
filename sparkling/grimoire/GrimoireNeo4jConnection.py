@@ -161,7 +161,7 @@ class Connection( BaseConnection ):
         for identity, row in df.fillna('').iterrows():
             
             # replace parameters
-            params = self.convert_parameters( dict(row) )
+            params = c.convert_node_parameters( dict(row) )
             query = f'MATCH ({NODE}) WHERE ID({NODE})={identity} SET {NODE}={params} RETURN labels({NODE}) AS labels_list'
             response = self.query( query, db_name=db_name )
             

@@ -118,7 +118,7 @@ class ColumnsNeo4j( BaseColumns ):
         # Empty / invalid values are skipped.
         
         label = label if label else ''
-        params = cls.convert_parameters( param_dict ) if param_dict else ''
+        params = cls.convert_node_parameters( param_dict ) if param_dict else ''
         
         command = f"({variable_name} {params})" \
             if label=='' \
