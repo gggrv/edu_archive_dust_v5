@@ -96,6 +96,7 @@ def autorun():
     global HOST_APPLICATION
     HOST_APPLICATION = HostApp( sys.argv, root_log_handler=custom_handler )
     HOST_APPLICATION.mainloop_start()
+    print() # for breakpoint during debugging
 
 if __name__ == '__main__':
     autorun()
