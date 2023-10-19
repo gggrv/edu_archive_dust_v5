@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 from PyQt5.QtGui import ( QIcon )
 from PyQt5.QtWidgets import QAction
 # same project
+from sparkling.common.BaseColumns import BaseColumns
 
 class ActionDefinitionObject( QAction ):
     
@@ -72,7 +73,7 @@ class ActionDefinitionObject( QAction ):
             icon = QIcon( row[c.icon] )
             self.setIcon( icon )
 
-class ColumnsActionDefinitions:
+class ColumnsActionDefinitions( BaseColumns ):
     
     # For some arbitrary data I usually write either
     # - a custom `Preset` class (inherits from `PresetManager`)
