@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-#
 
 # logging
 import logging
@@ -13,16 +12,17 @@ from datetime import datetime
 # same project
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
 
-g_grimoire_main_window = None
 PLUGIN_NAME = 'create_new_row'
+
+# `QWidget` that requested this plugin
+g_plugin_requester = None
 
 def new_row( *args ):
     
     # Allows to create an empty new row in current playlist viewer.
     
     # get latest playlist viewer
-    playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if playlist_viewer is None:
+    if g_plugin_requester is None:
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, can\'t create new row' )
         return
     
@@ -35,16 +35,17 @@ def new_row( *args ):
         'timestamp': date_human,
         }
     
-    playlist_viewer._add_to_view_db( [param_dict], True )
+    g_plugin_requester._add_to_view_db( [param_dict], True )
     
 def autoenable( grimoire_main_window, requester ):
     
-    global g_grimoire_main_window
-    g_grimoire_main_window = grimoire_main_window
+    # remember
+    global g_plugin_requester
+    g_plugin_requester = requester
     
     # get latest playlist viewer
     #playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if requester is None:
+    if g_plugin_requester is None:
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, failed to enable' )
         return
         
@@ -58,28 +59,23 @@ def autoenable( grimoire_main_window, requester ):
             c.shortcut: 'Ctrl+N',
             },
         ]
-    c.add_actions( requester, actions )
+    c.add_actions( g_plugin_requester, actions )
     
 def autodisable( grimoire_main_window, requester ):
     
     # remove modded actions
     
-    # get latest playlist viewer
-    #playlist_viewer = g_grimoire_main_window.centralWidget().Gui.tab_widget.currentWidget()
-    if requester is None:
+    if g_plugin_requester is None:
         log.error( f'plugin {PLUGIN_NAME}, no valid playlist_viewer found, nothing to disable' )
         return
     
     # remove modded context menu
     c = ColumnsActionDefinitions
-    modifications = [
-        {
-            c.identity: f'grimoire/plugin/{PLUGIN_NAME}/add_new_row',
-            c.remove: True,
-            },
+    act_identities = [
+        f'grimoire/plugin/{PLUGIN_NAME}/add_new_row'
         ]
-    c.modify_actions( requester, modifications )
+    c.remove_actions( requester, act_identities )
         
 #---------------------------------------------------------------------------+++
-# end 2023.10.13
-# update
+# end 2023.10.19
+# simplified

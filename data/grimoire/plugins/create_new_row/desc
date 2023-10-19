@@ -1,3 +1,3 @@
-This is an example simple <i>plugin</i>.<br/>
+This is an example simple <code>plugin</code>.<br/>
 <br/>
-It allows to create an empty new row in current <i>playlist</i>.
+It allows to create an empty new row in current <code>playlist</code>.
