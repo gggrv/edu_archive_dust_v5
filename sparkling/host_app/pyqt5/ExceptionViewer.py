@@ -37,9 +37,9 @@ class ExceptionViewer( QDialog ):
         
         # appearance
         self.setWindowTitle( 'HostApp Exception Log — dust' )
-        self.setWindowFlags(
-            Qt.WindowStaysOnTopHint
-            )
+        #self.setWindowFlags(
+        #    Qt.WindowStaysOnTopHint
+        #    )
         
         # gui
 
