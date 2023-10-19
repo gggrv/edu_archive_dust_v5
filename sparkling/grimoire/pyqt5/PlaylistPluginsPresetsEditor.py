@@ -164,7 +164,7 @@ class PlaylistPluginsPresetsEditor( QWidget ):
                 plugin_names.append( plugin_name )
         
         # save to disk
-        self.Presets.PlaylistPlugins.new_preset(
+        self.Presets.PlaylistPlugins.save_preset(
             self._basename,
             plugin_names
             )

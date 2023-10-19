@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-#
 
 # logging
 import logging
@@ -14,6 +13,10 @@ from PyQt5.QtWidgets import ( QComboBox )
 # same project
     
 class CbxForPresetManager( QComboBox ):
+    
+    # This custom ComboBox allows to easily switch
+    # between `presets` within chosen
+    # `preset manager`.
     
     _preset_manager = None
     
