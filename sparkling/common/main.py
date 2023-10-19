@@ -248,7 +248,7 @@ def remove_empty_folders( path_abs ):
         if len( os.listdir(path) ) == 0:
             shutil.rmtree(path)
 
-def select_files( folder, prefix, dot_ext, check_subfolders, filter_function=None ):
+def select_files( folder, prefix, dot_ext, check_subfolders, relpath, filter_function=None ):
 
     # Context-unaware file selection.
 
@@ -267,6 +267,9 @@ def select_files( folder, prefix, dot_ext, check_subfolders, filter_function=Non
                     continue
 
             src = os.path.join( root,f )
+            if relpath:
+                src = os.path.relpath( src, folder )
+                
             selected.append(src)
 
     return selected
