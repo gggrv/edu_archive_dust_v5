@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-#
 
 # logging
 import logging
@@ -58,7 +57,10 @@ def folder_name_corresponds_to_value( root_folder, prefixed_name ):
 
 class ConventionsStandard( BaseColumns ):
     
-    # These conventions attempt to follow
+    # Static class that allows to easily
+    # interact with `ConTeXt` data.
+    
+    # These conventions attempt to mimic
     # the ones described here:
     # https://wiki.contextgarden.net/Project_structure
     
