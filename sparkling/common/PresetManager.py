@@ -38,12 +38,12 @@ class PresetManager:
         log.error( 'no presets exist yet' )
         return self._presets
     
-    def preset( self, unique_name, force_reread=False ):
+    def preset( self, unique_name, rescan=False ):
         
         # Gets specific preset from existing ones.
         
         try:
-            ps = self.presets( force_reread=force_reread )
+            ps = self.presets( rescan=rescan )
             return ps[ unique_name ]
         except KeyError:
             # this preset does not exist yet
@@ -99,4 +99,4 @@ class PresetManager:
 
 #---------------------------------------------------------------------------+++
 # end 2023.10.19
-# clear names
+# fix force_reread
