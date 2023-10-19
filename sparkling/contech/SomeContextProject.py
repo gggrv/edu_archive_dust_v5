@@ -207,7 +207,7 @@ class DSomeContextProject( SomeDoer ):
     def load_project_index( self ):
         self._project_index = readf_yaml( self.Files.PROJECT_INDEX )
         
-    def rebuild_project_index( self ):
+    def rebuild_project_index( self, save=True ):
         
         # Fully rescans project folder and
         # replaces current `project index` with
@@ -233,7 +233,8 @@ class DSomeContextProject( SomeDoer ):
         src = get_existing_components( self.get_save_folder(), True, prefix=c.COMPONENT_NAME_PREFIX, relpath=True )
         ColumnsProjectIndex.set_components( self._project_index, src )
         
-        self.save_project_index()
+        if save:
+            self.save_project_index()
     
 #---------------------------------------------------------------------------+++
 # end 2023.10.19
