@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 # same project
 # contech
 from sparkling.contech.SomeContextProject import DSomeContextProject
+from sparkling.contech.main import render_product
 
 class DStandardContextProject( DSomeContextProject ):
     
@@ -48,36 +49,13 @@ class DStandardContextProject( DSomeContextProject ):
         c = self.Conventions
         c_src = c.set_component_in_product( product_root, component_name_unprefixed, custom_template=self._get_template(custom_template) )
         return super( DStandardContextProject, self )._set_component_in_product( c_src )
-        
-    """
-    def render_product( self, product, custom_context_console_command=None ):
-        
-        #unprefixed, prefixed = self.Conventions.get_correct_product_names( product, is_path=None )
-        
-        # get product src
-        
-        prd_src = None
-        if product in self.__products:
-            # i gave product name
-            prd_src = self.__products[product]
-        elif product is self.__products.values():
-            # i gave product path
-            prd_src = product
-        elif os.path.isfile(product):
-            # i gave product path
-            prd_src = product
-            log.warning( f'the product you want to render is not part of this project: {prd_src}' )
-        else:
-            # i gave something unknown
-            raise ValueError( f'unknown product: {prd_src}' )
-        
-        # render it
+       
+    def render_product( self, prd_src, custom_context_console_command='context' ):
         
         # TODO
         # allow custom commands
         return render_product( prd_src, context_console_command=custom_context_console_command )
-    """
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.14
-# simplified
+# end 2023.10.19
+# enabled `render_product`
