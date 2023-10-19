@@ -106,7 +106,7 @@ class ColumnsProjectIndex( BaseColumns ):
         
         cls._set_multivalues( cls.COMPONENTS, index, ok )
 
-class SomeContextProject( SomeDoer ):
+class DSomeContextProject( SomeDoer ):
     
     # Custom doer that
     # gives easy access to any `ConTeXt` project.
@@ -140,7 +140,7 @@ class SomeContextProject( SomeDoer ):
         
         # set save folder
         project_root_folder = c.set_project(project_root_folder)
-        super( SomeContextProject, self ).__init__( project_root_folder )
+        super( DSomeContextProject, self ).__init__( project_root_folder )
         
         # paths
         self.Folders.CONTEXT_TEMPLATES = self.set_folder( self.Folders.CONTEXT_TEMPLATES )
@@ -149,11 +149,22 @@ class SomeContextProject( SomeDoer ):
         # other
         self._project_index = {}
     
+    def __new__( cls, *args, **kwargs ):
+        
+        # This class should never be instantiated - only subclasses.
+        
+        # help:
+        # https://stackoverflow.com/questions/7989042/preventing-a-class-from-direct-instantiation-in-python
+        if cls is DSomeContextProject:
+            raise SyntaxError( 'this class is virtual - subclass it in order to create instances' )
+            
+        return super().__new__( cls )
+        
     def get_correct_project_names( self ):
         # For external use only.
         return self.Conventions.get_correct_project_names( self.get_save_folder(), True )
             
-    def __get_template( self, template_filename ):
+    def _get_template( self, template_filename ):
         
         # For internal use only.
         # Creates the `custom_template` value that can be passed
@@ -165,36 +176,30 @@ class SomeContextProject( SomeDoer ):
         src = os.path.join( self.Folders.CONTEXT_TEMPLATES, template_filename )
         return src
     
-    def set_project_in_project( self, custom_template=None ):
-        c = self.Conventions
-        project_src = c.set_project_in_project( self.get_save_folder(), custom_template=self.__get_template(custom_template) )
-        project_src = os.path.relpath( project_src, self.get_save_folder() )
-        ColumnsProjectIndex.set_project_definition( self._project_index, project_src )
+    def _set_project_in_project( self, project_src ):
+        src = os.path.relpath( project_src, self.get_save_folder() )
+        ColumnsProjectIndex.set_project_definition( self._project_index, src )
+        return project_src
             
-    def set_environment_in_project( self, env_name_unprefixed=None, custom_template=None ):
-        c = self.Conventions
-        env_src = c.set_environment_in_project( self.get_save_folder(), env_name_unprefixed=env_name_unprefixed, custom_template=self.__get_template(custom_template) )
-        env_src = os.path.relpath( env_src, self.get_save_folder() )
-        ColumnsProjectIndex.set_environment( self._project_index, env_src )
+    def _set_environment_in_project( self, env_src ):
+        src = os.path.relpath( env_src, self.get_save_folder() )
+        ColumnsProjectIndex.set_environment( self._project_index, src )
+        return env_src
         
-    def set_product_in_project( self, product_name_unprefixed, custom_template=None ):
-        c = self.Conventions
-        prd_src = c.set_product_in_project( self.get_save_folder(), product_name_unprefixed, custom_template=self.__get_template(custom_template) )
-        prd_src = os.path.relpath( prd_src, self.get_save_folder() )
-        ColumnsProjectIndex.set_product( self._project_index, prd_src )
+    def _set_product_in_project( self, prd_src ):
+        src = os.path.relpath( prd_src, self.get_save_folder() )
+        ColumnsProjectIndex.set_product( self._project_index, src )
+        return prd_src
         
-    def set_product_in_product( self, existing_product_root, product_name_unprefixed, custom_template=None ):
-        c = self.Conventions
-        project_unprefixed, _ = c.get_correct_project_names( self.get_save_folder(), True )
-        prd_src = c.set_product_in_product( existing_product_root, project_unprefixed, product_name_unprefixed, custom_template=self.__get_template(custom_template) )
-        prd_src = os.path.relpath( prd_src, self.get_save_folder() )
-        ColumnsProjectIndex.set_product( self._project_index, prd_src )
+    def _set_product_in_product( self, prd_src ):
+        src = os.path.relpath( prd_src, self.get_save_folder() )
+        ColumnsProjectIndex.set_product( self._project_index, src )
+        return prd_src
         
-    def set_component_in_product( self, product_root, component_name_unprefixed, custom_template=None ):
-        c = self.Conventions
-        c_src = c.set_component_in_product( product_root, component_name_unprefixed, custom_template=self.__get_template(custom_template) )
-        c_src = os.path.relpath( c_src, self.get_save_folder() )
-        ColumnsProjectIndex.set_product( self._project_index, c_src )
+    def _set_component_in_product( self, c_src ):
+        src = os.path.relpath( c_src, self.get_save_folder() )
+        ColumnsProjectIndex.set_product( self._project_index, src )
+        return c_src
         
     def save_project_index( self ):
         savef_yaml( self.Files.PROJECT_INDEX, self._project_index )
@@ -208,6 +213,8 @@ class SomeContextProject( SomeDoer ):
         # replaces current `project index` with
         # real-life up-to-date data.
         
+        c = self.Conventions
+        
         # reset existing
         self._project_index = {}
         
@@ -215,68 +222,19 @@ class SomeContextProject( SomeDoer ):
         self.set_project_in_project()
         
         # environments
-        src = get_existing_environments( self.get_save_folder(), prefix=self.Conventions.ENVIRONMENT_NAME_PREFIX )
+        src = get_existing_environments( self.get_save_folder(), prefix=c.ENVIRONMENT_NAME_PREFIX, relpath=True )
         ColumnsProjectIndex.set_environments( self._project_index, src )
         
         # products
-        src = get_existing_products( self.get_save_folder(), prefix=self.Conventions.PRODUCT_NAME_PREFIX )
+        src = get_existing_products( self.get_save_folder(), prefix=c.PRODUCT_NAME_PREFIX, relpath=True )
         ColumnsProjectIndex.set_products( self._project_index, src )
         
         # components
-        src = get_existing_products( self.get_save_folder(), prefix=self.Conventions.PRODUCT_NAME_PREFIX )
+        src = get_existing_components( self.get_save_folder(), True, prefix=c.COMPONENT_NAME_PREFIX, relpath=True )
         ColumnsProjectIndex.set_components( self._project_index, src )
         
         self.save_project_index()
-        
-    """
-    def products( self, rescan=False ):
-        
-        # Finds and saves existing `product definitions`
-        # into memory.
-        
-        if len( self.__products )==0 or rescan:
-            # need to rescan
-            
-            prd_srcs = get_existing_products( self.__project_root_folder, prefix=self.Conventions.PRODUCT_NAME_PREFIX )
-            
-            found = {}
-            for prd_src in prd_srcs:
-                unprefixed, prefixed = self.Conventions.get_correct_product_names( prd_src, is_path=True )
-                found[ unprefixed ] = prd_src
-                
-            self.__products = found
-            
-        # ok
-        return self.__products
-    
-    def render_product( self, product, custom_context_console_command=None ):
-        
-        #unprefixed, prefixed = self.Conventions.get_correct_product_names( product, is_path=None )
-        
-        # get product src
-        
-        prd_src = None
-        if product in self.__products:
-            # i gave product name
-            prd_src = self.__products[product]
-        elif product is self.__products.values():
-            # i gave product path
-            prd_src = product
-        elif os.path.isfile(product):
-            # i gave product path
-            prd_src = product
-            log.warning( f'the product you want to render is not part of this project: {prd_src}' )
-        else:
-            # i gave something unknown
-            raise ValueError( f'unknown product: {prd_src}' )
-        
-        # render it
-        
-        # TODO
-        # allow custom commands
-        return render_product( prd_src, context_console_command=custom_context_console_command )
-    """
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.14
-# simplified
+# end 2023.10.19
+# moved here

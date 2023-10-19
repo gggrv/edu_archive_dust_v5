@@ -10,11 +10,16 @@ log = logging.getLogger(__name__)
 import os
 # pip install
 # same project
-from sparkling.contech.TimecodedContextConventions import ConventionsTimecoded
-from sparkling.contech.SomeContextProject import SomeContextProject
+from sparkling.contech.StandardContextProject import DStandardContextProject, DSomeContextProject
+
+try:
+    ob  = DSomeContextProject( '' )
+    raise NotImplementedError('AAAAAAAA')
+except SyntaxError:
+    print( 'ok' )
 
 project_root = os.path.abspath( 'wawawa_BookNormal' )
-BookNormal = SomeContextProject(
+BookNormal = DStandardContextProject(
     project_root,
     custom_conventions_class=None
     )
