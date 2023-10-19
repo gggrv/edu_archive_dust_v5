@@ -4,7 +4,7 @@
 
 from sparkling.common.BaseColumns import BaseColumns
 
-class ContextCommands( BaseColumns ):
+class CommandsStandard( BaseColumns ):
     
     # definitions
     environment_named = r'\environment %environment_name%'
