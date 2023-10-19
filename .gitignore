@@ -9,6 +9,5 @@ data/*
 !data/host_qtapp/tray.png
 # ignore all documentation for now
 docs/*
-# unignore some plugins
-!data/grimoire/plugins/sample_notetaking/*
-!data/grimoire/plugins/create_new_row/*
+# unignore all grimoire plugins
+!data/grimoire/plugins/
