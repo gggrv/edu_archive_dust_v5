@@ -36,7 +36,7 @@ class ColumnsFoundTags( ColumnsFoundTexts ):
         project_root: 'Project root'
         }.update( ColumnsFoundTexts.texts )
     
-def get_existing_environments( project_root, prefix=Conventions.ENVIRONMENT_NAME_PREFIX, dot_ext='.tex' ):
+def get_existing_environments( project_root, prefix=Conventions.ENVIRONMENT_NAME_PREFIX, dot_ext='.tex', relpath=False ):
     
     # Gets all existing env.tex in given project.
     
@@ -45,9 +45,9 @@ def get_existing_environments( project_root, prefix=Conventions.ENVIRONMENT_NAME
     
     if not os.path.isdir( project_root ):
         return []
-    return select_files( project_root, prefix, dot_ext, True )
+    return select_files( project_root, prefix, dot_ext, True, relpath )
 
-def get_existing_products( project_root, prefix=Conventions.PRODUCT_NAME_PREFIX, dot_ext='.tex' ):
+def get_existing_products( project_root, prefix=Conventions.PRODUCT_NAME_PREFIX, dot_ext='.tex', relpath=False ):
     
     # Gets all existing product.tex in given project.
     
@@ -56,9 +56,9 @@ def get_existing_products( project_root, prefix=Conventions.PRODUCT_NAME_PREFIX,
     
     if not os.path.isdir( project_root ):
         return []
-    return select_files( project_root, prefix, dot_ext, True )
+    return select_files( project_root, prefix, dot_ext, True, relpath )
 
-def get_existing_components( root_folder, this_is_project, prefix=Conventions.COMPONENT_NAME_PREFIX, dot_ext='.tex' ):
+def get_existing_components( root_folder, this_is_project, prefix=Conventions.COMPONENT_NAME_PREFIX, dot_ext='.tex', relpath=False ):
     
     # Gets all existing component.tex in a given product / project.
     # `this_is_project`=True means `look for all the components you can find`,
@@ -70,7 +70,7 @@ def get_existing_components( root_folder, this_is_project, prefix=Conventions.CO
     if not os.path.isdir( root_folder ):
         return []
     
-    return select_files( root_folder, prefix, dot_ext, this_is_project )
+    return select_files( root_folder, prefix, dot_ext, this_is_project, relpath )
 
 def get_referenced_componenets( product_src, return_paths=True ):
 
