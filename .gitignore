@@ -1,13 +1,17 @@
-# ignore specific
+# ignore specific system files/folders
 **/__pycache__
 **/.pylint
 /.spyproject
+# ignore custom useless files
 */test
+# ignore all documentation for now
+docs/*
+# ignore the whole user data folder
 data/*
 # unignore css and tray
 !data/host_qtapp/app.css
 !data/host_qtapp/tray.png
-# ignore all documentation for now
-docs/*
 # unignore all grimoire plugins
 !data/grimoire/plugins/
+!data/grimoire/plugins/*
+!data/grimoire/plugins/**/*
