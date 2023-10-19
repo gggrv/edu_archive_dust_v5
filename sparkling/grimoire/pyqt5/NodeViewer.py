@@ -430,7 +430,7 @@ class NodeViewer( PandasTableView ):
         # del from db
         identities = list( subdf.index )
         query = f'MATCH ({NODE}) WHERE ID({NODE}) IN {identities} DETACH DELETE {NODE}'
-        response = self._conn.query( query, db_name=self._playlist.db_name() )
+        response = self._conn.query( query, db_name=self._settings[c.db_name] )
         if response is None:
             log.error( 'failed to delete from server' )
             return
@@ -586,5 +586,5 @@ class NodeViewer( PandasTableView ):
         raise NotImplementedError
             
 #---------------------------------------------------------------------------+++
-# end 2023.10.06
-# simplified
+# end 2023.10.19
+# fix del from disk
