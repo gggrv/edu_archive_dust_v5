@@ -225,7 +225,9 @@ class DWritingProject( DStandardContextProject ):
                 ColumnsPlaylist.title: f'Product for {unprefixed} (render me)',
                 ColumnsPlaylist.album: unprefixed,
                 ColumnsPlaylist.track_number: '1',
+                ColumnsPlaylist.disk_number: '0',
                 ColumnsPlaylist.neo4j_labels: self.plugin_settings[ColumnsPluginSettings.neo4j_labels],
+                ColumnsPlaylist.move_protected: EConsent.CONSENT,
                 }
             self.playlist_viewer._add_to_view_db( [param_dict], True )
             
@@ -289,8 +291,10 @@ class DWritingProject( DStandardContextProject ):
                 ColumnsPlaylist.path: c_src,
                 ColumnsPlaylist.title: f'Component {unprefixed} (manually add me to product)',
                 ColumnsPlaylist.album: self.Conventions.get_correct_product_names(prd_root,True)[0],
+                ColumnsPlaylist.disk_number: '0',
                 ColumnsPlaylist.track_number: '2',
                 ColumnsPlaylist.neo4j_labels: self.plugin_settings[ColumnsPluginSettings.neo4j_labels],
+                ColumnsPlaylist.move_protected: EConsent.CONSENT,
                 }
             # TODO
             # fix neo4j_labels not working
@@ -375,6 +379,9 @@ def autoenable( grimoire_main_window, requester_playlist_viewer ):
             c.text: 'Rescan project',
             c.method: G_BOOK.rebuild_project_index,
             },
+        # TODO
+        # action to move project_root somewhere else
+        # custom FileRanmer that allows to quickly rename products, components
         ]
     c.add_actions( G_BOOK.playlist_viewer, actions )
         
