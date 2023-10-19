@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-#
 
 # logging
 import logging
@@ -34,14 +33,14 @@ def generate_renaming_rules( src ):
         
     text = """---
 # example rules:
-# r'C:\custom_dir' + '\\' + row['custom_column1'] + '\\' + row['custom_column2'] + '\\' + os.path.basename(row[c.path])
-# r'D:\custom_dir' + '\\' + row['custom_column5'] + '\\' + os.path.basename(row[c.path])
-# r'E:\custom_dir' + '\\' + pd.to_datetime(row['timestamp']).strftime( r'%Y\%m\%Y%m%d_%H%M%S' ) + os.path.splitext(row[c.path])[1]
+# r'C:\custom_dir' + '\\\\' + row['custom_column1'] + '\\\\' + row['custom_column2'] + '\\\\' + os.path.basename(row['path'])
+# r'D:\custom_dir' + '\\\\' + row['custom_column5'] + '\\\\' + os.path.basename(row['path'])
+# r'E:\custom_dir' + '\\\\' + pd.to_datetime(row['timestamp']).strftime( r'%Y\%m\%Y%m%d_%H%M%S' ) + os.path.splitext(row['path'])[1]
 123:
   screen_name: test renaming rule
   neo4j_labels: 
   db_name: neo4j
-  rule: r'C:\custom_folder' + '\\' + os.path.splitext(row[c.path])[1]
+  rule: r'C:\custom_folder' + '\\\\' + os.path.splitext(row['path'])[1]
   description: some basic rule
 ..."""
     
@@ -170,5 +169,5 @@ class MainDoer( DAutorunDoer ):
         return True, 'ok'
     
 #---------------------------------------------------------------------------+++
-# end 2023.10.14
-# simplified
+# end 2023.10.19
+# hardcoded field names in example renaming rules
