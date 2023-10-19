@@ -39,7 +39,13 @@ class ConventionsTimecoded( ConventionsStandard ):
     def set_product_in_project( cls,
         project_root,
         product_name_unprefixed=None,
-        custom_template=None ):
+        custom_template=None,
+        is_timecoded=True ):
+        
+        if not is_timecoded:
+            # this is a normal product
+            # i just add it
+            return super().set_product_in_project( project_root, product_name_unprefixed, custom_template=custom_template )
         
         # get correct product name
         unprefixed = new_unprefixed_name(PRODUCT_DT_FORMAT) if product_name_unprefixed is None else _validate_unprefixed_name(product_name_unprefixed,PRODUCT_DT_FORMAT)
@@ -59,21 +65,41 @@ class ConventionsTimecoded( ConventionsStandard ):
     def set_component_in_product( cls,
         product_root,
         component_name_unprefixed=None,
-        custom_template=None ):
+        custom_template=None,
+        is_timecoded=True ):
+        
+        if not is_timecoded:
+            # this is a normal component
+            # i just add it
+            return super().set_component_in_product( product_root, component_name_unprefixed, custom_template=custom_template )
         
         # get correct component name
         unprefixed = new_unprefixed_name(COMPONENT_DT_FORMAT) if component_name_unprefixed is None else _validate_unprefixed_name(component_name_unprefixed,COMPONENT_DT_FORMAT)
         
-        # fix product name so it corresponds to chosen component name
+        # force product name to correspond to chosen component name
         datetime = dt.datetime.strptime( unprefixed, COMPONENT_DT_FORMAT )
         expected_basename = datetime.strftime( PRODUCT_DT_FORMAT )
         root, basename = os.path.split( product_root )
-        if not basename == expected_basename:
-            _,product_prefixed = cls.get_correct_product_names( expected_basename, False )
-            product_root = os.path.join( root, product_prefixed )
+        _,product_prefixed = cls.get_correct_product_names( expected_basename, False )
+        product_root = os.path.join( root, product_prefixed )
         
         return ConventionsStandard.set_component_in_product( product_root, unprefixed, custom_template=custom_template )
+    
+    @classmethod
+    def set_component_in_project( cls,
+        project_root,
+        component_name_unprefixed=None,
+        custom_template=None,
+        is_timecoded=True ):
+        
+        # Only timecoded components allowed.
+        
+        if not is_timecoded:
+            raise ValueError( 'only timecoded components allowed, for others use `set_component_in_product`' )
+        
+        product_root = os.path.join( project_root, 'x' ) # does not matter, becaise i will forcefully fix it
+        return cls.set_component_in_product( product_root=product_root, component_name_unprefixed=component_name_unprefixed, custom_template=custom_template, is_timecoded=is_timecoded )
         
 #---------------------------------------------------------------------------+++
-# end 2023.10.14
-# moved here
+# end 2023.10.19
+# allowed to create not timecoded items
