@@ -13,15 +13,28 @@ import os
 from sparkling.contech.TimecodedContextConventions import ConventionsTimecoded
 from sparkling.contech.SomeContextProject import SomeContextProject
 
+project_root = os.path.abspath( 'wawawa_BookNormal' )
 BookNormal = SomeContextProject(
-    'wawawa_BookNormal',
+    project_root,
     custom_conventions_class=None
     )
 
-BookTimecoded = SomeContextProject(
-    'wawawa_BookTimecoded',
-    custom_conventions_class=ConventionsTimecoded
-    )
+#BookTimecoded = SomeContextProject(
+#    'wawawa_BookTimecoded',
+#    custom_conventions_class=ConventionsTimecoded
+#    )
+
+BookNormal.set_project_in_project()
+BookNormal.set_environment_in_project()
+BookNormal.set_product_in_project( 'test_version' )
+BookNormal.save_project_index()
+
+index1 = BookNormal._project_index
+BookNormal.load_project_index()
+index2 = BookNormal._project_index
+
+BookNormal.rebuild_project_index()
+index3 = BookNormal._project_index
 
 print()
         
