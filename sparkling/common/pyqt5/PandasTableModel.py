@@ -136,6 +136,27 @@ class PandasTableModel( QAbstractTableModel ):
             
         self.layoutChanged.emit()
     
+    def supportedDragActions( self ):
+        
+        # The user `drags` something from here.
+        # I allow to do specific `actions`.
+    
+        # This function was created with the aid of
+        # an AI assistant.
+        
+        # help:
+        # https://stackoverflow.com/questions/61387248/in-pyqt5-how-do-i-properly-move-rows-in-a-qtableview-using-dragdrop
+        # https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractItemModel.html
+        
+        return Qt.MoveAction
+
+    def supportedDropActions( self ):
+        
+        # The user brings here something.
+        # I plan to do specific `actions`.
+        
+        return Qt.MoveAction
+    
     def mimeTypes( self ):
         
         # Reserved `PyQt5` method.
