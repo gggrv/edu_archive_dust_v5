@@ -18,6 +18,7 @@ from sparkling.common import unique_loc
 from sparkling.common.enums.Consent import EConsent
 
 NEO4J_LABEL_PLAYLIST = 'DustGrimoirePlaylist'
+NEO4J_LABEL_PLAYLIST_SELECTOR = 'DustGrimoirePlaylistSelector'
 
 def _query_is_code( query ):
     
@@ -255,6 +256,36 @@ class ColumnsPlaylist( Columns ):
                 
         return df
     
+    @classmethod
+    def _playlist_of_playlists( cls, conn ):
+        
+        # Makes sure that unique `playlist` that records ordering info
+        # about other `playlists` exists.
+        
+        # This special `playlist` is expected to be
+        # used only by `PalylistSelector`.
+        
+        # attempt to get existing
+        node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST_SELECTOR )
+        response = conn.query( f'MATCH {node} RETURN {NODE}', db_name=DB_DEFAULT )
+        
+        if len(response) == 0:
+            # need to create from scratch
+        
+            settings = {
+                cls.db_name: DB_DEFAULT,
+                cls.identities: '', # can't manually sort auto query
+                }
+            node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST_SELECTOR, param_dict=settings )
+            response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
+        else:
+            response = conn.query( f'MATCH {node} RETURN {NODE}', db_name=DB_DEFAULT )
+        
+        settings = response[0]['n']._properties
+        settings[ cls.identity ] = response[0]['n'].id
+        
+        return settings
+        
 #---------------------------------------------------------------------------+++
-# end 2023.10.14
-# classmethod
+# end 2023.10.21
+# added NEO4J_LABEL_PLAYLIST_SELECTOR

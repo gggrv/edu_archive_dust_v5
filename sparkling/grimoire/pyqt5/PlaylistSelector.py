@@ -16,7 +16,9 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from sparkling.grimoire.PlaylistColumns import (
     ColumnsPlaylist,
     NODE, DB_DEFAULT,
-    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR
+    LABEL_SEPARATOR, MULTIVALUE_SEPARATOR,
+    NEO4J_LABEL_PLAYLIST,
+    NEO4J_LABEL_PLAYLIST_SELECTOR
     )
 # common
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
@@ -44,12 +46,28 @@ class PlaylistSelector( NodeViewer ):
         super( PlaylistSelector, self ).__init__(
             parent=parent,
             accept_drops=False,
+            manually_reorder_rows=True,
             *args, **kwargs )
         
         self.__init_context_menu()
         
-        # i only need this data for this widget to work
-        self.set_settings( {ColumnsPlaylist.db_name:DB_DEFAULT} )
+        # this custom `playlist viewer` holds
+        # very real `playlist` - it is saved to `db`
+        
+        # this `playlists` has custom `neo4j label` and i expect
+        # that no other nodes with same label exist
+        
+        # this `playlists` records `identities` of other
+        # `playlists
+        
+        # will not work w/o calling `set_connection`
+        
+    def set_connection( self, conn ):
+        
+        super( PlaylistSelector, self ).set_connection( conn )
+            
+        settings = ColumnsPlaylist._playlist_of_playlists( self._conn )
+        self.set_settings( settings )
         
     def __init_context_menu( self ):
         
@@ -205,5 +223,5 @@ class PlaylistSelector( NodeViewer ):
         self.PLAYLIST_EDITED.emit( new_df )
         
 #---------------------------------------------------------------------------+++
-# end 2023.10.07
-# simplified
+# end 2023.10.21
+# wip save data to db
