@@ -491,17 +491,18 @@ class NodeViewer( PandasTableView ):
         
         # make sure this playlist supports adding items
         if c.auto_query in self._settings:
-            # this playlist is rule-based,
-            # i don't want to edit it manually
             log.error( 'this playlist is automatic, i don\'t want to add items to it manually' )
             ev.ignore()
             return
         
-        ev.accept()
-    
-    def dragMoveEvent( self, ev ):
+        elif ev.dropAction() == Qt.CopyAction:
+            
+            if ev.mimeData().hasUrls():
+                ev.accept()
+                return
         
-        ev.accept()
+        # for all other cases
+        super( NodeViewer, self ).dragEnterEvent(ev)
 
     def dropEvent( self, ev ):
         
@@ -517,6 +518,12 @@ class NodeViewer( PandasTableView ):
                     if is_local_path \
                     else ev.mimeData().text().split('\n')
                     
+                # TODO
+                # correctly call model.dropMimeData
+                # so that items that are drag/dropped on this
+                # widget are placed in a block right
+                # after the row under mouse cursor
+                    
                 self._add_to_view_db( paths, False, parsing_function=_parse_path )
                 ev.accept()
                 return
@@ -528,8 +535,9 @@ class NodeViewer( PandasTableView ):
                 return
             
         # i got not links but something else
-        log.error( 'unknown drops, not doing anything' )
-        ev.ignore()
+        
+        # for all other cases
+        super( NodeViewer, self ).dropEvent(ev)
         
     def dragLeaveEvent( self, ev ):
         ev.accept()

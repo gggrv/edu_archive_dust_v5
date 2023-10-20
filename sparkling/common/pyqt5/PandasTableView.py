@@ -94,7 +94,7 @@ class PandasTableView( QTableView ):
         # I can filter out unsupported events
         # the moment they are dragged into this widget.
 
-        if ev.source() is self:
+        if issubclass( type( ev.source() ), PandasTableView ):
             # i sent this event
             ev.accept()
             return
