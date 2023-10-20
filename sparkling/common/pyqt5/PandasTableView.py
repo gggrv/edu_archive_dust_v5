@@ -11,11 +11,13 @@ log = logging.getLogger(__name__)
 # embedded in python
 # pip install
 import pandas as pd
-from PyQt5.QtCore import Qt, QItemSelectionModel
-from PyQt5.QtWidgets import QTableView
+from PyQt5.QtCore import Qt, QItemSelectionModel, QMimeData
+from PyQt5.QtWidgets import QTableView, QAbstractItemView
+from PyQt5.QtGui import QDrag
 # same project
 from sparkling.common.pyqt5.PandasTableModel import PandasTableModel
 from sparkling.common.BaseColumns import BaseColumns
+#from sparkling.common.enums.MimeTypes import EMimeTypes
         
 class EMouseMoveModes( BaseColumns ):
     
@@ -29,6 +31,34 @@ class EMouseMoveModes( BaseColumns ):
     # alternative operation - what to do when i move
     # already selected items
     drag_move_selection = 1
+            
+class ColumnsMimeText( BaseColumns ):
+    
+    # Textual MimeData may be like this:
+    # `key1=value1;key2=value2;`.
+    
+    #EQ = '='
+    #SEP = ';'
+    
+    # i am dragging `df.index`, which allows to addess relevant
+    # `df` rows using `loc`
+    drag_df_locs = 'drag_df_locs'
+    
+#     @classmethod
+#     def encode_into_text( cls, dictionary ):
+#         items = []
+#         for k, v in dictionary.items():    
+#             item = f'{k}{cls.EQ}{v}'
+#             items.append( item )
+#         return cls.SEP.join( items )
+        
+#     @classmethod
+#     def decode_into_dictionary( cls, text ):
+#         dictionary = {}
+#         for item in text.split( cls.SEP ):
+#             k, v = item.split( cls.EQ, maxsplit=1 )
+#             dictionary[k] = v
+#         return dictionary
 
 class PandasTableView( QTableView ):
 
@@ -56,6 +86,7 @@ class PandasTableView( QTableView ):
         self.setSelectionBehavior( self.SelectRows )
         self.setWordWrap( False )
         self.setSortingEnabled( True )
+        self.setDragDropMode( QAbstractItemView.DragDrop )
 
         # instantly populate
         self._MODEL = PandasTableModel( self )
@@ -82,6 +113,25 @@ class PandasTableView( QTableView ):
         if not sel.hasSelection(): return []
         return sel.selectedRows()
     
+    def dragEnterEvent( self, ev ):
+        
+        # I can filter out unsupported events
+        # the moment they are dragged into this widget.
+
+        if ev.source() is self:
+            # i sent this event
+            ev.accept()
+            return
+
+        log.error( 'not implemented yet' )
+        ev.ignore()
+    
+    def dragMoveEvent( self, ev ):
+        print( 'dragMoveEvent' )
+    
+    def dragLeaveEvent( self, ev ):
+        print( 'dragLeaveEvent' )
+        
     def mousePressEvent( self, ev ):
 
         # Reserved `PyQt5` method.
@@ -89,7 +139,7 @@ class PandasTableView( QTableView ):
         # i want to know current situation before
         # processing this mouse click
         
-        print( 'mousePressEvent start', self.__mouse_move_mode )
+        #print( 'mousePressEvent start', self.__mouse_move_mode )
         
         if ev.buttons() & Qt.LeftButton:
             # at this moment i started holding the
@@ -124,7 +174,7 @@ class PandasTableView( QTableView ):
         # proceed
         super( PandasTableView, self ).mousePressEvent( ev )
     
-        print( 'mousePressEvent end  ', self.__mouse_move_mode )
+        #print( 'mousePressEvent end  ', self.__mouse_move_mode )
         
     def mouseMoveEvent( self, ev ):
 
@@ -158,7 +208,41 @@ class PandasTableView( QTableView ):
         
             elif self.__mouse_move_mode == EMouseMoveModes.drag_move_selection:
                 # i want to reposition selected items
-                print( 'repos' )
+                # this section was created with the aid of
+                # an AI assistant
+                
+                # just in case
+                if self.selectionModel().hasSelection():
+                    # create very customized drag event
+                    
+                    # `self` is parent widget (event sender)
+                    DragEv = QDrag( self )
+                    
+                    # encode selected `df` `locs`
+                    mime_data = QMimeData()
+                    #df_index = ' '.join( self.selected_subdf().index.astype(str) )
+                    #mime_data.setText( ColumnsMimeText.encode_into_text({
+                    #    ColumnsMimeText.drag_df_locs: df_index )
+                    #    }) )
+                    mime_data.setText( '' ) # it assigns `EMimeTypes.TEXT_PLAIN`
+                    mime_data.setProperty( ColumnsMimeText.drag_df_locs, self.selected_subdf().index )
+                    
+                    DragEv.setMimeData( mime_data )
+                    
+                    # some kind of image
+                    #DragEv.setPixmap()
+                    # where to show mouse cursor relative to image
+                    #DragEv.setHotSpot()
+                    
+                    # start drag/dropping
+                    retval = DragEv.exec_( Qt.MoveAction )
+                    #if retval == 0:
+                    #    # this event was accepted, i safely
+                    #    # reordered rows in underlying `df`
+                    #    # using `model`
+                    #    print( retval )
+                else:
+                    log.debug( 'why am i here?' )
     
     """
     def mouseReleaseEvent( self, ev ):

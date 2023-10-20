@@ -25,8 +25,8 @@ mw = QMainWindow()
 
 # gui
 w = PandasTableView( parent=mw )
-w.setAcceptDrops( True )
-w.setDragEnabled( True )
+#w.setAcceptDrops( True )
+#w.setDragEnabled( True )
 
 # at this moment grabbing an item and dragging it with a mouse
 # results not in multiple selection,

@@ -15,6 +15,7 @@ from numpy import argsort
 import pandas as pd
 from PyQt5.QtCore import ( Qt, QAbstractTableModel )
 # same project
+from sparkling.common.enums.MimeTypes import EMimeTypes
 
 class PandasTableModel( QAbstractTableModel ):
     
@@ -158,7 +159,9 @@ class PandasTableModel( QAbstractTableModel ):
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
         # https://www.iana.org/assignments/media-types/media-types.xhtml
         
-        return super( PandasTableModel, self ).mimeTypes()
+        #return super( PandasTableModel, self ).mimeTypes()
+        
+        return [ EMimeTypes.TEXT_PLAIN ]
     
     def mimeData( self, indexes ):
         
@@ -242,6 +245,11 @@ class PandasTableModel( QAbstractTableModel ):
             # dedicated `drop event received` method?
             # why did this `drop event` get this far?
             return False
+        
+        elif action == Qt.MoveAction:
+            
+            print( data )
+            return True
         
         log.error( 'not implemented, rejecting by default' )
         return False
