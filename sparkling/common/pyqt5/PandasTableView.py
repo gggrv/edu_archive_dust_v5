@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 # embedded in python
 # pip install
 import pandas as pd
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QItemSelectionModel
 from PyQt5.QtWidgets import QTableView
 # same project
 from sparkling.common.pyqt5.PandasTableModel import PandasTableModel
@@ -101,6 +101,9 @@ class PandasTableView( QTableView ):
 
         # Reserved `PyQt5` method.
         
+        # i want precise and predictable behavior,
+        # so i don't call `super`
+        
         # i want to override the creation of `QDrag`
         
         if ev.buttons() & Qt.LeftButton:
@@ -116,13 +119,19 @@ class PandasTableView( QTableView ):
                 # https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QAbstractItemView.html#PySide2.QtWidgets.PySide2.QtWidgets.QAbstractItemView.indexAt
                 index = self.indexAt( ev.pos() )
                 if index.isValid():
-                    # i can select this item
-                    
-                    # so at this moment
-                    # current implementation allows me
-                    # to continuously change current selected row
-                    # whlie the user moves the mouse
-                    self.selectRow( index.row() )
+                    # it is possible to add this item to current selection
+                    # this section was created with the aid of
+                    # an AI assistant
+                    # help:
+                    # https://doc.qt.io/qtforpython-5/PySide2/QtCore/QItemSelectionModel.html
+                    self.selectionModel().select( index,
+                        QItemSelectionModel.Select
+                        |QItemSelectionModel.Rows
+                        )
+        
+        # at this moment this function successfully mimics
+        # the original behavior - user clicks to select a single item,
+        # user drags pressed mouse to select multiple items
       
     def selected_rowilocs( self ):
         
