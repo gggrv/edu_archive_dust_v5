@@ -350,6 +350,10 @@ def autoenable( grimoire_main_window, requester_playlist_viewer ):
     global G_BOOK
     if G_BOOK is None:
         G_BOOK = DWritingProject( requester_playlist_viewer )
+    else:
+        # replace playlist viewer with current
+        # because old one was closed and deleted
+        G_BOOK.playlist_viewer = requester_playlist_viewer
     
     # mod context menu
     # TODO
@@ -398,9 +402,10 @@ def autodisable( grimoire_main_window, requester ):
         f'grimoire/plugin/{PLUGIN_NAME}/new_product',
         f'grimoire/plugin/{PLUGIN_NAME}/new_component',
         f'grimoire/plugin/{PLUGIN_NAME}/render_product',
+        f'grimoire/plugin/{PLUGIN_NAME}/rescan_project',
         ]
     c.remove_actions( G_BOOK.playlist_viewer, identities=act_identities )
         
 #---------------------------------------------------------------------------+++
-# end 2023.10.19
-# update
+# end 2023.10.20
+# fix playlist viewer not updating
