@@ -25,6 +25,22 @@ mw = QMainWindow()
 
 # gui
 w = PandasTableView( parent=mw )
+w.setAcceptDrops( True )
+w.setDragEnabled( True )
+
+# at this moment grabbing an item and dragging it with a mouse
+# results not in multiple selection,
+# but in moving the single selected item across the screen
+
+# multiple selection is achieved via keyboard,
+# dragging already selected items results in
+# moving them across the screen
+
+# TODO
+# add keywords to constructor / method
+# that explicitly sets drag/drop behavior,
+# so that `setDragEnabled` does not interfere with
+# intended functionality
 
 # populate gui wuth some data
 
