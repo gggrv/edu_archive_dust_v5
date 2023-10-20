@@ -229,11 +229,16 @@ class CentralWidget( QWidget ):
         # help:
         # https://stackoverflow.com/questions/61342380/pyqt5-closeable-tabs-in-qtabwidget
         
+        # remove tab from gui
+        # calling `removeTab` does not destroy the widget
+        # help:
+        # https://doc.qt.io/qt-5/qtabwidget.html
         w = self.Gui.tab_widget.widget( tabiloc )
+        self.Gui.tab_widget.removeTab( tabiloc )
+        
+        # forcefully destroy the remaining widget
         w.deleteLater()
         del w
-        
-        self.Gui.tab_widget.removeTab( tabiloc )
         
     def _sent_contents_receive_event( self, identities, settings ):
         
@@ -351,6 +356,24 @@ class CentralWidget( QWidget ):
         
     def _request_plugins_enable_event( self, plugin_names, requester ):
         self.REQUEST_PLUGINS_ENABLE.emit( plugin_names, requester )
+        
+    def wrap_up_before_closing_main_window( self ):
+        
+        # close all playlists
+        
+        # get all playlist viewers
+        ws = [ self.Gui.tab_widget.widget(tabiloc) for tabiloc in range(self.Gui.tab_widget.count()) ]
+        
+        # calling `clear` does not destroy the widget
+        # help:
+        # https://doc.qt.io/qt-5/qtabwidget.html
+        self.Gui.tab_widget.clear()
+        
+        # forcefully destroy the remaining widgets
+        while len(ws) > 0:
+            ws[0].deleteLater()
+            ws.pop( 0 )
+        del ws
         
     def _import_csv_to_playlist_event( self, p ):
         

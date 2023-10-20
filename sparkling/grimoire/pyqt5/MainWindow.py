@@ -119,6 +119,7 @@ class MainWindow( ParentlessMainWindow ):
             cw.Gui.split_vleft.setVisible( not visible )
 
     def closeEvent( self, ev ):
+        self.centralWidget().wrap_up_before_closing_main_window()
         self.OK_TO_CLOSE.emit( self.objectName() )
         ev.ignore() # !!!
         
