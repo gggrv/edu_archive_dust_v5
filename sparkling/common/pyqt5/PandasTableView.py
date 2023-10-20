@@ -21,6 +21,14 @@ class EMouseMoveModes( BaseColumns ):
     
     # the default behavior - when don't know that to do, do this
     drag_select = 0
+    
+    # i explicitly indicate that i just stopped
+    # doing `drag_select`
+    #drag_select_finished = 
+    
+    # alternative operation - what to do when i move
+    # already selected items
+    drag_move_selection = 1
 
 class PandasTableView( QTableView ):
 
@@ -81,13 +89,32 @@ class PandasTableView( QTableView ):
         # i want to know current situation before
         # processing this mouse click
         
+        print( 'mousePressEvent start', self.__mouse_move_mode )
+        
         if ev.buttons() & Qt.LeftButton:
             # at this moment i started holding the
             # left mouse button
             
             # is the thing under the mouse already selected?
             if self.selectionModel().hasSelection():
-                pass
+                # i have selected something, where is it?
+                
+                # which item is currently under the mouse pointer?
+                index = self.indexAt( ev.pos() )
+                if index.isValid():
+                    # it is possible to further inspect this item
+                    
+                    if self.selectionModel().isSelected(index):
+                        # i want to move all currently selected items
+                        self.__mouse_move_mode = EMouseMoveModes.drag_move_selection
+                    else:
+                        # i want to start selecting items from scratch
+                        # regardless of any previous intentions
+                        self.__mouse_move_mode = EMouseMoveModes.drag_select
+                else:
+                    # idk what is this, go back to default mode
+                    self.__mouse_move_mode = EMouseMoveModes.drag_select
+            
             else:
                 # nothing is selected, which means that
                 # i want to start selecting multiple items
@@ -97,6 +124,8 @@ class PandasTableView( QTableView ):
         # proceed
         super( PandasTableView, self ).mousePressEvent( ev )
     
+        print( 'mousePressEvent end  ', self.__mouse_move_mode )
+        
     def mouseMoveEvent( self, ev ):
 
         # Reserved `PyQt5` method.
@@ -108,7 +137,7 @@ class PandasTableView( QTableView ):
         
         if ev.buttons() & Qt.LeftButton:
             # at this moment i am holding something
-            # and started moving the mouse
+            # and started/continuing to move the mouse
             
             if self.__mouse_move_mode == EMouseMoveModes.drag_select:
                 # i want to continue selecting items
@@ -124,15 +153,31 @@ class PandasTableView( QTableView ):
                     # an AI assistant
                     # help:
                     # https://doc.qt.io/qtforpython-5/PySide2/QtCore/QItemSelectionModel.html
-                    self.selectionModel().select( index,
-                        QItemSelectionModel.Select
-                        |QItemSelectionModel.Rows
-                        )
+                    if not self.selectionModel().isSelected(index):
+                        self.selectionModel().select( index, QItemSelectionModel.Select|QItemSelectionModel.Rows )
         
-        # at this moment this function successfully mimics
-        # the original behavior - user clicks to select a single item,
-        # user drags pressed mouse to select multiple items
-      
+            elif self.__mouse_move_mode == EMouseMoveModes.drag_move_selection:
+                # i want to reposition selected items
+                print( 'repos' )
+    
+    """
+    def mouseReleaseEvent( self, ev ):
+
+        # Reserved `PyQt5` method.
+        
+        # i want to know current situation before
+        # processing this mouse click
+        
+        print( 'mouseReleaseEvent start', self.__mouse_move_mode )
+        
+        if self.__mouse_move_mode==EMouseMoveModes.drag_select:
+            # explicitly indicate that i stopped
+            # selecting
+            self.__mouse_move_mode = EMouseMoveModes.drag_select_finished
+        
+        print( 'mouseReleaseEvent end  ', self.__mouse_move_mode )
+    """
+        
     def selected_rowilocs( self ):
         
         # My custom method. I may use it manually.
