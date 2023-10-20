@@ -187,7 +187,7 @@ class PandasTableModel( QAbstractTableModel ):
         # The user brings here something.
         # I plan to do specific `actions`.
         
-        return Qt.MoveAction
+        return Qt.MoveAction | Qt.CopyAction
     
     def mimeTypes( self ):
         
@@ -212,9 +212,16 @@ class PandasTableModel( QAbstractTableModel ):
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
         # https://www.iana.org/assignments/media-types/media-types.xhtml
         
-        #return super( PandasTableModel, self ).mimeTypes()
+        # use QMimeData.formats() to inspect dropEvents and
+        # add necessary types here
         
-        return [ EMimeTypes.TEXT_PLAIN ]
+        types = [
+            EMimeTypes.TEXT_PLAIN,
+            EMimeTypes.TEXT_URI_LIST,
+            EMimeTypes.APPLICATION_QT_WINDOWS_MIME,
+            ]
+        types.extend( super( PandasTableModel, self ).mimeTypes() )
+        return types
     
     def mimeData( self, indexes ):
         

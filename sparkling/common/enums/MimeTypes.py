@@ -9,6 +9,9 @@ class EMimeTypes( BaseColumns ):
     # standard
     
     TEXT_PLAIN = 'text/plain'
+    TEXT_URI_LIST = 'text/uri-list'
+    
+    APPLICATION_QT_WINDOWS_MIME = 'application/x-qt-windows-mime'
     
     # custom
             
