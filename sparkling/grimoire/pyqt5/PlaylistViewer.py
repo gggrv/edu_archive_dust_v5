@@ -71,6 +71,11 @@ class PlaylistViewer( NodeViewer ):
             # https://stackoverflow.com/questions/14803315/connecting-qtableview-selectionchanged-signal-produces-segfault-with-pyqt
             selectionModel = self.selectionModel()
             selectionModel.selectionChanged.connect( self.__selection_changed_event )
+            
+        #if sorted_event:
+        #    # these signals were suggested by an AI assistant
+        #    #self.horizontalHeader().sectionClicked.connect( self.__horizontal_section_clicked_event )
+        #    self.horizontalHeader().sortIndicatorChanged.connect( self.__horizontal_sorting_indicator_changed_event )
         
     def __init_context_menu( self ):
         
@@ -169,11 +174,34 @@ class PlaylistViewer( NodeViewer ):
         df.fillna( '', inplace=True )
         ColumnsPlaylist.fill_reserved_columns( self._conn, df, db_name=self._settings[c.db_name] )
         
+        if c.identities in self._settings:
+            # enforce specific row ordering
+            # TODO
+            # do so in Columns
+            # help:
+            # https://stackoverflow.com/questions/30009948/how-to-reorder-indexed-rows-based-on-a-list-in-pandas-data-frame
+            df = df.reindex([ int(loc) for loc in self._settings[c.identities].split(' ') ])
+        
         self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
         
         # request plugins
         if not to_add=='':
             self.REQUEST_PLUGINS_ENABLE.emit( to_add, self )
+        
+    def the_dying_message( self ):
+        
+        # Whenever this widget/subclass is no longer needed,
+        # I may want to remember certain things.
+        
+        c = ColumnsPlaylist
+        
+        # remember item ordering
+        self._settings[c.identities] = ' '.join(list( self._MODEL.df.index.astype(str) ))
+        
+        # notify playlist selector
+        self.OVERRIDE_SETTINGS.emit( self._settings )
+        
+        super( PlaylistViewer, self ).the_dying_message()
         
     def mouseDoubleClickEvent( self, ev ):
     
@@ -239,6 +267,18 @@ class PlaylistViewer( NodeViewer ):
                 c = ColumnsPlaylist
                 db_name = self._settings[c.db_name] if c.db_name in self._settings else DB_DEFAULT
                 w.change_items( new_subdf, rem_identities, db_name )
+        
+    #def __horizontal_sorting_indicator_changed_event( self, coliloc, order ):
+    #    
+    #    # I end up here the moment before the table
+    #    # is about to be sorted. Which means that this
+    #    # method is currently useless.
+    #
+    #    c = ColumnsPlaylist        
+    #
+    #    # notify playlist selector
+    #    self._settings[c.identities] = ' '.join(list( self._MODEL.df.index.astype(str) ))
+    #    self.OVERRIDE_SETTINGS.emit( self._settings )
         
     def forbid_deep_deletions( self, forbid ):
         

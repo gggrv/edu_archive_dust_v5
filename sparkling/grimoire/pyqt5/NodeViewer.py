@@ -192,7 +192,21 @@ class NodeViewer( PandasTableView ):
         
     def set_connection( self, conn ):
         self._conn = conn
-                
+        
+    def the_dying_message( self ):
+        # Whenever this widget/subclass is no longer needed,
+        # I may want to remember certain things.
+        pass
+    def destroy( self, *args, **kwargs ):
+        self.the_dying_message()
+        super( NodeViewer, self ).destroy( *args, **kwargs )
+    def deleteLater( self ):
+        self.the_dying_message()
+        super( NodeViewer, self ).deleteLater()
+    def closeEvent( self, ev ):
+        self.the_dying_message()
+        super( NodeViewer, self ).closeEvent( ev )
+        
     def launch_selection_editor( self, constructor_parameters=None ):
         
         # Launches editor.
