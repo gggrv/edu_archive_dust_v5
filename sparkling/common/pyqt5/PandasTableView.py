@@ -11,21 +11,31 @@ log = logging.getLogger(__name__)
 # embedded in python
 # pip install
 import pandas as pd
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableView
 # same project
 from sparkling.common.pyqt5.PandasTableModel import PandasTableModel
+from sparkling.common.BaseColumns import BaseColumns
         
-# Basic table view that works efficiently with
-# pandas DataFrames. Has some default .css settings.
-class PandasTableView( QTableView ):
+class EMouseMoveModes( BaseColumns ):
     
+    # the default behavior - when don't know that to do, do this
+    drag_select = 0
+
+class PandasTableView( QTableView ):
+
     # Universal widget for viewing a single `pd.DataFrame`
     # full of strings.
+    # Has some default .css settings.
     
     # At this moment selecting an item and dragging it with mouse
     # will result in multiple item selection.
 
     _MODEL = None
+    
+    # the user may press a button and drag a mouse across
+    # this widget, widget reactions may vary
+    __mouse_move_mode = EMouseMoveModes.drag_select
     
     def __init__( self,
                   parent,
@@ -63,6 +73,56 @@ class PandasTableView( QTableView ):
 
         if not sel.hasSelection(): return []
         return sel.selectedRows()
+    
+    def mousePressEvent( self, ev ):
+
+        # Reserved `PyQt5` method.
+        
+        # i want to know current situation before
+        # processing this mouse click
+        
+        if ev.buttons() & Qt.LeftButton:
+            # at this moment i started holding the
+            # left mouse button
+            
+            # is the thing under the mouse already selected?
+            if self.selectionModel().hasSelection():
+                pass
+            else:
+                # nothing is selected, which means that
+                # i want to start selecting multiple items
+                # while dragging the mouse
+                self.__mouse_move_mode = EMouseMoveModes.drag_select
+        
+        # proceed
+        super( PandasTableView, self ).mousePressEvent( ev )
+    
+    def mouseMoveEvent( self, ev ):
+
+        # Reserved `PyQt5` method.
+        
+        # i want to override the creation of `QDrag`
+        
+        if ev.buttons() & Qt.LeftButton:
+            # at this moment i am holding something
+            # and started moving the mouse
+            
+            if self.__mouse_move_mode == EMouseMoveModes.drag_select:
+                # i want to continue selecting items
+                # while the user moves the mouse
+                
+                # which item is currently under the mouse pointer?
+                # help:
+                # https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QAbstractItemView.html#PySide2.QtWidgets.PySide2.QtWidgets.QAbstractItemView.indexAt
+                index = self.indexAt( ev.pos() )
+                if index.isValid():
+                    # i can select this item
+                    
+                    # so at this moment
+                    # current implementation allows me
+                    # to continuously change current selected row
+                    # whlie the user moves the mouse
+                    self.selectRow( index.row() )
       
     def selected_rowilocs( self ):
         
