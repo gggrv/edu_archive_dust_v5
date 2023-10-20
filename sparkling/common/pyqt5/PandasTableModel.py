@@ -16,6 +16,38 @@ import pandas as pd
 from PyQt5.QtCore import ( Qt, QAbstractTableModel )
 # same project
 from sparkling.common.enums.MimeTypes import EMimeTypes
+from sparkling.common.BaseColumns import BaseColumns
+            
+class ColumnsMimeText( BaseColumns ):
+    
+    # Textual MimeData may be like this:
+    # `key1=value1;key2=value2;`.
+    
+    #EQ = '='
+    #SEP = ';'
+    
+    # i am dragging `df.index`, which allows to addess relevant
+    # `df` rows using `loc`
+    drag_df_locs = 'drag_df_locs'
+    
+    # i want to select specific rowilocs
+    set_selected_rowilocs = 'set_selected_rowilocs'
+    
+#     @classmethod
+#     def encode_into_text( cls, dictionary ):
+#         items = []
+#         for k, v in dictionary.items():    
+#             item = f'{k}{cls.EQ}{v}'
+#             items.append( item )
+#         return cls.SEP.join( items )
+        
+#     @classmethod
+#     def decode_into_dictionary( cls, text ):
+#         dictionary = {}
+#         for item in text.split( cls.SEP ):
+#             k, v = item.split( cls.EQ, maxsplit=1 )
+#             dictionary[k] = v
+#         return dictionary
 
 class PandasTableModel( QAbstractTableModel ):
     
@@ -224,7 +256,7 @@ class PandasTableModel( QAbstractTableModel ):
         
         return super( PandasTableModel, self ).mimeData( indexes )
     
-    def dropMimeData( self, data, action, row, column, parent ):
+    def dropMimeData( self, data, action, row, column, parent_index ):
         
         # Reserved `PyQt5` method.
         
@@ -269,8 +301,26 @@ class PandasTableModel( QAbstractTableModel ):
         
         elif action == Qt.MoveAction:
             
-            print( data )
-            return True
+            # TODO
+            # update pyqt5 to version 5.6 (at least)
+            # bc i can't call data.mimeTypes()
+            # to see a `list of str` with actual `EMimeTypes`
+            # this `QMimeData` object named `data` carries
+            
+            # also i can't check that the `data` parent is self
+            # too much ambiguity
+            
+            # i have some expected values
+            if data.hasText():
+                if data.text() == '':
+                    
+                    subdf_index = data.property( ColumnsMimeText.drag_df_locs )
+                    if not subdf_index is None:
+                        # communicate back to `view`
+                        rowilocs = list(range( row, row+len(subdf_index) ))
+                        data.setProperty( ColumnsMimeText.set_selected_rowilocs, rowilocs )
+                        # perform actions
+                        return self.__reorder_subdf( subdf_index, row )
         
         log.error( 'not implemented, rejecting by default' )
         return False
@@ -382,7 +432,52 @@ class PandasTableModel( QAbstractTableModel ):
         
         self.layoutChanged.emit()
                 
+    def __reorder_subdf( self, subdf_index, target_rowiloc ):
+        
+        # My custom method. I may use it manually.
+        
+        # I want to reposition rows with given
+        # `subdf_index`.
+        # How it was:
+        # ----x---x-xxxx--x
+        # How i want it to be:
+        # --xxxxxxx--------
+        # Because i moved my mouse here:
+        # --!--------------
+        
+        # foolcheck
+        if subdf_index is None:
+            return False
+        elif not subdf_index.isin( self.df.index ).all():
+            log.error( 'given subdf index does not describe items from self.df - these are two different indexes, not doing anything' )
+            return False
+        elif not type( subdf_index ) is pd.Int64Index:
+            log.error( 'unknown index format, need pd.Int64Index, not implemented, not doing anything' )
+            return False
+            
+        # obtain old index excluding `subdf_index`
+        old_index = list(self.df.index[ ~self.df.index.isin(subdf_index) ])
+        
+        # some rows retain their positions
+        new_index = old_index[:target_rowiloc]
+        
+        # then i need to group the `subdf` ones
+        new_index.extend( list(subdf_index) )
+        
+        # then i need to add the rest of them
+        # while retaining their order
+        for v in old_index[target_rowiloc:]:
+            if not v in new_index:
+                new_index.append( v )
+        
+        # apply the new index to sort rows
+        self.layoutAboutToBeChanged.emit()
+        self.df = self.df.reindex([ loc for loc in new_index ])
+        self.layoutChanged.emit()
+        
+        return True
+    
 #---------------------------------------------------------------------------+++
 # end 2023.10.20
-# better comments
+# __reorder_subdf
 

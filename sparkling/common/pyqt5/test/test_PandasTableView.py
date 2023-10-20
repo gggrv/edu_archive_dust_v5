@@ -102,7 +102,7 @@ now = pd.Timestamp.now()
 rows = [ {
     'date': now - pd.Timedelta(days=iloc),
     'value': iloc,
-    } for iloc in range(50) ]
+    } for iloc in range(10) ]
 df = pd.DataFrame( rows )
 w.switch_df( df )
 

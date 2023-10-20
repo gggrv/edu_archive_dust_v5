@@ -11,12 +11,14 @@ log = logging.getLogger(__name__)
 # embedded in python
 # pip install
 import pandas as pd
-from PyQt5.QtCore import Qt, QItemSelectionModel, QMimeData
+from PyQt5.QtCore import Qt, QMimeData, QItemSelectionModel, QItemSelection
 from PyQt5.QtWidgets import QTableView, QAbstractItemView
 from PyQt5.QtGui import QDrag
 # same project
-from sparkling.common.pyqt5.PandasTableModel import PandasTableModel
-from sparkling.common.BaseColumns import BaseColumns
+from sparkling.common.pyqt5.PandasTableModel import (
+    PandasTableModel,
+    BaseColumns, ColumnsMimeText
+    )
 #from sparkling.common.enums.MimeTypes import EMimeTypes
         
 class EMouseMoveModes( BaseColumns ):
@@ -31,34 +33,6 @@ class EMouseMoveModes( BaseColumns ):
     # alternative operation - what to do when i move
     # already selected items
     drag_move_selection = 1
-            
-class ColumnsMimeText( BaseColumns ):
-    
-    # Textual MimeData may be like this:
-    # `key1=value1;key2=value2;`.
-    
-    #EQ = '='
-    #SEP = ';'
-    
-    # i am dragging `df.index`, which allows to addess relevant
-    # `df` rows using `loc`
-    drag_df_locs = 'drag_df_locs'
-    
-#     @classmethod
-#     def encode_into_text( cls, dictionary ):
-#         items = []
-#         for k, v in dictionary.items():    
-#             item = f'{k}{cls.EQ}{v}'
-#             items.append( item )
-#         return cls.SEP.join( items )
-        
-#     @classmethod
-#     def decode_into_dictionary( cls, text ):
-#         dictionary = {}
-#         for item in text.split( cls.SEP ):
-#             k, v = item.split( cls.EQ, maxsplit=1 )
-#             dictionary[k] = v
-#         return dictionary
 
 class PandasTableView( QTableView ):
 
@@ -114,6 +88,8 @@ class PandasTableView( QTableView ):
         return sel.selectedRows()
     
     def dragEnterEvent( self, ev ):
+
+        # Reserved `PyQt5` method.
         
         # I can filter out unsupported events
         # the moment they are dragged into this widget.
@@ -125,12 +101,76 @@ class PandasTableView( QTableView ):
 
         log.error( 'not implemented yet' )
         ev.ignore()
+        
+    def dropEvent( self, ev ):
+
+        # Reserved `PyQt5` method.
+        
+        # This function was created with the aid of
+        # an AI assistant.
+        
+        # need to override because
+        # it gives incorrect `row` and `column`
+        # to `self._MODEL.dropMimeData`
+        
+        ev.accept()
+        
+        # request model to do something
+        pos = ev.pos()
+        rowiloc = self.rowAt(pos.y())
+        coliloc = self.columnAt(pos.x())
+        success = self._MODEL.dropMimeData( ev.mimeData(), ev.dropAction(), rowiloc, coliloc, self.rootIndex() )
+        
+        if not success:
+            return
+        
+        # model may request view to do something
+        # via `mimeData properties`
+        
+        # change selection
+        selection_rowilocs = ev.mimeData().property( ColumnsMimeText.set_selected_rowilocs )
+        if type(selection_rowilocs) is list:
+            self.clearSelection()
+            if len(selection_rowilocs) > 0:
+                # currently i can only select 1 block of rows
+                # TODO
+                # select precisely selection_rowilocs in a sane way
+                
+                # i received specific rowilocs
+                # i may need to appropriate them in they
+                # exceed number of existing items
+                
+                n_rows = self.rowCount()
+                n_overflow = len(selection_rowilocs)
+                
+                # of the first element in block
+                target_rowiloc = selection_rowilocs[0]
+                
+                # make sure i can select these items
+                if target_rowiloc + n_overflow > n_rows:
+                    # move all block rowilocs up
+                    # until they fit
+                    target_rowiloc = n_rows - n_overflow
+                    if target_rowiloc < 0: target_rowiloc = 0
+                    new_selection = QItemSelection(
+                        self._MODEL.index( target_rowiloc, coliloc ),
+                        self._MODEL.index( n_rows-1, coliloc )
+                        )
+                    self.selectionModel().select( new_selection, QItemSelectionModel.Select|QItemSelectionModel.Rows )
+                    return
+                
+                # i can safely select items
+                new_selection = QItemSelection(
+                    self._MODEL.index( target_rowiloc, coliloc ),
+                    self._MODEL.index( target_rowiloc+n_overflow-1, coliloc )
+                    )
+                self.selectionModel().select( new_selection, QItemSelectionModel.Select|QItemSelectionModel.Rows )
     
-    def dragMoveEvent( self, ev ):
-        print( 'dragMoveEvent' )
+    #def dragMoveEvent( self, ev ):
+    #    print( 'dragMoveEvent' )
     
-    def dragLeaveEvent( self, ev ):
-        print( 'dragLeaveEvent' )
+    #def dragLeaveEvent( self, ev ):
+    #    print( 'dragLeaveEvent' )
         
     def mousePressEvent( self, ev ):
 
@@ -220,12 +260,13 @@ class PandasTableView( QTableView ):
                     
                     # encode selected `df` `locs`
                     mime_data = QMimeData()
-                    #df_index = ' '.join( self.selected_subdf().index.astype(str) )
+                    #subdf_index = ' '.join( self.selected_subdf().index.astype(str) )
+                    subdf_index = self.selected_subdf().index
                     #mime_data.setText( ColumnsMimeText.encode_into_text({
-                    #    ColumnsMimeText.drag_df_locs: df_index )
+                    #    ColumnsMimeText.drag_df_locs: subdf_index )
                     #    }) )
                     mime_data.setText( '' ) # it assigns `EMimeTypes.TEXT_PLAIN`
-                    mime_data.setProperty( ColumnsMimeText.drag_df_locs, self.selected_subdf().index )
+                    mime_data.setProperty( ColumnsMimeText.drag_df_locs, subdf_index )
                     
                     DragEv.setMimeData( mime_data )
                     
@@ -235,12 +276,19 @@ class PandasTableView( QTableView ):
                     #DragEv.setHotSpot()
                     
                     # start drag/dropping
-                    retval = DragEv.exec_( Qt.MoveAction )
-                    #if retval == 0:
-                    #    # this event was accepted, i safely
-                    #    # reordered rows in underlying `df`
-                    #    # using `model`
-                    #    print( retval )
+                    # time gets paused, so my current `ev.pos`
+                    # becomes obsolete - i may have moved mouse
+                    # anywhere
+                    performed_action = DragEv.exec_( Qt.MoveAction )
+                    # if performed_action == Qt.MoveAction:
+                    #     # this event was accepted - `self._MODEL`
+                    #     # reordered necessary rows,
+                    #     # yet the items selected in view remain the same
+                    #     # i need to manually reapply selection
+                    #     # but in this method i can't easily get up-to-date
+                    #     # ev.pos(), so i process everything in
+                    #     # self.dropEvent
+                        
                 else:
                     log.debug( 'why am i here?' )
     
