@@ -42,14 +42,16 @@ class PlaylistViewer( NodeViewer ):
     
     def __init__( self,
                   selection_changed_event=True,
-                  accept_drops=True,
                   node_editor_class=DfEditor,
                   file_renamer_class=None,
+                  accept_drops=True,
+                  manually_reorder_rows=True,
                   parent=None,
                   *args, **kwargs ):
         super( PlaylistViewer, self ).__init__(
             node_editor_class=node_editor_class,
             accept_drops=accept_drops,
+            manually_reorder_rows=manually_reorder_rows,
             parent=parent, *args, **kwargs )
         
         # remember

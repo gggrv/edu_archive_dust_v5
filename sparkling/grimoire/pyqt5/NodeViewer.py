@@ -111,10 +111,14 @@ class NodeViewer( PandasTableView ):
     # i expect `settings` to be fully validated beforehand
     _settings = None
     
+    __manually_reorder_rows = None
+    __accept_drops_override = None
+    
     def __init__( self,
                   parent=None,
                   node_editor_class=DfEditor,
                   accept_drops=True,
+                  manually_reorder_rows=True,
                   *args, **kwargs ):
         super( NodeViewer, self ).__init__(
             parent=parent, *args, **kwargs )
@@ -123,10 +127,11 @@ class NodeViewer( PandasTableView ):
         self._settings = {}
         self._parentless_windows = []
         self._node_editor_class = node_editor_class
+        self.__manually_reorder_rows = manually_reorder_rows
+        self.__accept_drops_override = accept_drops
         
         # appearance
         self.setWordWrap( False )
-        self.setAcceptDrops( accept_drops )
         self.setContextMenuPolicy( Qt.ActionsContextMenu )
         
         # interactions
@@ -486,6 +491,11 @@ class NodeViewer( PandasTableView ):
         
         # Node viewer should be able to accept
         # various drag and drops.
+        
+        if not self.__accept_drops_override:
+            if self.__manually_reorder_rows:
+                super( NodeViewer, self ).dragEnterEvent(ev)
+            return
         
         c = ColumnsPlaylist
         

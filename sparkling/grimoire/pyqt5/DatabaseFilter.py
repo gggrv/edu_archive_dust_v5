@@ -93,10 +93,15 @@ class DatabaseFilter( QWidget ):
         
         # results view
         
+        # TODO
+        # enable row repositioning but still forbid
+        # other drag/drops because useful;
+        # not that important though
         self.Gui.result_view = PlaylistViewer(
             parent=self,
             selection_changed_event=False,
-            accept_drops=False # don't want to add data in db through it
+            accept_drops=False, # don't want to add data in db through it
+            manually_reorder_rows=True
             )
         
         # assemble
