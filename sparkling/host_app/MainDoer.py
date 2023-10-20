@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-#
 
 # logging
 import logging
@@ -21,9 +20,9 @@ class MainDoer( SomeDoer ):
     PREFERRED_SAVE_DIR_NAME = 'host_qtapp'
     
     # Doer hierarchy:
-    # ■ `data` folder = `sparkling.SomeDoer`
-    # └─■ `data/PREFERRED_SAVE_DIR_NAME` = this doer
-    #   └─■ `data/PREFERRED_SAVE_DIR_NAME/some_other_folder` = some other doer
+    # ■ `data` folder is managed by `sparkling.SomeDoer`
+    # └─■ `data/PREFERRED_SAVE_DIR_NAME` is managed by this doer
+    #   └─■ `data/PREFERRED_SAVE_DIR_NAME/some_other_folder` may be managed by some other doer.
         
     def __init__( self, save_folder ):
         
