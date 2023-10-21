@@ -276,6 +276,9 @@ class NodeViewer( PandasTableView ):
         if is_df_and_df: # i have two dataframes
             # completely replace old with the new one
         
+            old_df.fillna( '', inplace=True )
+            new_df.fillna( '', inplace=True )
+        
             # make sure i have rows to work with
             have_same_length = len(old_df.index) == len(new_df.index)
             have_some_rows = len(old_df.index)>0
@@ -501,6 +504,9 @@ class NodeViewer( PandasTableView ):
         
         # make sure this playlist supports adding items
         if c.auto_query in self._settings:
+            if self.__manually_reorder_rows:
+                super( NodeViewer, self ).dragEnterEvent(ev)
+                return
             log.error( 'this playlist is automatic, i don\'t want to add items to it manually' )
             ev.ignore()
             return
