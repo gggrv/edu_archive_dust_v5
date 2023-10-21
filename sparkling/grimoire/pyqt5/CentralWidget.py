@@ -129,9 +129,6 @@ class CentralWidget( QWidget ):
         # set all connections
         self.CONNECTION_CHANGED.emit( self._own_doer.conn )
         
-        # populate playlist selector
-        self.Gui.playlist_selector.download_playlists()
-        
         # select and open first playlist
         #self.Gui.playlist_selector.selectRow( 0 )
         #self.Gui.playlist_selector.open_selected()
@@ -374,6 +371,9 @@ class CentralWidget( QWidget ):
             ws[0].deleteLater()
             ws.pop( 0 )
         del ws
+        
+        # same with playlist selector
+        self.Gui.playlist_selector.deleteLater()
         
     def _import_csv_to_playlist_event( self, p ):
         

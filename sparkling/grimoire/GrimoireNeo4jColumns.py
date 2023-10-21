@@ -36,6 +36,10 @@ class Columns( ColumnsNeo4j ):
     # don't rename/delete from disk
     move_protected = 'move_protected'
     
+    # show/don't these columns in own gui
+    columns_to_hide = 'columns_to_hide' # less priority
+    columns_to_show = 'columns_to_show' # will override `columns_to_hide`
+    
     @classmethod
     def is_move_protected( cls, row ):
         

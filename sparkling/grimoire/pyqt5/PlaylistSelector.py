@@ -22,14 +22,14 @@ from sparkling.grimoire.PlaylistColumns import (
     )
 # common
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
-from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer
+from sparkling.grimoire.pyqt5.PlaylistViewer import PlaylistViewer
         
 PLAYLIST_COLUMNS_TO_SHOW = [
     ColumnsPlaylist.title,
     ColumnsPlaylist.db_name,
     ]
 
-class PlaylistSelector( NodeViewer ):
+class PlaylistSelector( PlaylistViewer ):
     
     # I want to browse existing playists.
     # Contents of opened playlists are available in a
@@ -45,7 +45,8 @@ class PlaylistSelector( NodeViewer ):
                   *args, **kwargs ):
         super( PlaylistSelector, self ).__init__(
             parent=parent,
-            accept_drops=False,
+            selection_changed_event=False,
+            accept_drops=True,
             manually_reorder_rows=True,
             *args, **kwargs )
         
@@ -65,8 +66,19 @@ class PlaylistSelector( NodeViewer ):
     def set_connection( self, conn ):
         
         super( PlaylistSelector, self ).set_connection( conn )
-            
+        
+        # upon executing `set_settings`, info regarding `playlists`
+        # will be downloaded; actual contents of these `playlists`
+        # will not be downloaded
+        
+        # TODO
+        # for now i download full playlists metadata
+        # and store it in self, but in the future
+        # it might be possible that i don't need
+        # all metadata
+        
         settings = ColumnsPlaylist._playlist_of_playlists( self._conn )
+        settings[ ColumnsPlaylist.columns_to_show ] = MULTIVALUE_SEPARATOR.join(PLAYLIST_COLUMNS_TO_SHOW)
         self.set_settings( settings )
         
     def __init_context_menu( self ):
@@ -124,28 +136,6 @@ class PlaylistSelector( NodeViewer ):
         if ev.button()==Qt.LeftButton:
             self.open_selected_playlists()
         
-    def download_playlists( self ):#, conn ):
-        
-        # I want to download info regarding `playlists`.
-        # Without actually downloading contents of these `playlists`.
-        
-        # TODO
-        # download only limited predefined columns, because
-        # in `PlaylistSelector` i don't need
-        # - identities
-        # - auto query
-        # - plugins
-        # - etc
-        
-        # for now i download full playlists metadata
-        # and store it in self
-        
-        c = ColumnsPlaylist
-        
-        df = c.get_playlists( self._conn )
-        
-        self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_SHOW, appropriate_reverse=True )
-        
     def new_playlist( self ):#, conn ):
         
         # Alternative `create new row`.
@@ -157,7 +147,6 @@ class PlaylistSelector( NodeViewer ):
         # i use df instead of `dict` in order to get
         # 100% accurate node.identity value
         # in current self._MODEL.df.index
-        # avoid using `add_rows`
         self.add_df( df )
         
     def open_selected_playlists( self ):
@@ -210,7 +199,7 @@ class PlaylistSelector( NodeViewer ):
         
     def _accept_selection_edits_event( self, changes, db_name ):
     
-        new_df = super( PlaylistSelector, self )._accept_selection_edits_event( changes, db_name )
+        new_df = super( PlaylistViewer, self )._accept_selection_edits_event( changes, db_name )
         if new_df is None:
             # no change happened
             return

@@ -18,7 +18,8 @@ from PyQt5.QtWidgets import ( QMessageBox )
 from sparkling.grimoire.PlaylistColumns import ColumnsPlaylist
 from sparkling.grimoire.GrimoireNeo4jColumns import (
     Columns as ColumnsNeo4j,
-    NODE, DB_DEFAULT
+    NODE, DB_DEFAULT,
+    MULTIVALUE_SEPARATOR
     )
 # gui
 from sparkling.grimoire.pyqt5.NodeViewer import NodeViewer, ColumnsActionDefinitions, _open_path, DfEditor
@@ -160,7 +161,12 @@ class PlaylistViewer( NodeViewer ):
             # this playlist is empty at this moment
             # and i can manually set auto query / add items
             # from search
-            self.switch_df( pd.DataFrame(), columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
+            columns_to_hide = self._settings[ColumnsPlaylist.columns_to_hide].split(MULTIVALUE_SEPARATOR) if ColumnsPlaylist.columns_to_hide in self._settings else PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR
+            appropriate_reverse = False
+            if ColumnsPlaylist.columns_to_show in self._settings:
+                columns_to_hide = self._settings[ColumnsPlaylist.columns_to_show].split(MULTIVALUE_SEPARATOR)
+                appropriate_reverse = True
+            self.switch_df( pd.DataFrame(), columns_to_hide=columns_to_hide, appropriate_reverse=appropriate_reverse )
             return
             
         response = self._conn.query( query, db_name=self._settings[c.db_name] )
@@ -184,7 +190,12 @@ class PlaylistViewer( NodeViewer ):
             # https://stackoverflow.com/questions/30009948/how-to-reorder-indexed-rows-based-on-a-list-in-pandas-data-frame
             df = df.reindex([ int(loc) for loc in self._settings[c.identities].split(' ') ])
         
-        self.switch_df( df, columns_to_hide=PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR )
+        columns_to_hide = self._settings[ColumnsPlaylist.columns_to_hide].split(MULTIVALUE_SEPARATOR) if ColumnsPlaylist.columns_to_hide in self._settings else PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR
+        appropriate_reverse = False
+        if ColumnsPlaylist.columns_to_show in self._settings:
+            columns_to_hide = self._settings[ColumnsPlaylist.columns_to_show].split(MULTIVALUE_SEPARATOR)
+            appropriate_reverse = True
+        self.switch_df( df, columns_to_hide=columns_to_hide, appropriate_reverse=appropriate_reverse )
         
         # request plugins
         if not to_add=='':

@@ -201,18 +201,6 @@ class ColumnsPlaylist( Columns ):
         
         # i want to remove all old and don't add any new
         return old_settings[cls.plugins], ''
-        
-    @classmethod
-    def get_playlists( cls, conn ):
-        
-        # Download all info regarding playlists
-        # from default db.
-        
-        query = f'MATCH ({NODE}:{NEO4J_LABEL_PLAYLIST}) RETURN {NODE}'
-        response = conn.query( query, db_name=DB_DEFAULT )
-        df = cls.response2df( response, identity=True )
-        
-        return df
             
     @classmethod    
     def new_playlist( cls, conn ):
@@ -231,7 +219,7 @@ class ColumnsPlaylist( Columns ):
         param_dict = {
             cls.title: unique_loc(),
             cls.db_name: DB_DEFAULT, # `nodes` from which `db` this playlist holds
-            cls.forbid_deep_deletions: '+',
+            cls.forbid_deep_deletions: EConsent.CONSENT,
             }
         node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST, param_dict=param_dict )
     
@@ -265,6 +253,9 @@ class ColumnsPlaylist( Columns ):
         # This special `playlist` is expected to be
         # used only by `PalylistSelector`.
         
+        # TODO
+        # do all this safer
+        
         # attempt to get existing
         node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST_SELECTOR )
         response = conn.query( f'MATCH {node} RETURN {NODE}', db_name=DB_DEFAULT )
@@ -274,13 +265,14 @@ class ColumnsPlaylist( Columns ):
         
             settings = {
                 cls.db_name: DB_DEFAULT,
-                cls.identities: '', # can't manually sort auto query
+                cls.auto_query: f'MATCH ({NODE}:{NEO4J_LABEL_PLAYLIST}) RETURN {NODE} ORDER BY {NODE}.{cls.track_number}',
                 }
             node = cls.convert_node( NODE, NEO4J_LABEL_PLAYLIST_SELECTOR, param_dict=settings )
             response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
         else:
             response = conn.query( f'MATCH {node} RETURN {NODE}', db_name=DB_DEFAULT )
         
+        # download, parse into `settings`
         settings = response[0]['n']._properties
         settings[ cls.identity ] = response[0]['n'].id
         
@@ -288,4 +280,4 @@ class ColumnsPlaylist( Columns ):
         
 #---------------------------------------------------------------------------+++
 # end 2023.10.21
-# added NEO4J_LABEL_PLAYLIST_SELECTOR
+# added NEO4J_LABEL_PLAYLIST_SELECTOR, _playlist_of_playlists
