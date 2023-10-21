@@ -183,7 +183,8 @@ class PlaylistSelector( PlaylistViewer ):
             'master_column': ColumnsPlaylist.title,
             }
         
-        super( PlaylistSelector, self ).launch_selection_editor( constructor_parameters=constructor_parameters )
+        # go directly to `NodeViewer`, skip `PlaylistViewer`
+        super( PlaylistViewer, self ).launch_selection_editor( constructor_parameters=constructor_parameters )
         
     def _accept_programmatic_edits( self, df, tell_everyone=True ):
         
