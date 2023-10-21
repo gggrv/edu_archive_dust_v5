@@ -192,7 +192,8 @@ class PlaylistViewer( NodeViewer ):
             # do so in Columns
             # help:
             # https://stackoverflow.com/questions/30009948/how-to-reorder-indexed-rows-based-on-a-list-in-pandas-data-frame
-            df = df.reindex([ int(loc) for loc in self._settings[c.identities].split(' ') ])
+            if not self._settings[c.identities].strip() == '':
+                df = df.reindex([ int(loc) for loc in self._settings[c.identities].split(' ') ])
         
         columns_to_hide = self._settings[ColumnsPlaylist.columns_to_hide].split(MULTIVALUE_SEPARATOR) if ColumnsPlaylist.columns_to_hide in self._settings else PLAYLIST_COLUMNS_TO_HIDE_IN_EDITOR
         appropriate_reverse = False
