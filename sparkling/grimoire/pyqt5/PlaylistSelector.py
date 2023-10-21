@@ -46,7 +46,7 @@ class PlaylistSelector( PlaylistViewer ):
         super( PlaylistSelector, self ).__init__(
             parent=parent,
             selection_changed_event=False,
-            accept_drops=True,
+            accept_drops=False,
             manually_reorder_rows=True,
             *args, **kwargs )
         
@@ -130,6 +130,19 @@ class PlaylistSelector( PlaylistViewer ):
         # so that `PlaylistSelector`'s functionality is limited
         c.remove_actions( self )
         c.add_actions( self, actions )
+        
+    def the_dying_message( self ):
+        
+        # Whenever this widget/subclass is no longer needed,
+        # I may want to remember certain things.
+        
+        c = ColumnsPlaylist
+        
+        # assign track numbers based on current ordering
+        self._MODEL.df[c.track_number] = [ str(iloc+1) for iloc in range(self.rowCount()) ]
+        
+        # write to db
+        self._accept_programmatic_edits( self._MODEL.df, tell_everyone=False )
         
     def mouseDoubleClickEvent( self, ev ):
     
