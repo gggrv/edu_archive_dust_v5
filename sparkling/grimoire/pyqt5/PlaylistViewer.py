@@ -60,7 +60,6 @@ class PlaylistViewer( NodeViewer ):
         
         # appearance
         self.setWordWrap( False )
-        self.setAcceptDrops( accept_drops )
         self.setContextMenuPolicy( Qt.ActionsContextMenu )
         
         # interactions
@@ -201,6 +200,27 @@ class PlaylistViewer( NodeViewer ):
         if not to_add=='':
             self.REQUEST_PLUGINS_ENABLE.emit( to_add, self )
         
+    def mouseDoubleClickEvent( self, ev ):
+    
+        # Reserved `PyQt5` method.
+        
+        if ev.button()==Qt.LeftButton:
+            self._cm_open_file()
+        
+    def focusInEvent( self, ev ):
+        
+        # Reserved `PyQt5` method.
+        
+        # When this widget was clicked, it's internal `playlist`
+        # became global `current active playlist`.
+        # Now this functionality is deprecated.
+        # Will keep this for future ideas.
+        
+        # help:
+        # https://stackoverflow.com/questions/28793440/pyqt5-focusin-out-events
+        
+        super( PlaylistViewer, self ).focusInEvent( ev )
+    
     def the_dying_message( self ):
         
         # Whenever this widget/subclass is no longer needed,
@@ -215,23 +235,6 @@ class PlaylistViewer( NodeViewer ):
         self.OVERRIDE_SETTINGS.emit( self._settings )
         
         super( PlaylistViewer, self ).the_dying_message()
-        
-    def mouseDoubleClickEvent( self, ev ):
-    
-        if ev.button()==Qt.LeftButton:
-            self._cm_open_file()
-        
-    def focusInEvent( self, ev ):
-        
-        # When this widget was clicked, it's internal `playlist`
-        # became global `current active playlist`.
-        # Now this functionality is deprecated.
-        # Will keep this for future ideas.
-        
-        # help:
-        # https://stackoverflow.com/questions/28793440/pyqt5-focusin-out-events
-        
-        super( PlaylistViewer, self ).focusInEvent( ev )
         
     def launch_selection_editor( self ):
     
