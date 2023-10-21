@@ -17,14 +17,14 @@ from PyQt5.QtWidgets import ( QVBoxLayout, QListWidget, QWidget,
     QHBoxLayout, QPushButton, QSplitter, QTableWidget, QTableWidgetItem,
     QComboBox, QMessageBox, QLineEdit, QCompleter, QStyledItemDelegate )
 # same project
-from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
+from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions, BaseColumns
 from sparkling.common import unique_loc
 
 _MULTIPLE_VALUES_INDICATOR = '<MULTIPLE VALUES>'
 _MULTIPLE_VALUES_SEPARATOR = '; '
 _MAXIMUM_MULTIPLE_VALUES = 10 # items
 
-class ColumnsDfEditorConstructor:
+class ColumnsDfEditorConstructor( BaseColumns ):
     
     completions_dictionary = 'completions_dictionary'
     
@@ -706,5 +706,5 @@ class DfEditor( QWidget ):
             self.Gui.parse_preview.addItems( str(ex).split('\n') )
 
 #---------------------------------------------------------------------------+++
-# end 2022.10.07
-# fix numeric column name error
+# end 2022.10.21
+# BaseColumns
