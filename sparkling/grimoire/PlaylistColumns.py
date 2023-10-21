@@ -226,6 +226,7 @@ class ColumnsPlaylist( Columns ):
         # send this playlist definition specifically to default db
         response = conn.query( f'CREATE {node} RETURN {NODE}', db_name=DB_DEFAULT )
         df = cls.response2df( response, identity=True ) # i already have `identity` in `index`, but having it in column as well proved to be useful
+        df[ cls.neo4j_labels ] = NEO4J_LABEL_PLAYLIST
                 
         return df
             
