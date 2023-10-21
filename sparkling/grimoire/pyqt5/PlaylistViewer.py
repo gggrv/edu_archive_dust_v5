@@ -166,6 +166,11 @@ class PlaylistViewer( NodeViewer ):
                 columns_to_hide = self._settings[ColumnsPlaylist.columns_to_show].split(MULTIVALUE_SEPARATOR)
                 appropriate_reverse = True
             self.switch_df( pd.DataFrame(), columns_to_hide=columns_to_hide, appropriate_reverse=appropriate_reverse )
+            
+            # request plugins
+            if not to_add=='':
+                self.REQUEST_PLUGINS_ENABLE.emit( to_add, self )
+            
             return
             
         response = self._conn.query( query, db_name=self._settings[c.db_name] )
