@@ -1,4 +1,6 @@
-# dust
+# dust v5 (legacy version)
+
+This version is obsolete and is no longer maintained. Please see another repository for the up-to-date version.
 
 GUI python application made with `PyQt5`. Resides in system icon tray. Allows to launch any other python/???/custom applications. Comes with the following optional `subpackages`:
 - `contech`
