@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Everything needed for custom pandas table view.
 
 # logging
 import logging

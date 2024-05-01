@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Contains common context-unaware functions for PyQt5.
 
 # logging
 import logging

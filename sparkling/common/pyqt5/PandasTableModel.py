@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Custom `QAbstractTableModel` that works well
-# with `pandas.DataFrame`.
 
 # logging
 import logging

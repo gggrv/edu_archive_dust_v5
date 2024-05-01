@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Reserved column names that have pre-existing functionality constraints.
 
 # same project
 # code

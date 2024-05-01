@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Host application.
-# Provides access to predefined PyQt5 programs from tray menu.
-# Can set global css style.
-# Can handle unhandled exceptions.
 
 # logging
 import logging
@@ -29,7 +25,12 @@ from sparkling.common import ( readf, unique_loc )
 from sparkling.common.pyqt5.ActionDefinitionsColumns import ColumnsActionDefinitions
     
 class HostApp( QApplication ):
-    
+
+    # Host application.
+    # Provides access to predefined PyQt5 programs from tray menu.
+    # Can set global css style.
+    # Can handle unhandled exceptions.
+
     # invisible spawned parentless windows will be saved here
     __parentless_windows = None # future list
     

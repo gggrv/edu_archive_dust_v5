@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Tree nodes that can be arranged into multi-column tree.
 
 # logging
 import logging

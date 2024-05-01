@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Common context-unaware tools for any ConTeXt projects.
 
 # logging
 import logging

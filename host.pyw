@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Entry point. Launches `host application`.
 
 # logging
 import logging

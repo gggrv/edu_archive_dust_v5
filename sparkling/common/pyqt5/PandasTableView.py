@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Custom `QTableView` that works well
-# with `PandasTableModel`.
 
 # logging
 import logging

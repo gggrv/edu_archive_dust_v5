@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Context-unaware pd.DataFrame editor.
-# Can be launched from any PyQt5 app.
 
 # logging
 import logging

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Allows to perform neo4j queries from GUI.
 
 # logging
 import logging

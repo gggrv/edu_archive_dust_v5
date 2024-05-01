@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Custom pyqt5 widgets for handling logs.
-# help:
-# https://stackoverflow.com/questions/28655198/best-way-to-display-logs-in-pyqt
 
 # logging
 import logging
@@ -15,6 +12,9 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import ( QDialog, QVBoxLayout,
     QPlainTextEdit )
 # same project
+
+# help:
+# https://stackoverflow.com/questions/28655198/best-way-to-display-logs-in-pyqt
 
 class ExceptionViewer( QDialog ):
     

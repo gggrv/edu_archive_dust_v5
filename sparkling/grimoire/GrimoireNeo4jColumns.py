@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 #---------------------------------------------------------------------------+++
-# Reserved column names that have pre-existing functionality constraints.
 
 from sparkling.neo4j.Neo4jColumns import (
     ColumnsNeo4j,
