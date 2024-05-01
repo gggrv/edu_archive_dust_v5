@@ -1,0 +1,63 @@
+license,program_one_line_description,src
+gpl_v3,"Python utility ""Grimoire Plugin"". Allows to create a new row in a ""Grimoire Playlist Viewer"".",data\grimoire\plugins\create_new_row\main.py
+gpl_v3,"Python utility ""Grimoire Plugin"". Allows to manage a ConTeXt project from a ""Grimoire Playlist Viewer"".",data\grimoire\plugins\nocontext\main.py
+gpl_v3,"Python utility ""Grimoire Plugin"". Allows to delete empty folders from a custom root folder via a ""Grimoire Playlist Viewer"".",data\grimoire\plugins\remove_empty_folders\main.py
+gpl_v3,"Python utility ""Demo Entry Point"". Launches the corresponding Demo PyQt5 app.",host.pyw
+bsd_0,--,sparkling\common\AutorunDoer.py
+bsd_0,--,sparkling\common\BaseColumns.py
+bsd_0,"Python utility ""Preset Manager"". Allows to conveniently manage structured contents of a given .yaml file.",sparkling\common\PresetManager.py
+bsd_0,"Python base class ""Some Doer"". Allows to conveniently access files and subfolders in given directory.",sparkling\common\SomeDoer.py
+bsd_0,"Python utility ""Multi-value Tree Node"". Minimal data structure that can be arranged into a tree.",sparkling\common\TreeNode.py
+bsd_0,--,sparkling\common\enums\Consent.py
+bsd_0,--,sparkling\common\enums\DragOps.py
+bsd_0,--,sparkling\common\enums\MimeTypes.py
+bsd_0,"Python utility ""Minimal Commons"". Contains common reusable context-unaware tools.",sparkling\common\main.py
+gpl_v3,"Python utility ""Action Definitions"". Allows to conveniently manage PyQt5 actions via python dict objects.",sparkling\common\pyqt5\ActionDefinitionsColumns.py
+gpl_v3,"Python utility ""Combobox for Preset Manager"". Allows to conveniently switch between existing presets via PyQt5 QComboBox.",sparkling\common\pyqt5\CbxForPresetManager.py
+gpl_v3,"Python class ""Pandas TableModel"". Allows to conveniently interface with a pandas.DataFrame via PyQt5 view/model architecture.",sparkling\common\pyqt5\PandasTableModel.py
+gpl_v3,"Python class ""Pandas TableView"". Allows to conveniently interface with a pandas.DataFrame via PyQt5 view/model architecture.",sparkling\common\pyqt5\PandasTableView.py
+gpl_v3,"Python class ""General TreeModel"". Allows to conveniently interface with a basic tree node via PyQt5 view/model architecture.",sparkling\common\pyqt5\TreeModel.py
+gpl_v3,"Python class ""Minimal TreeView"". Allows to conveniently interface with a basic tree node via PyQt5 view/model architecture.",sparkling\common\pyqt5\TreeView.py
+gpl_v3,"Python utility ""PyQt5 Commons"". Contains common reusable context-unaware tools for PyQt5.",sparkling\common\pyqt5\main.py
+gpl_v3,"Python class ""DfEditor"". Allows to conveniently edit any pandas.DataFrame via PyQt5 GUI.",sparkling\common\pyqt5\parentless\DfEditor.py
+gpl_v3,"Python class ""Parentless Main Window"". Allows to spawn and interact with any number of parentless PyQt5 windows during runtime.",sparkling\common\pyqt5\parentless\MainWindow.py
+gpl_v3,"Python utility ""Demo Parentless Architecture"". Demonstrates minimal working setup for effective use of parentless splashscreen PyQt5 windows during runtime.",sparkling\common\pyqt5\parentless\old_parentless_example.py
+gpl_v3,"Python utility ""Test for Pandas TableView"". Allows to manually inspect and documents some of the functionality of a ""Pandas TableView"" PyQt5 object.",sparkling\common\pyqt5\test\test_PandasTableView.py
+bsd_0,"Python utility ""Some ConTeXt Project"". Allows to conveniently interface with a ConTeXt project folder via python.",sparkling\contech\SomeContextProject.py
+bsd_0,"Python utility ""Standard ConTeXt Commands"". Contains a list of basic ConTeXt keywords, ready for programmatic use via python.",sparkling\contech\StandardContextCommands.py
+bsd_0,"Python utility ""Standard ConTeXt Conventions"". Allows to conveniently interface with a ConTeXt project folder via python.",sparkling\contech\StandardContextConventions.py
+bsd_0,"Python utility ""Standard ConTeXt Project"". Allows to conveniently interface with a ConTeXt project folder via python.",sparkling\contech\StandardContextProject.py
+bsd_0,"Python utility ""Timecoded ConTeXt Conventions"". Allows to conveniently interface with a ConTeXt project folder via python.",sparkling\contech\TimecodedContextConventions.py
+bsd_0,"Python utility ""Timecoded ConTeXt Project"". Allows to conveniently interface with a ConTeXt project folder via python.",sparkling\contech\TimecodedContextProject.py
+bsd_0,"Python utility ""ConTeXt Commons"". Contains common reusable context-unaware tools for ConTeXt.",sparkling\contech\main.py
+bsd_0,"Python utility ""Test for Standard Conventions"". Allows to manually inspect the functionality of a class.",sparkling\contech\test\test_ContextConventions_standard.py
+bsd_0,"Python utility ""Test for Timecoded Conventions"". Allows to manually inspect the functionality of a class.",sparkling\contech\test\test_ContextConventions_timecoded.py
+bsd_0,"Python utility ""Test for Standard Project"". Allows to manually inspect the functionality of a class.",sparkling\contech\test\test_StandardContextProject.py
+bsd_0,"Python utility ""Test for Timecoded Project"". Allows to manually inspect the functionality of a class.",sparkling\contech\test\test_TimecodedContextProject.py
+bsd_0,"Python utility ""Main Followindow Doer"". Allows to conveniently access/manage contents of a folder.",sparkling\followindow\MainDoer.py
+gpl_v3,"Python utility ""Followindow"". Creates a toggable PyQt5 window that can accept mouse gestures.",sparkling\followindow\MainWindow.py
+gpl_v3,"Python utility ""Neo4J Columns"". A static interface to specific nodes on a Neo4J server.",sparkling\grimoire\GrimoireNeo4jColumns.py
+gpl_v3,"Python utility ""Neo4J Connection"". A custom interface to data on a Neo4J server.",sparkling\grimoire\GrimoireNeo4jConnection.py
+gpl_v3,"Python utility ""Main Grimoire Doer"". Allows to conveniently access/manage contents of a folder.",sparkling\grimoire\MainDoer.py
+gpl_v3,"Python utility ""Playlist Columns"". A static interface to specific nodes on a Neo4J server.",sparkling\grimoire\PlaylistColumns.py
+bsd_0,--,sparkling\grimoire\PlaylistPluginsPresets.py
+gpl_v3,"Python utility ""Grimoire CentralWidget"". Contains specific PyQt5 app functionality.",sparkling\grimoire\pyqt5\CentralWidget.py
+gpl_v3,"Python utility ""Neo4J Database Filter"". Allows to send queries to Neo4J server via PyQt5.",sparkling\grimoire\pyqt5\DatabaseFilter.py
+gpl_v3,"Python utility ""Grimoire File Renamer"". Allows to rename files on disk via PyQt5.",sparkling\grimoire\pyqt5\FileRenamer.py
+gpl_v3,"Python utility ""Grimoire MainWindow"". Contains specific PyQt5 app functionality.",sparkling\grimoire\pyqt5\MainWindow.py
+gpl_v3,"Python utility ""Neo4J Node Viewer"". Allows to present contents of a Neo4J server in a ""Pandas TableView"".",sparkling\grimoire\pyqt5\NodeViewer.py
+gpl_v3,"Python utility ""Grimoire Plugin Preset Editor"".",sparkling\grimoire\pyqt5\PlaylistPluginsPresetsEditor.py
+gpl_v3,"Python utility ""Grimoire Playlist Selector"". Allows to manage ""playlist Neo4J nodes"" via PyQt5.",sparkling\grimoire\pyqt5\PlaylistSelector.py
+gpl_v3,"Python utility ""Grimoire Playlist Viewer"". Allows to view the contents of a ""playlist Neo4J node"" via PyQt5.",sparkling\grimoire\pyqt5\PlaylistViewer.py
+gpl_v3,"Python utility ""Tab Widget for Playlist Viewers"". Allows to to organize ""Grimoire Playlist Viewer""s into tabs.",sparkling\grimoire\pyqt5\TabWidgetForPlaylistViewers.py
+gpl_v3,"Python utility ""Grimoire Neo4J Tree View"".",sparkling\grimoire\pyqt5\TreeFilter.py
+bsd_0,"Python utility ""Main HostApp Doer"". Allows to conveniently access/manage contents of a folder.",sparkling\host_app\MainDoer.py
+bsd_0,--,sparkling\host_app\pyqt5\CentralWidget.py
+gpl_v3,"Python utility ""Exception Viewer"". Allows to view current python log via PyQt5.",sparkling\host_app\pyqt5\ExceptionViewer.py
+gpl_v3,"Python class ""Demo Host App"".",sparkling\host_app\pyqt5\HostApp.py
+bsd_0,--,sparkling\host_app\pyqt5\MainWindow.py
+bsd_0,"Python utility ""MainPaths"". Top-level project paths organizer.",sparkling\main.py
+gpl_v3,"Python utility ""Neo4J Connection"". A custom interface to data on a Neo4J server.",sparkling\neo4j\Connection.py
+gpl_v3,"Python utility ""Neo4J Columns"". A static interface to specific nodes on a Neo4J server.",sparkling\neo4j\Neo4jColumns.py
+gpl_v3,"Python utility ""Neo4J Tree View"".",sparkling\neo4j\NeoTreeView.py
+gpl_v3,"Python utility ""Neo4J Tree View"".",sparkling\path_eater\PathEater.py
