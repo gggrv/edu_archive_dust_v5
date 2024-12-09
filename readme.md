@@ -71,8 +71,8 @@ At any point in time the developer can access the small `system tray icon` that 
 
 | Function | Usage |
 |--|--|
-| <ul><li>Launch</li><li>Hover</li><li>Input correct gesture</li><li>Encounter errors</li></ul> | <video width="320" height="240" controls><source src="docs/followindow_errors.mp4" type="video/mp4" alt="Video"></video> |
-| <ul><li>Input unknown gesture</li></ul> | <video width="320" height="240" controls><source src="docs/followindow_help.mp4" type="video/mp4" alt="Video"></video> |
+| <ul><li>Launch</li><li>Hover</li><li>Input correct gesture</li><li>Encounter errors</li></ul> | *If the video does not render, please see `docs/followindow_errors.mp4`*<br><video width="320" height="240" controls><source src="docs/followindow_errors.mp4" type="video/mp4" alt="Video"></video> |
+| <ul><li>Input unknown gesture</li></ul> | *If the video does not render, please see `docs/followindow_help.mp4`*<br><video width="320" height="240" controls><source src="docs/followindow_help.mp4" type="video/mp4" alt="Video"></video> |
 
 
 ### More on the `big and complex program`
@@ -82,11 +82,11 @@ In order to launch it from the `small and simple program`, hover the grey pixel 
 On the first ever launch, the following file will be created and opened automatically: `data/grimoire/neo4j_settings.yaml`. The user is expected to provide valid server credentials.  
 After this, on the subsequent launches, the `grimoire/pyqt5/MainWindow.py` widget will be shown.
 
-| Function | Demonstration |
+| Function | Usage |
 |--|--|
-| <ul><li>Launch</li><li>Create one new "playlist"</li></ul> | <video width="320" height="240" controls><source src="docs/grimoire_new_playlist.mp4" type="video/mp4" alt="Video"></video> |
-| <ul><li>Edit multiple items</li><li>Encounter errors</li></ul> | <video width="320" height="240" controls><source src="docs/grimoire_edit_multiple_simple.mp4" type="video/mp4" alt="Video"></video> |
-| <ul><li>`auto_query` VS manual "playlist" content editing</li><li>`parsing line`</li><li>`FileRenamer`</li></ul> | <video width="320" height="240" controls><source src="docs/grimoire_edit_complex.mp4" type="video/mp4" alt="Video"></video> |
+| <ul><li>Launch</li><li>Create one new "playlist"</li></ul> | *If the video does not render, please see `docs/grimoire_new_playlist.mp4`*<br><video width="320" height="240" controls><source src="docs/grimoire_new_playlist.mp4" type="video/mp4" alt="Video"></video> |
+| <ul><li>Edit multiple items</li><li>Encounter errors</li></ul> | *If the video does not render, please see `docs/grimoire_edit_multiple_simple.mp4`*<br><video width="320" height="240" controls><source src="docs/grimoire_edit_multiple_simple.mp4" type="video/mp4" alt="Video"></video> |
+| <ul><li>`auto_query` VS manual "playlist" content editing</li><li>`parsing line`</li><li>`FileRenamer`</li></ul> | *If the video does not render, please see `docs/grimoire_edit_complex.mp4`*<br><video width="320" height="240" controls><source src="docs/grimoire_edit_complex.mp4" type="video/mp4" alt="Video"></video> |
 | <ul><li>Add/remove `plugins`</li></ul> | <ol><li>Start editing the "playlist"</li><li>Create reserved field named `plugins`</li><li>Add/remove your plugin name as value</li><li>Save changes, close the editor</li><li>Open the "playlist"</li><li>Right-click to see context menus</li><li>See your plugin functionality in the context menu.</li></ol> |
 
 ### Purpose
