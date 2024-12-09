@@ -2,10 +2,10 @@
 **/__pycache__
 **/.pylint
 /.spyproject
+/.virtual_env
+desktop.ini
 # ignore custom useless files
 */test
-# ignore all documentation for now
-docs/*
 # ignore the whole user data folder
 data/*
 # unignore css and tray
