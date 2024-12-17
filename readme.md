@@ -63,7 +63,7 @@ The event sequence is as follows:
 5. The user explores the `big and complex program` to their leisure.
 6. The user decides to modify something.
 7. ???
-8. Profit.
+8. Profit [(for me, hopefully)](https://buymeacoffee.com/aggressive_developer).
 
 ### More on the `small and simple program`
 
