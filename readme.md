@@ -32,17 +32,14 @@
 
 ## Installation
 
-For the best experience, please use the specific version of the `Spyder` python IDE. It can be installed via `pip install spyder==5.5.6` command.
+For the best experience, please use the [Visual Studio Code](https://code.visualstudio.com) ("vscode") IDE.
 
 <ol>
 <li>Clone this repository in a directory of choice.</li>
 <li>Navigate to this directory.</li>
-<li>Follow <a href="https://medium.com/analytics-vidhya/5-steps-setup-python-virtual-environment-in-spyder-ide-da151bafa337">this manual</a> in order to:<ol><li>Create the virtual environment,</li><li>Activate this virtual environment,</li><li>Make the <code>Spyder</code> work in this virtual environment.</li></ol></li>
+<li>Open it in vscode using <code>File/Open Folder...</code> menu item<ol><li>Create the virtual environment by running the command <code>python -m venv .virtual_env</code>,</li><li>Tell vscode to use the <code>python interpreter</code> from this virtual environment: <code>Command Palette/Python: Select Interpteter/Enter path</code>.</li></ol></li>
 <li>Install the setuptools via the command <code>pip install setuptools</code> into this virtual environment.</li>
-<li>Install the dependencies, listed in the <code>requirements.txt</code>, into this virtual environment.</li>
-<li>In <code>Spyder</code>, open the menu option "Projects"->"New Project...", select "Existing directory", set "Location" to the dir of the cloned repository and click "Create".</li>
-<li>Open the menu option "Tools"->"Preferences", select "Run", set "Working directory settings" to "The current working directory" option.</li>
-<li>Make sure that current working dir is the cloned repository dir.</li>
+<li>Install the dependencies, listed in the <code>pip install -r requirements.txt</code>, into this virtual environment.</li>
 </ol>
 
 After completing these instructions, the user will be able to use this repository to:
@@ -50,7 +47,7 @@ After completing these instructions, the user will be able to use this repositor
 2. Inspect the underlying abstract python tools.
 
 In order to use the `big and complex` part of this demo app, several additional steps must be completed:
-1. Install the [Neo4J desktop server](https://neo4j.com/download/) (click to open).
+1. Install the [Neo4J Desktop Server](https://neo4j.com/download/) (click to open).
 2. Create a local database, user credentials, etc.
 
 ## Demo App Usage
@@ -99,7 +96,7 @@ More information could be found at the following links:
 
 ## License <a name="license"></a>
 
-The actual licenses are available at the beginning of each source code file; superficial overview:
+The actual licenses are available at the beginning of each source code file; brief overview:
 - Abstract python tools for general python development are generally subject to 0BSD.
 - Abstract python tools for `PyQt5` are generally subject to GPL v3.
 - Abstract python tools for `Neo4J` are generally subject to GPL v3.
