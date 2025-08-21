@@ -1,83 +1,88 @@
 # Educational Archive "Dust v5"
 
-*Please note, that this project is obsolete, and is no longer maintained. No additional documentation will be released. No additional installation support will be provided*.
+*Note: This project is archived and no longer maintained. No additional documentation or installation support will be provided.*
 
-*Please note, that the artifacts of this project were used as a basis for several other projects. These new projects address, extend, enhance and fix any issues this project may have had. Please see the dedicated repositories for necessary information*.
+*The components of this project have been used as a foundation for several newer projects that address, extend, and enhance parts of its functionality. Please refer to their respective repositories for newer information.*
+
+*This readme document was optimised with AI*.
+
+<p style="text-align:right;"><a href="https://gggrv.github.io/something/2022/05/17/devinfo-dust/">Homepage for "Dust"</a> | <a href="https://gggrv.github.io/something/2024/12/09/devinfo-grimoire/">Homepage for "Grimoire"</a></p>
 
 ## What is This
 
 | Item | Description |
 | ------------- | ------------- |
-| What is this? | A project, saved into `git` repository, hosted at `GitHub` website. |
-| What does it contain? | <ul><li>Several abstract `python` tools.</li><li>Demo app with graphical user interface:<ul><li>Contains `small and simple program` named "Dust"</li><li>And `big and complex program` named "Grimoire"</li></ul></li></ul> |
-| Whom are they for? | For beginner `python`+`Qt` developers. |
-| What is the current project status? | <ul><li>✔️Functional.</li><li>😴Archived, outdated, no longer maintained.</li></ul> |
-| Why is it obsolete? | Because the complex multipurpose multi-license code, developed here, is more useful, when reorganized, simplified and split into several other independent projects. |
-| What is the purpose of this repository? | Host an educational archive with working code. |
-| Why is it named like that? | `small and simple program` name was inspired by the real-world dust:<ol><li>It is small (see `followindow`),</li><li>Floats in air (see `followindow`),</li><li>Present everywhere (see `HostApp.py`),</li><li>Hard to get rid of (see `GuiLogHandler` class and `ExceptionViewer.py`),</li><li>Beautifully sparkles in the sun (the only positive property).</li></ol><br> `big and complex program` name was inspired by the word "grimoire":<ol><li>An old and ugly dusty book (it *is* old and ugly)</li><li>With lots of mysterious information (can host metadata)</li><li>And unknown unstable magical properties (see `data/grimoire/plugins` subfolder).</li></ol> |
+| What is this? | A GitHub repository containing Python tools and two-in-one demo applications. |
+| Contents | - Abstract Python tools<br>- Demo GUI applications:<br>  - "Dust" (small and simple).<br>  - "Grimoire" (large and complex). |
+| Target Audience | Beginner Python and Qt developers |
+| Project Status | ✔️ Functional and archived<br>😴 No longer maintained |
+| Purpose | Educational archive with working code examples |
+| Name Origin | - "Dust" refers to its small, floating nature (see `followindow`).<br>- "Grimoire" refers to its ugly, complex, metadata-rich nature. |
 
 ## Structure
 
 ```
-■─host.pyw (demo app launcher)
-■─sparkling (top-level namespace)
-  ├─■ common (context-unaware helper classes, functions, usable anywhere)
-  ├─■ contech (tools for ConTeXt word processor)
-  ├─■ followindow (small and simple PyQt5 program)
-  ├─■ grimoire (big and complex PyQt5 program)
-  ├─■ host_app (source code of the demo app launcher)
-  ├─■ neo4j (tools for Neo4J database)
-  └─■ path_eater (obsolete unused PyQt5 widget)
+■─host.pyw (demo application launcher)
+■─sparkling (main package)
+  ├─■ common (general-purpose helper classes and functions)
+  ├─■ contech (ConTeXt word processor tools)
+  ├─■ followindow (Dust program - simple PyQt5 application)
+  ├─■ grimoire (Grimoire program - complex PyQt5 application)
+  ├─■ host_app (launcher source code)
+  ├─■ neo4j (Neo4J database tools)
+  └─■ path_eater (deprecated PyQt5 widget)
 ```
 
 ## Installation
 
-For the best experience, please use the [Visual Studio Code](https://code.visualstudio.com) ("vscode") IDE.
+This project is best used with [Visual Studio Code](https://code.visualstudio.com) (VS Code).
 
-<ol>
-<li>Clone this repository in a directory of choice.</li>
-<li>Navigate to this directory.</li>
-<li>Open it in vscode using <code>File/Open Folder...</code> menu item<ol><li>Create the virtual environment by running the command <code>python -m venv .virtual_env</code>,</li><li>Tell vscode to use the <code>python interpreter</code> from this virtual environment: <code>Command Palette/Python: Select Interpteter/Enter path</code>.</li></ol></li>
-<li>Install the setuptools via the command <code>pip install setuptools</code> into this virtual environment.</li>
-<li>Install the dependencies, listed in the <code>pip install -r requirements.txt</code>, into this virtual environment.</li>
-</ol>
+1. Clone this repository
+2. Open the folder in VS Code
+3. Set up Python environment:
+   - Create virtual environment: `python -m venv .virtual_env`
+   - Select the interpreter: VS Code Command Palette → "Python: Select Interpreter" → Enter path
+4. Install dependencies:
+   ```
+   pip install setuptools
+   pip install -r requirements.txt
+   ```
 
-After completing these instructions, the user will be able to use this repository to:
-1. Launch and exlore the `small and simple` part of the demo app.
-2. Inspect the underlying abstract python tools.
+For the basic features (Dust program), this is all you need.
 
-In order to use the `big and complex` part of this demo app, several additional steps must be completed:
-1. Install the [Neo4J Desktop Server](https://neo4j.com/download/) (click to open).
-2. Create a local database, user credentials, etc.
+For the advanced features (Grimoire program), also:
+1. Install [Neo4J Desktop Server](https://neo4j.com/download/)
+2. Set up a local database with appropriate credentials
 
-## Demo App Usage
+## Usage
 
-The event sequence is as follows:
-1. The user runs the `host.pyw` file (although it can be launched directly from the file explorer with the doubleclick, it is recommended to run it via `IDE` at least on the first try — this way the developer will be able to see if any depencencies have failed to set up correctly).
-2. The `small and simple` program is automatically started.
-3. The user may use this `small and simple program` to launch the `big and complex program`.
-4. The user actually uses the `small and simple program` to launch the `big and complex program`.
-5. The user explores the `big and complex program` to their leisure.
-6. The user decides to modify something.
-7. ???
-8. Profit [(for me, hopefully)](https://buymeacoffee.com/aggressive_developer).
+1. Run `host.pyw` through VS Code (recommended for first run to catch any setup issues)
+2. The Dust program starts automatically
+3. Use Dust to launch Grimoire when needed
+4. Explore both applications' features
 
-### More on the `small and simple program`
+### Dust Program
 
-At any point in time the developer can access the small `system tray icon` that looks as follows: <img src="data/host_qtapp/tray.png" width="15px" alt="Image of the tray icon">. Right-clickling it will open a dedicated context menu with some default actions.
+A system tray icon (<img src="data/host_qtapp/tray.png" width="15px" alt="Tray icon">) provides access to the program. Right-click for available actions.
+
+#### Demo Videos
 
 | Function | Usage |
 |--|--|
 | <ul><li>Launch</li><li>Hover</li><li>Input correct gesture</li><li>Encounter errors</li></ul> | *If the video does not render, please see `docs/followindow_errors.mp4`*<br><video width="320" height="240" controls><source src="docs/followindow_errors.mp4" type="video/mp4" alt="Video"></video> |
 | <ul><li>Input unknown gesture</li></ul> | *If the video does not render, please see `docs/followindow_help.mp4`*<br><video width="320" height="240" controls><source src="docs/followindow_help.mp4" type="video/mp4" alt="Video"></video> |
 
+### Grimoire Program
 
-### More on the `big and complex program`
+To launch: In Dust, hover over the grey pixel and swipe down with the right mouse button.
 
-In order to launch it from the `small and simple program`, hover the grey pixel and swipe down while holding the right mouse button.
+First launch:
+- Creates and opens `data/grimoire/neo4j_settings.yaml`
+- Enter your Neo4J server credentials
 
-On the first ever launch, the following file will be created and opened automatically: `data/grimoire/neo4j_settings.yaml`. The user is expected to provide valid server credentials.  
-After this, on the subsequent launches, the `grimoire/pyqt5/MainWindow.py` widget will be shown.
+On the subsequent launches, the `grimoire/pyqt5/MainWindow.py` widget will be shown.
+
+#### Demo Videos
 
 | Function | Usage |
 |--|--|
@@ -86,21 +91,22 @@ After this, on the subsequent launches, the `grimoire/pyqt5/MainWindow.py` widge
 | <ul><li>`auto_query` VS manual "playlist" content editing</li><li>`parsing line`</li><li>`FileRenamer`</li></ul> | *If the video does not render, please see `docs/grimoire_edit_complex.mp4`*<br><video width="320" height="240" controls><source src="docs/grimoire_edit_complex.mp4" type="video/mp4" alt="Video"></video> |
 | <ul><li>Add/remove `plugins`</li></ul> | <ol><li>Start editing the "playlist"</li><li>Create reserved field named `plugins`</li><li>Add/remove your plugin name as value</li><li>Save changes, close the editor</li><li>Open the "playlist"</li><li>Right-click to see context menus</li><li>See your plugin functionality in the context menu.</li></ol> |
 
+Plugin usage:
+1. Edit a playlist
+2. Create a `plugins` field
+3. Add plugin names as values
+4. Save and reopen to see plugin features in context menus
+
 ### Purpose
 
 This is a highly experimental GUI demo app that allowed the developer to learn the basics of the `Qt` library via python. Additionally, it acted as a stress-test for the underlying abstract python tools, software project structure and project management approaches.
 
-More information could be found at the following links:  
-[[Dev Info] Dust](https://gggrv.github.io/something/2022/05/17/devinfo-dust/) (click to open) — detailed information regarding the `small and simple program` and its future.  
-[[Dev Info] Grimoire](https://gggrv.github.io/something/2024/12/09/devinfo-grimoire/) (click to open) — detailed information regarding the `big and complex program` and its future.
+## Licenses
 
-## License <a name="license"></a>
-
-The actual licenses are available at the beginning of each source code file; brief overview:
-- Abstract python tools for general python development are generally subject to 0BSD.
-- Abstract python tools for `PyQt5` are generally subject to GPL v3.
-- Abstract python tools for `Neo4J` are generally subject to GPL v3.
-- Abstract python tools for `ConTeXt` are generally subject to 0BSD.
-- The `PyQt5` demo app is generally subject to GPL v3.
-
-Any other file is implied to be subject to 0BSD.
+License details are provided in each source file. Overview:
+- General Python tools: 0BSD
+- PyQt5-related tools: GPL v3
+- Neo4J tools: GPL v3
+- ConTeXt tools: 0BSD
+- Demo applications: GPL v3
+- All other files: 0BSD
