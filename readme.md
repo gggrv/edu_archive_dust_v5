@@ -22,8 +22,8 @@
 ## Structure
 
 ```
-■─host.pyw (demo application launcher)
-■─sparkling (main package)
+■ host.pyw (demo application launcher)
+■ sparkling (main package)
   ├─■ common (general-purpose helper classes and functions)
   ├─■ contech (ConTeXt word processor tools)
   ├─■ followindow (Dust program - simple PyQt5 application)
@@ -91,12 +91,6 @@ On the subsequent launches, the `grimoire/pyqt5/MainWindow.py` widget will be sh
 | <ul><li>`auto_query` VS manual "playlist" content editing</li><li>`parsing line`</li><li>`FileRenamer`</li></ul> | *If the video does not render, please see `docs/grimoire_edit_complex.mp4`*<br><video width="320" height="240" controls><source src="docs/grimoire_edit_complex.mp4" type="video/mp4" alt="Video"></video> |
 | <ul><li>Add/remove `plugins`</li></ul> | <ol><li>Start editing the "playlist"</li><li>Create reserved field named `plugins`</li><li>Add/remove your plugin name as value</li><li>Save changes, close the editor</li><li>Open the "playlist"</li><li>Right-click to see context menus</li><li>See your plugin functionality in the context menu.</li></ol> |
 
-Plugin usage:
-1. Edit a playlist
-2. Create a `plugins` field
-3. Add plugin names as values
-4. Save and reopen to see plugin features in context menus
-
 ### Purpose
 
 This is a highly experimental GUI demo app that allowed the developer to learn the basics of the `Qt` library via python. Additionally, it acted as a stress-test for the underlying abstract python tools, software project structure and project management approaches.
@@ -109,4 +103,4 @@ License details are provided in each source file. Overview:
 - Neo4J tools: GPL v3
 - ConTeXt tools: 0BSD
 - Demo applications: GPL v3
-- All other files: 0BSD
+- All other files: implied 0BSD
